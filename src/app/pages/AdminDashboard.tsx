@@ -21,7 +21,6 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Card, CardContent } from '../components/ui/card';
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -35,7 +34,6 @@ ChartJS.register(
   Filler
 );
 
-// Chart.js data structures
 const revenueChartData = {
   labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
   datasets: [
@@ -161,7 +159,6 @@ export const AdminDashboard: React.FC = () => {
   const [isFilterSticky, setIsFilterSticky] = useState(false);
   const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'gundam' | 'cardgame'>('all');
 
-  // Scroll handler for sticky filter bar
   React.useEffect(() => {
     const handleScroll = () => {
       setIsFilterSticky(window.scrollY > 150);
@@ -180,25 +177,18 @@ export const AdminDashboard: React.FC = () => {
 
   const exportData = (format: 'csv' | 'excel') => {
     console.log(`Exporting data as ${format}...`);
-    // Export logic here
   };
 
-  // Chart.js options
   const lineChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const,
-      },
+      legend: { display: true, position: 'top' as const },
       tooltip: {
         callbacks: {
           label: function(context: any) {
             let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
+            if (label) label += ': ';
             label += formatCurrency(context.parsed.y);
             return label;
           }
@@ -219,67 +209,20 @@ export const AdminDashboard: React.FC = () => {
   const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const,
-      },
-    },
-    scales: {
-      x: {
-        stacked: false,
-      },
-      y: {
-        stacked: false,
-      },
-    },
+    plugins: { legend: { display: true, position: 'top' as const } },
+    scales: { x: { stacked: false }, y: { stacked: false } },
   };
 
-  const pieChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'right' as const,
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context: any) {
-            const label = context.label || '';
-            const value = context.parsed || 0;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(0);
-            return `${label}: ${percentage}%`;
-          }
-        }
-      }
-    },
-  };
-
-  // Dynamic category data based on active tab
   const getCategoryChartData = () => {
     if (activeCategoryTab === 'gundam') {
       return {
         labels: ['HG', 'MG', 'RG', 'PG'],
-        datasets: [
-          {
-            data: [320, 280, 180, 120],
-            backgroundColor: ['#DC143C', '#000000', '#6b7280', '#9ca3af'],
-            borderWidth: 0,
-          },
-        ],
+        datasets: [{ data: [320, 280, 180, 120], backgroundColor: ['#DC143C', '#000000', '#6b7280', '#9ca3af'], borderWidth: 0 }],
       };
     } else if (activeCategoryTab === 'cardgame') {
       return {
         labels: ['Pokémon', 'One Piece'],
-        datasets: [
-          {
-            data: [450, 350],
-            backgroundColor: ['#0066CC', '#60a5fa'],
-            borderWidth: 0,
-          },
-        ],
+        datasets: [{ data: [450, 350], backgroundColor: ['#0066CC', '#60a5fa'], borderWidth: 0 }],
       };
     } else {
       return categoryChartData;
@@ -311,102 +254,90 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const TAB_CLASS = 'flex-1 min-w-fit rounded-xl px-5 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 hover:text-gray-800 hover:bg-gray-100 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md';
+
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       <div className="max-w-[1920px] mx-auto px-6 py-8">
-        {/* ====================================
-            TỔNG QUAN NHANH - KPI CARDS (TOP PRIORITY)
-            ==================================== */}
+
+        {/* KPI CARDS */}
         <div className="mb-8">
           <div className="mb-6">
-            <h1 className="text-black mb-2">Tổng quan Nhanh</h1>
-            <p className="text-gray-600">Các chỉ số KPI chính</p>
+            <h1 className="text-xl font-bold text-black mb-1">Tổng quan Nhanh</h1>
+            <p className="text-sm text-gray-500">Các chỉ số KPI chính</p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Total Revenue */}
-            <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-2xl">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                     <DollarSign className="w-6 h-6 text-primary" />
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+15%</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>+15%</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Tổng Doanh thu</p>
-                <p className="text-3xl font-bold text-black mb-2">67.000.000đ</p>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <p className="text-sm text-gray-500 mb-1">Tổng Doanh thu</p>
+                <p className="text-2xl font-bold text-black mb-3">67.000.000đ</p>
+                <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-primary h-1.5 rounded-full" style={{ width: '75%' }}></div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Total Orders */}
-            <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-2xl">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
                     <ShoppingCart className="w-6 h-6 text-secondary" />
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+8%</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>+8%</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Tổng Đơn hàng</p>
-                <p className="text-3xl font-bold text-black mb-2">245</p>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <p className="text-sm text-gray-500 mb-1">Tổng Đơn hàng</p>
+                <p className="text-2xl font-bold text-black mb-3">245</p>
+                <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-secondary h-1.5 rounded-full" style={{ width: '62%' }}></div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Total Customers */}
-            <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-2xl">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Users className="w-6 h-6 text-primary" />
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+23%</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>+23%</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Tổng Khách hàng</p>
-                <p className="text-3xl font-bold text-black mb-2">1,234</p>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <p className="text-sm text-gray-500 mb-1">Tổng Khách hàng</p>
+                <p className="text-2xl font-bold text-black mb-3">1,234</p>
+                <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-primary h-1.5 rounded-full" style={{ width: '85%' }}></div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Total Products */}
-            <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-2xl">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
                     <Package className="w-6 h-6 text-secondary" />
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+12%</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>+12%</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Tổng Sản phẩm</p>
-                <p className="text-3xl font-bold text-black mb-2">156</p>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <p className="text-sm text-gray-500 mb-1">Tổng Sản phẩm</p>
+                <p className="text-2xl font-bold text-black mb-3">156</p>
+                <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-secondary h-1.5 rounded-full" style={{ width: '68%' }}></div>
                 </div>
               </CardContent>
@@ -414,31 +345,29 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* ====================================
-            ANALYTICS & REPORTS
-            ==================================== */}
+        {/* ANALYTICS & REPORTS */}
         <div className="mb-8">
-          {/* Header */}
           <div className="mb-6">
-            <h1 className="text-black mb-2">Phân tích & Báo cáo</h1>
-            <p className="text-gray-600">Phân tích sâu về hiệu suất kinh doanh</p>
+            <h1 className="text-xl font-bold text-black mb-1">Phân tích & Báo cáo</h1>
+            <p className="text-sm text-gray-500">Phân tích sâu về hiệu suất kinh doanh</p>
           </div>
 
-          {/* Analytics Tabs */}
-          <Card className="border-gray-200 shadow-sm">
+          <Card className="border border-gray-200 shadow-sm rounded-2xl">
             <CardContent className="p-6">
               <Tabs value={activeAnalyticsTab} onValueChange={setActiveAnalyticsTab}>
-                <TabsList className="mb-6 bg-gray-100">
-                  <TabsTrigger value="revenue" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+
+                {/* Tab Navigation */}
+                <TabsList className="mb-6 flex flex-wrap gap-2 bg-white border border-gray-200 rounded-2xl shadow-sm p-2 h-auto">
+                  <TabsTrigger value="revenue" className={TAB_CLASS}>
                     Phân tích Doanh thu
                   </TabsTrigger>
-                  <TabsTrigger value="orders" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger value="orders" className={TAB_CLASS}>
                     Phân tích Đơn hàng
                   </TabsTrigger>
-                  <TabsTrigger value="customers" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger value="customers" className={TAB_CLASS}>
                     Phân tích Khách hàng
                   </TabsTrigger>
-                  <TabsTrigger value="products" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger value="products" className={TAB_CLASS}>
                     Hiệu suất Sản phẩm
                   </TabsTrigger>
                 </TabsList>
@@ -446,13 +375,12 @@ export const AdminDashboard: React.FC = () => {
                 {/* Sticky Filter Bar */}
                 <div className={`transition-all duration-300 ${isFilterSticky ? 'fixed top-0 left-0 right-0 z-40 bg-white shadow-md px-6 py-4' : ''}`}>
                   <div className="flex flex-wrap items-center gap-4 mb-6">
-                    {/* Date Range Filter */}
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <Calendar className="w-4 h-4 text-gray-400" />
                       <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
-                        className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                        className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-gray-700"
                       >
                         <option value="7days">7 ngày qua</option>
                         <option value="30days">30 ngày qua</option>
@@ -461,14 +389,12 @@ export const AdminDashboard: React.FC = () => {
                         <option value="1year">1 năm qua</option>
                       </select>
                     </div>
-
-                    {/* Category Filter */}
                     <div className="flex items-center gap-2">
-                      <Filter className="w-4 h-4 text-gray-500" />
+                      <Filter className="w-4 h-4 text-gray-400" />
                       <select
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                        className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-gray-700"
                       >
                         <option value="all">Tất cả danh mục</option>
                         <option value="gundam">Gundam Models</option>
@@ -476,14 +402,12 @@ export const AdminDashboard: React.FC = () => {
                         <option value="onepiece">One Piece Cards</option>
                       </select>
                     </div>
-
-                    {/* Status Filter */}
                     <div className="flex items-center gap-2">
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                        className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-gray-700"
                       >
                         <option value="all">Tất cả trạng thái</option>
                         <option value="completed">Hoàn thành</option>
@@ -491,19 +415,17 @@ export const AdminDashboard: React.FC = () => {
                         <option value="cancelled">Đã hủy</option>
                       </select>
                     </div>
-
-                    {/* Export Buttons */}
                     <div className="ml-auto flex items-center gap-2">
                       <button
                         onClick={() => exportData('csv')}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors text-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-secondary text-white rounded-xl hover:bg-secondary/90 transition-colors text-sm font-medium"
                       >
                         <Download className="w-4 h-4" />
                         Xuất CSV
                       </button>
                       <button
                         onClick={() => exportData('excel')}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors text-sm font-medium"
                       >
                         <Download className="w-4 h-4" />
                         Xuất Excel
@@ -512,28 +434,26 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Tab Content - Using conditional rendering */}
+                {/* Tab Content */}
                 <div className={isFilterSticky ? 'mt-20' : ''}>
-                  {/* Revenue Analytics */}
                   {activeAnalyticsTab === 'revenue' && (
                     <div className="space-y-6">
-                      {/* Comparison Metrics */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+                        <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 rounded-xl border border-primary/20">
                           <p className="text-sm text-gray-600 mb-1">Doanh thu kỳ này</p>
                           <p className="text-2xl font-bold text-black">67.000.000đ</p>
                           <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
                             <TrendingUp className="w-4 h-4" /> +15% so với kỳ trước
                           </p>
                         </div>
-                        <div className="bg-gradient-to-br from-secondary/5 to-secondary/10 p-4 rounded-lg border border-secondary/20">
+                        <div className="bg-gradient-to-br from-secondary/5 to-secondary/10 p-4 rounded-xl border border-secondary/20">
                           <p className="text-sm text-gray-600 mb-1">Chi phí kỳ này</p>
                           <p className="text-2xl font-bold text-black">40.000.000đ</p>
                           <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
                             <TrendingDown className="w-4 h-4" /> -8% so với kỳ trước
                           </p>
                         </div>
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
                           <p className="text-sm text-gray-600 mb-1">Lợi nhuận kỳ này</p>
                           <p className="text-2xl font-bold text-black">27.000.000đ</p>
                           <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
@@ -542,53 +462,30 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Line Chart */}
-                      <div className="bg-white p-6 rounded-lg border border-gray-200">
-                        <h3 className="text-black mb-4">Xu hướng Doanh thu & Lợi nhuận</h3>
+                      <div className="bg-white p-6 rounded-xl border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-4">Xu hướng Doanh thu & Lợi nhuận</h3>
                         <div style={{ width: '100%', height: 400 }}>
                           <Line data={revenueChartData} options={lineChartOptions} />
                         </div>
                       </div>
 
-                      {/* Category Distribution Pie Chart */}
-                      <div className="bg-white p-6 rounded-lg border border-gray-200">
-                        <h3 className="text-black mb-4">Phân bổ theo danh mục</h3>
-
-                        {/* Tab Buttons */}
+                      <div className="bg-white p-6 rounded-xl border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-4">Phân bổ theo danh mục</h3>
                         <div className="flex gap-2 mb-6">
-                          <button
-                            onClick={() => setActiveCategoryTab('all')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              activeCategoryTab === 'all'
-                                ? 'bg-primary text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            Tất cả
-                          </button>
-                          <button
-                            onClick={() => setActiveCategoryTab('gundam')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              activeCategoryTab === 'gundam'
-                                ? 'bg-primary text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            Gundam
-                          </button>
-                          <button
-                            onClick={() => setActiveCategoryTab('cardgame')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              activeCategoryTab === 'cardgame'
-                                ? 'bg-primary text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            Card Game
-                          </button>
+                          {(['all', 'gundam', 'cardgame'] as const).map((tab) => (
+                            <button
+                              key={tab}
+                              onClick={() => setActiveCategoryTab(tab)}
+                              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                                activeCategoryTab === tab
+                                  ? 'bg-primary text-white shadow-sm'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              {tab === 'all' ? 'Tất cả' : tab === 'gundam' ? 'Gundam' : 'Card Game'}
+                            </button>
+                          ))}
                         </div>
-
-                        {/* Pie Chart */}
                         <div style={{ width: '100%', height: 300, marginBottom: '24px' }}>
                           <Pie
                             key={activeCategoryTab}
@@ -597,9 +494,7 @@ export const AdminDashboard: React.FC = () => {
                               responsive: true,
                               maintainAspectRatio: false,
                               plugins: {
-                                legend: {
-                                  display: false,
-                                },
+                                legend: { display: false },
                                 tooltip: {
                                   callbacks: {
                                     label: function(context: any) {
@@ -615,11 +510,7 @@ export const AdminDashboard: React.FC = () => {
                             }}
                           />
                         </div>
-
-                        {/* Dynamic Legend */}
-                        <div className={`grid gap-x-8 gap-y-3 ${
-                          activeCategoryTab === 'cardgame' ? 'grid-cols-1' : 'grid-cols-2'
-                        }`}>
+                        <div className={`grid gap-x-8 gap-y-3 ${activeCategoryTab === 'cardgame' ? 'grid-cols-1' : 'grid-cols-2'}`}>
                           {getCategoryLegendData().map((item) => (
                             <div key={item.name} className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -634,11 +525,10 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Orders Analytics */}
                   {activeAnalyticsTab === 'orders' && (
                     <div className="space-y-6">
-                      <div className="bg-white p-6 rounded-lg border border-gray-200">
-                        <h3 className="text-black mb-4">Đơn hàng theo Ngày trong Tuần</h3>
+                      <div className="bg-white p-6 rounded-xl border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-4">Đơn hàng theo Ngày trong Tuần</h3>
                         <div style={{ width: '100%', height: 400 }}>
                           <Bar data={ordersChartData} options={barChartOptions} />
                         </div>
@@ -646,11 +536,10 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Customer Analytics */}
                   {activeAnalyticsTab === 'customers' && (
                     <div className="space-y-6">
-                      <div className="bg-white p-6 rounded-lg border border-gray-200">
-                        <h3 className="text-black mb-4">Khách hàng Mới vs Khách hàng Quay lại</h3>
+                      <div className="bg-white p-6 rounded-xl border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-4">Khách hàng Mới vs Khách hàng Quay lại</h3>
                         <div style={{ width: '100%', height: 400 }}>
                           <Bar data={customerChartData} options={barChartOptions} />
                         </div>
@@ -658,20 +547,19 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Product Performance */}
                   {activeAnalyticsTab === 'products' && (
                     <div className="space-y-6">
-                      <div className="bg-white p-6 rounded-lg border border-gray-200">
-                        <h3 className="text-black mb-4">Bảng Hiệu suất Sản phẩm</h3>
+                      <div className="bg-white p-6 rounded-xl border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-4">Bảng Hiệu suất Sản phẩm</h3>
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead>
                               <tr className="border-b border-gray-200">
-                                <th className="text-left py-3 px-4 text-gray-600 font-medium">Sản phẩm</th>
-                                <th className="text-right py-3 px-4 text-gray-600 font-medium">Đã bán</th>
-                                <th className="text-right py-3 px-4 text-gray-600 font-medium">Tồn kho</th>
-                                <th className="text-right py-3 px-4 text-gray-600 font-medium">Doanh thu</th>
-                                <th className="text-center py-3 px-4 text-gray-600 font-medium">Tỷ lệ bán</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Sản phẩm</th>
+                                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Đã bán</th>
+                                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Tồn kho</th>
+                                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Doanh thu</th>
+                                <th className="text-center py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Tỷ lệ bán</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -680,19 +568,16 @@ export const AdminDashboard: React.FC = () => {
                                 const sellRate = (product.daBan / total) * 100;
                                 return (
                                   <tr key={`product-perf-${product.product}`} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                    <td className="py-3 px-4 font-semibold text-black">{product.product}</td>
+                                    <td className="py-3 px-4 font-semibold text-gray-900">{product.product}</td>
                                     <td className="py-3 px-4 text-right font-bold text-primary">{product.daBan}</td>
-                                    <td className="py-3 px-4 text-right text-gray-700">{product.tonKho}</td>
-                                    <td className="py-3 px-4 text-right font-bold text-black">{formatCurrency(product.doanhThu)}</td>
+                                    <td className="py-3 px-4 text-right text-gray-600">{product.tonKho}</td>
+                                    <td className="py-3 px-4 text-right font-bold text-gray-900">{formatCurrency(product.doanhThu)}</td>
                                     <td className="py-3 px-4">
                                       <div className="flex items-center justify-center gap-2">
                                         <div className="w-24 bg-gray-200 rounded-full h-2">
-                                          <div
-                                            className="bg-primary h-2 rounded-full"
-                                            style={{ width: `${sellRate}%` }}
-                                          ></div>
+                                          <div className="bg-primary h-2 rounded-full" style={{ width: `${sellRate}%` }}></div>
                                         </div>
-                                        <span className="text-sm font-medium">{sellRate.toFixed(0)}%</span>
+                                        <span className="text-sm font-semibold text-gray-700">{sellRate.toFixed(0)}%</span>
                                       </div>
                                     </td>
                                   </tr>
@@ -710,36 +595,38 @@ export const AdminDashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* ====================================
-            QUICK INSIGHTS
-            ==================================== */}
+        {/* QUICK INSIGHTS */}
         <div className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-black mb-1">Thông tin Nhanh</h2>
-            <p className="text-sm text-gray-600">Tổng quan các chỉ số quan trọng</p>
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-black mb-1">Thông tin Nhanh</h2>
+            <p className="text-sm text-gray-500">Tổng quan các chỉ số quan trọng</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Top Selling Products */}
-            <Card className="border-gray-200 shadow-sm">
+            <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-base text-black">Sản phẩm Bán chạy</h3>
+              </div>
               <CardContent className="p-6">
-                <h3 className="font-semibold text-black mb-4 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-primary" />
-                  Sản phẩm Bán chạy
-                </h3>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {topSellingProducts.map((product, index) => (
-                    <div key={`top-product-${product.id}`} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div key={`top-product-${product.id}`} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-bold text-primary">{index + 1}</span>
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                          index === 0 ? 'bg-red-100 text-primary' :
+                          index === 1 ? 'bg-gray-100 text-gray-600' :
+                          'bg-gray-50 text-gray-500'
+                        }`}>
+                          {index + 1}
                         </div>
                         <div>
-                          <p className="font-medium text-black text-sm">{product.name}</p>
-                          <p className="text-xs text-gray-500">{product.sold} đã bán</p>
+                          <p className="font-medium text-gray-900 text-sm leading-tight">{product.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{product.sold} đã bán</p>
                         </div>
                       </div>
-                      <p className="font-bold text-black text-sm">{product.revenue}</p>
+                      <p className="font-semibold text-gray-900 text-sm whitespace-nowrap">{product.revenue}</p>
                     </div>
                   ))}
                 </div>
@@ -747,22 +634,22 @@ export const AdminDashboard: React.FC = () => {
             </Card>
 
             {/* Recent Orders */}
-            <Card className="border-gray-200 shadow-sm">
+            <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-secondary" />
+                <h3 className="font-semibold text-base text-black">Đơn hàng Gần đây</h3>
+              </div>
               <CardContent className="p-6">
-                <h3 className="font-semibold text-black mb-4 flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-secondary" />
-                  Đơn hàng Gần đây
-                </h3>
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {recentOrders.slice(0, 5).map((order) => (
                     <div
                       key={`recent-order-${order.id}`}
                       onClick={() => navigate(`/admin/orders/${order.id}`)}
-                      className="py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-[#F5F5F5] transition-colors rounded-lg px-2 -mx-2"
+                      className="py-2.5 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg px-2 -mx-2"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <p className="font-semibold text-primary text-sm">#{order.id}</p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           order.status === 'Hoàn thành' ? 'bg-green-100 text-green-700' :
                           order.status === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' :
                           'bg-yellow-100 text-yellow-700'
@@ -770,10 +657,10 @@ export const AdminDashboard: React.FC = () => {
                           {order.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700">{order.customer}</p>
+                      <p className="text-sm text-gray-700 leading-tight">{order.customer}</p>
                       <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-gray-500">{order.product}</p>
-                        <p className="font-bold text-black text-sm">{order.amount}</p>
+                        <p className="text-xs text-gray-400">{order.product}</p>
+                        <p className="font-semibold text-gray-900 text-sm">{order.amount}</p>
                       </div>
                     </div>
                   ))}
@@ -781,73 +668,38 @@ export const AdminDashboard: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Customer Growth */}
-            <Card className="border-gray-200 shadow-sm">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-black mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  Tăng trưởng Khách hàng
-                </h3>
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Tổng khách hàng</p>
-                    <p className="text-3xl font-bold text-black">1,234</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '75%' }}></div>
-                      </div>
-                      <span className="text-sm font-medium text-green-600">+23%</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-1">Khách mới</p>
-                      <p className="text-xl font-bold text-black">67</p>
-                      <p className="text-xs text-green-600 mt-1">↑ 12%</p>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-1">Khách quay lại</p>
-                      <p className="text-xl font-bold text-black">178</p>
-                      <p className="text-xs text-green-600 mt-1">↑ 8%</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Top Customers */}
-            <Card className="border-gray-200 shadow-sm">
+            <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-base text-black">Khách hàng hàng đầu</h3>
+              </div>
               <CardContent className="p-6">
-                <h3 className="font-semibold text-black mb-4">Khách hàng hàng đầu</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 text-xs font-medium text-gray-600 uppercase">Khách hàng</th>
-                        <th className="text-right py-2 text-xs font-medium text-gray-600 uppercase">Đơn hàng</th>
-                        <th className="text-right py-2 text-xs font-medium text-gray-600 uppercase">Chi tiêu</th>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">Khách hàng</th>
+                      <th className="text-center pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">Đơn hàng</th>
+                      <th className="text-right pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">Chi tiêu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topCustomers.map((customer) => (
+                      <tr key={customer.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <td className="py-3 pr-2">
+                          <p className="font-semibold text-gray-900 text-sm leading-tight">{customer.name}</p>
+                          <p className="text-xs text-blue-500 mt-0.5">{customer.email}</p>
+                        </td>
+                        <td className="py-3 text-center">
+                          <span className="inline-block bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full">{customer.orders}</span>
+                        </td>
+                        <td className="py-3 text-right">
+                          <span className="text-sm font-bold text-gray-900">{customer.spending}</span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {topCustomers.map((customer) => (
-                        <tr key={customer.id} className="border-b border-gray-100 last:border-0">
-                          <td className="py-3">
-                            <div>
-                              <p className="font-semibold text-black text-sm">{customer.name}</p>
-                              <p className="text-xs text-blue-600">{customer.email}</p>
-                            </div>
-                          </td>
-                          <td className="py-3 text-right">
-                            <span className="text-sm font-medium text-gray-900">{customer.orders}</span>
-                          </td>
-                          <td className="py-3 text-right">
-                            <span className="text-sm font-bold text-black">{customer.spending}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </CardContent>
             </Card>
           </div>

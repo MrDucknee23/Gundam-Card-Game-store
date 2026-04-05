@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 export const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const order = orders.find(o => o.id === id);
   const [orderStatus, setOrderStatus] = useState<OrderStatus>(order?.orderStatus || 'processing');
   const [adminNotes, setAdminNotes] = useState(order?.notes || '');
@@ -72,7 +72,6 @@ export const OrderDetail: React.FC = () => {
 
   const handleUpdateStatus = () => {
     toast.success('Trạng thái đơn hàng đã được cập nhật!');
-    // In real app, make API call here
   };
 
   const handlePrintInvoice = () => {
@@ -82,13 +81,11 @@ export const OrderDetail: React.FC = () => {
 
   const handleIssueRefund = () => {
     toast.success('Yêu cầu hoàn tiền đã được gửi!');
-    // In real app, open refund modal
   };
 
   const handleSaveNotes = () => {
     setIsEditingNotes(false);
     toast.success('Ghi chú đã được lưu!');
-    // In real app, make API call here
   };
 
   const handleSaveOrderChanges = (updatedOrder: Partial<Order>) => {
@@ -96,10 +93,8 @@ export const OrderDetail: React.FC = () => {
       setOrderStatus(updatedOrder.orderStatus);
     }
     toast.success('Đơn hàng đã được cập nhật!');
-    // In real app, make API call here to update the order
   };
 
-  // Order timeline stages
   const getTimelineStages = () => {
     const stages = [
       { key: 'processing', label: 'Đang xử lý', icon: Clock },
@@ -122,7 +117,6 @@ export const OrderDetail: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb */}
         <Breadcrumb
           items={[
             { label: 'Admin', href: '/admin' },
@@ -131,7 +125,6 @@ export const OrderDetail: React.FC = () => {
           ]}
         />
 
-        {/* Back Button */}
         <button
           onClick={() => navigate('/admin/orders')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-6"
@@ -140,7 +133,6 @@ export const OrderDetail: React.FC = () => {
           <span className="font-medium">Quay lại danh sách</span>
         </button>
 
-        {/* Page Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -179,12 +171,10 @@ export const OrderDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Order Timeline */}
         {order.orderStatus !== 'cancelled' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-bold text-gray-900 mb-6">Tiến trình đơn hàng</h2>
             <div className="relative">
-              {/* Progress Line */}
               <div className="absolute top-6 left-0 w-full h-1 bg-gray-200">
                 <div
                   className="h-full bg-primary transition-all duration-500"
@@ -193,10 +183,8 @@ export const OrderDetail: React.FC = () => {
                   }}
                 />
               </div>
-
-              {/* Timeline Steps */}
               <div className="relative flex justify-between">
-                {timelineStages.map((stage, index) => {
+                {timelineStages.map((stage) => {
                   const Icon = stage.icon;
                   return (
                     <div key={stage.key} className="flex flex-col items-center" style={{ width: '33.33%' }}>
@@ -226,11 +214,8 @@ export const OrderDetail: React.FC = () => {
           </div>
         )}
 
-        {/* Main Content - Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Items Ordered */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Sản phẩm đã đặt</h2>
               <div className="space-y-4">
@@ -239,7 +224,6 @@ export const OrderDetail: React.FC = () => {
                     key={index}
                     className="flex gap-4 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0"
                   >
-                    {/* Product Image */}
                     <div className="flex-shrink-0">
                       <img
                         src={item.productImage}
@@ -247,8 +231,6 @@ export const OrderDetail: React.FC = () => {
                         className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                       />
                     </div>
-
-                    {/* Product Info */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-900 mb-1">{item.productName}</h3>
                       <div className="flex items-center gap-2 mb-2">
@@ -271,11 +253,9 @@ export const OrderDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Customer Information */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Thông tin khách hàng</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Customer Profile */}
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-blue-50 rounded-lg">
@@ -306,7 +286,6 @@ export const OrderDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Shipping Address */}
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-orange-50 rounded-lg">
@@ -335,7 +314,6 @@ export const OrderDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Admin Notes */}
             <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-bold text-gray-900">Ghi chú nội bộ (Admin)</h2>
@@ -376,9 +354,7 @@ export const OrderDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            {/* Order Summary */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Tóm tắt đơn hàng</h2>
               <div className="space-y-3">
@@ -415,7 +391,6 @@ export const OrderDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Payment Information */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Thông tin thanh toán</h2>
               <div className="space-y-3">
@@ -442,7 +417,6 @@ export const OrderDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Update Status */}
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Cập nhật trạng thái</h2>
               <div className="space-y-3">
@@ -468,7 +442,6 @@ export const OrderDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit Order Modal */}
       {order && (
         <EditOrderModal
           isOpen={isEditModalOpen}

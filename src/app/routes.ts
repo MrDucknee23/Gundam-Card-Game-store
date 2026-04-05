@@ -12,6 +12,8 @@ import { Profile } from './pages/Profile';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
 import { FAQ } from './pages/FAQ';
+import { MyOrders } from './pages/MyOrders';
+import { OrderTracking } from './pages/OrderTracking';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AddProduct } from './pages/AddProduct';
 import { ManageProducts } from './pages/ManageProducts';
@@ -41,6 +43,8 @@ export const router = createBrowserRouter([
       { path: 'about', Component: About },
       { path: 'contact', Component: Contact },
       { path: 'faq', Component: FAQ },
+      { path: 'orders', Component: MyOrders },
+      { path: 'orders/:id', Component: OrderTracking },
       { path: '*', Component: NotFound }
     ]
   },
