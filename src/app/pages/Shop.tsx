@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { products, ProductCategory, GundamGrade, CardRarity } from '../data/products';
+import { ProductCategory, GundamGrade, CardRarity } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { Slider } from '../components/ui/slider';
 import { Input } from '../components/ui/input';
 
 export const Shop: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  
+  const { products, loading, error } = useProducts(); // ← thêm dòng này
+
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | ''>('');
   const [selectedGrade, setSelectedGrade] = useState<GundamGrade | ''>('');
   const [selectedRarity, setSelectedRarity] = useState<CardRarity | ''>('');
@@ -19,12 +21,23 @@ export const Shop: React.FC = () => {
 
   useEffect(() => {
     const category = searchParams.get('category') as ProductCategory;
-    const search = searchParams.get('search');
-    
     if (category) {
       setSelectedCategory(category);
     }
   }, [searchParams]);
+
+  // ← thêm loading/error state
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-gray-500 text-lg">Đang tải sản phẩm...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-red-500 text-lg">{error}</p>
+    </div>
+  );
 
   const handleCategoryChange = (category: ProductCategory | '') => {
     setSelectedCategory(category);
@@ -57,20 +70,15 @@ export const Shop: React.FC = () => {
 
   const filteredProducts = products.filter(product => {
     if (selectedCategory && product.category !== selectedCategory) return false;
-    
     if (selectedGrade && product.grade !== selectedGrade) return false;
-    
     if (selectedRarity && product.rarity !== selectedRarity) return false;
-    
     if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
-    
     const searchQuery = searchParams.get('search');
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      return product.name.toLowerCase().includes(query) || 
+      return product.name.toLowerCase().includes(query) ||
              product.description.toLowerCase().includes(query);
     }
-    
     return true;
   });
 
@@ -89,7 +97,6 @@ export const Shop: React.FC = () => {
             <div className="bg-white rounded-xl p-6 sticky top-24 border border-gray-200 shadow-sm">
               <h2 className="text-xl font-bold mb-6 text-black border-b border-gray-200 pb-3">Bộ lọc</h2>
 
-              {/* Category Filter */}
               <Collapsible defaultOpen className="mb-6">
                 <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
                   Danh mục
@@ -98,50 +105,25 @@ export const Shop: React.FC = () => {
                 <CollapsibleContent>
                   <div className="space-y-2">
                     <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={selectedCategory === ''}
-                        onChange={() => handleCategoryChange('')}
-                        className="w-4 h-4 text-primary accent-primary"
-                      />
+                      <input type="radio" name="category" checked={selectedCategory === ''} onChange={() => handleCategoryChange('')} className="w-4 h-4 text-primary accent-primary" />
                       <span>Tất cả sản phẩm</span>
                     </label>
                     <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={selectedCategory === 'gundam'}
-                        onChange={() => handleCategoryChange('gundam')}
-                        className="w-4 h-4 text-primary accent-primary"
-                      />
+                      <input type="radio" name="category" checked={selectedCategory === 'gundam'} onChange={() => handleCategoryChange('gundam')} className="w-4 h-4 text-primary accent-primary" />
                       <span>Gundam</span>
                     </label>
                     <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={selectedCategory === 'pokemon'}
-                        onChange={() => handleCategoryChange('pokemon')}
-                        className="w-4 h-4 text-primary accent-primary"
-                      />
+                      <input type="radio" name="category" checked={selectedCategory === 'pokemon'} onChange={() => handleCategoryChange('pokemon')} className="w-4 h-4 text-primary accent-primary" />
                       <span>Pokémon</span>
                     </label>
                     <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={selectedCategory === 'onepiece'}
-                        onChange={() => handleCategoryChange('onepiece')}
-                        className="w-4 h-4 text-primary accent-primary"
-                      />
+                      <input type="radio" name="category" checked={selectedCategory === 'onepiece'} onChange={() => handleCategoryChange('onepiece')} className="w-4 h-4 text-primary accent-primary" />
                       <span>One Piece</span>
                     </label>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Gundam Grade Filter */}
               {selectedCategory === 'gundam' && (
                 <Collapsible defaultOpen className="mb-6">
                   <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
@@ -151,24 +133,12 @@ export const Shop: React.FC = () => {
                   <CollapsibleContent>
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                        <input
-                          type="radio"
-                          name="grade"
-                          checked={selectedGrade === ''}
-                          onChange={() => setSelectedGrade('')}
-                          className="w-4 h-4 text-primary accent-primary"
-                        />
+                        <input type="radio" name="grade" checked={selectedGrade === ''} onChange={() => setSelectedGrade('')} className="w-4 h-4 text-primary accent-primary" />
                         <span>Tất cả cấp độ</span>
                       </label>
                       {(['HG', 'MG', 'RG', 'PG'] as GundamGrade[]).map(grade => (
                         <label key={grade} className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                          <input
-                            type="radio"
-                            name="grade"
-                            checked={selectedGrade === grade}
-                            onChange={() => setSelectedGrade(grade)}
-                            className="w-4 h-4 text-primary accent-primary"
-                          />
+                          <input type="radio" name="grade" checked={selectedGrade === grade} onChange={() => setSelectedGrade(grade)} className="w-4 h-4 text-primary accent-primary" />
                           <span>{grade}</span>
                         </label>
                       ))}
@@ -177,7 +147,6 @@ export const Shop: React.FC = () => {
                 </Collapsible>
               )}
 
-              {/* Card Rarity Filter - BEFORE Price Range for card games */}
               {(selectedCategory === 'pokemon' || selectedCategory === 'onepiece') && (
                 <Collapsible defaultOpen className="mb-6">
                   <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
@@ -187,24 +156,12 @@ export const Shop: React.FC = () => {
                   <CollapsibleContent>
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                        <input
-                          type="radio"
-                          name="rarity"
-                          checked={selectedRarity === ''}
-                          onChange={() => setSelectedRarity('')}
-                          className="w-4 h-4 text-primary accent-primary"
-                        />
+                        <input type="radio" name="rarity" checked={selectedRarity === ''} onChange={() => setSelectedRarity('')} className="w-4 h-4 text-primary accent-primary" />
                         <span>Tất cả độ hiếm</span>
                       </label>
                       {(['Common', 'Rare', 'Super Rare', 'Ultra Rare'] as CardRarity[]).map(rarity => (
                         <label key={rarity} className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                          <input
-                            type="radio"
-                            name="rarity"
-                            checked={selectedRarity === rarity}
-                            onChange={() => setSelectedRarity(rarity)}
-                            className="w-4 h-4 text-primary accent-primary"
-                          />
+                          <input type="radio" name="rarity" checked={selectedRarity === rarity} onChange={() => setSelectedRarity(rarity)} className="w-4 h-4 text-primary accent-primary" />
                           <span>{rarity}</span>
                         </label>
                       ))}
@@ -213,7 +170,6 @@ export const Shop: React.FC = () => {
                 </Collapsible>
               )}
 
-              {/* Price Filter - AFTER Grade/Rarity */}
               <Collapsible defaultOpen className="mb-6">
                 <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
                   Khoảng giá
@@ -221,32 +177,15 @@ export const Shop: React.FC = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="space-y-4">
-                    <Slider
-                      min={0}
-                      max={10000000}
-                      step={100000}
-                      value={priceRange}
-                      onValueChange={handlePriceRangeChange}
-                      className="mb-4"
-                    />
+                    <Slider min={0} max={10000000} step={100000} value={priceRange} onValueChange={handlePriceRangeChange} className="mb-4" />
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Tối thiểu</label>
-                        <Input
-                          type="number"
-                          value={minPriceInput}
-                          onChange={(e) => handleMinPriceInputChange(e.target.value)}
-                          className="w-full bg-gray-50 border-gray-300 text-black"
-                        />
+                        <Input type="number" value={minPriceInput} onChange={(e) => handleMinPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Tối đa</label>
-                        <Input
-                          type="number"
-                          value={maxPriceInput}
-                          onChange={(e) => handleMaxPriceInputChange(e.target.value)}
-                          className="w-full bg-gray-50 border-gray-300 text-black"
-                        />
+                        <Input type="number" value={maxPriceInput} onChange={(e) => handleMaxPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
                       </div>
                     </div>
                     <p className="text-sm text-gray-600">
@@ -262,7 +201,7 @@ export const Shop: React.FC = () => {
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
               <p className="text-gray-600">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'sản phẩm' : 'sản phẩm'} được tìm thấy
+                {filteredProducts.length} sản phẩm được tìm thấy
               </p>
             </div>
 
