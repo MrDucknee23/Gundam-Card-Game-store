@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { orders } from '../data/orders';
+import type { Order } from '../data/orders';
 import type { OrderStatus } from '../data/orders';
 import {
   Package, ChevronRight, Search,
@@ -26,6 +26,18 @@ export const MyOrders: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab]     = useState<'all' | OrderStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/orders')
+      .then((res) => res.json())
+      .then((data) => {
+        setOrders(data);
+        setIsLoading(false);
+      })
+      .catch((err) => console.error('Lỗi khi lấy đơn hàng:', err));
+  }, []);
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);

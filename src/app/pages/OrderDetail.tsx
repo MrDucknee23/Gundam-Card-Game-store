@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { orders, getPaymentMethodLabel } from '../data/orders';
+import { getPaymentMethodLabel } from '../data/orders';
 import type { OrderStatus, Order } from '../data/orders';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
@@ -26,11 +26,32 @@ export const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const order = orders.find(o => o.id === id);
-  const [orderStatus, setOrderStatus] = useState<OrderStatus>(order?.orderStatus || 'processing');
-  const [adminNotes, setAdminNotes] = useState(order?.notes || '');
+  const [order, setOrder] = useState<Order | null>(null);
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>('processing');
+  const [adminNotes, setAdminNotes] = useState('');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/orders')
+      .then((res) => res.json())
+      .then((data) => {
+        const foundOrder = data.find((o: Order) => o.id === id);
+        if (foundOrder) {
+          setOrder(foundOrder);
+          setOrderStatus(foundOrder.orderStatus);
+          setAdminNotes(foundOrder.notes || '');
+        }
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Lỗi lấy chi tiết:', err);
+        setIsLoading(false);
+      });
+  }, [id]);
+
+  if (isLoading) return <div className="min-h-screen bg-gray-50 flex justify-center items-center">Đang tải dữ liệu...</div>;
 
   if (!order) {
     return (
@@ -71,7 +92,13 @@ export const OrderDetail: React.FC = () => {
   };
 
   const handleUpdateStatus = () => {
-    toast.success('Trạng thái đơn hàng đã được cập nhật!');
+    fetch(`http://localhost:5000/api/orders/${order.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderStatus })
+    }).then(() => {
+      toast.success('Trạng thái đơn hàng đã được cập nhật!');
+    }).catch(err => console.error('Lỗi khi cập nhật:', err));
   };
 
   const handlePrintInvoice = () => {

@@ -17,6 +17,8 @@ app.get('/', (req, res) => {
 
 // Thêm route products
 app.use('/api/products', require('./routes/products'));
+// Thêm route orders
+app.use('/api/orders', require('./routes/orders'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server tại http://localhost:${PORT}`));
