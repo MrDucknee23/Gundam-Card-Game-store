@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -18,17 +18,13 @@ export const Login: React.FC = () => {
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isLogin) {
-      // Login
       if (formData.email && formData.password) {
         const success = await login(formData.email, formData.password, false);
         if (success) {
@@ -41,16 +37,17 @@ export const Login: React.FC = () => {
         toast.error('Vui lòng điền đầy đủ thông tin');
       }
     } else {
-      // Mock register
       if (formData.password !== formData.confirmPassword) {
         toast.error('Mật khẩu không khớp');
         return;
       }
       if (formData.email && formData.password && formData.firstName && formData.lastName) {
-        const success = await login(formData.email, formData.password, false);
+        const success = await register(formData.email, formData.password, formData.firstName, formData.lastName);
         if (success) {
           toast.success('Đăng ký thành công!');
           navigate('/profile');
+        } else {
+          toast.error('Email đã tồn tại hoặc có lỗi xảy ra');
         }
       } else {
         toast.error('Vui lòng điền đầy đủ thông tin');
@@ -73,72 +70,32 @@ export const Login: React.FC = () => {
         <div className="bg-gray-50 rounded-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">Họ</Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Tên</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">Họ</Label>
+                  <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required className="mt-1" />
                 </div>
-              </>
+                <div>
+                  <Label htmlFor="lastName">Tên</Label>
+                  <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} required className="mt-1" />
+                </div>
+              </div>
             )}
 
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                className="mt-1"
-              />
+              <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required className="mt-1" />
             </div>
 
             <div>
               <Label htmlFor="password">Mật khẩu</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-                className="mt-1"
-              />
+              <Input id="password" name="password" type="password" value={formData.password} onChange={handleInputChange} required className="mt-1" />
             </div>
 
             {!isLogin && (
               <div>
                 <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1"
-                />
+                <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleInputChange} required className="mt-1" />
               </div>
             )}
 
@@ -151,10 +108,7 @@ export const Login: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-secondary hover:underline"
-            >
+            <button onClick={() => setIsLogin(!isLogin)} className="text-secondary hover:underline">
               {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
             </button>
           </div>

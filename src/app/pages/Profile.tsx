@@ -1,31 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { User, Package, MapPin, Heart } from 'lucide-react';
 
 export const Profile: React.FC = () => {
-  const mockOrders = [
-    {
-      id: 'ORD-001',
-      date: '2026-03-25',
-      total: 1250000,
-      status: 'Delivered',
-      items: 2
-    },
-    {
-      id: 'ORD-002',
-      date: '2026-03-20',
-      total: 5500000,
-      status: 'Processing',
-      items: 1
-    },
-    {
-      id: 'ORD-003',
-      date: '2026-03-15',
-      total: 850000,
-      status: 'Shipped',
-      items: 3
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    setCurrentUser(user);
+
+    if (!user?.email) {
+      setIsLoadingOrders(false);
+      return;
     }
-  ];
+
+    fetch(`http://localhost:5000/api/orders?email=${user.email}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setRecentOrders(data.slice(0, 3)); // Chỉ lấy 3 đơn hàng mới nhất
+        setIsLoadingOrders(false);
+      })
+      .catch((err) => {
+        console.error('Lỗi khi fetch đơn hàng:', err);
+        setIsLoadingOrders(false);
+      });
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -36,14 +38,26 @@ export const Profile: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Delivered':
+      case 'delivered':
         return 'text-green-600 bg-green-100';
-      case 'Processing':
+      case 'processing':
         return 'text-blue-600 bg-blue-100';
-      case 'Shipped':
+      case 'shipped':
         return 'text-purple-600 bg-purple-100';
+      case 'cancelled':
+        return 'text-red-600 bg-red-100';
       default:
         return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'delivered': return 'Giao thành công';
+      case 'processing': return 'Đang xử lý';
+      case 'shipped': return 'Đang vận chuyển';
+      case 'cancelled': return 'Đã hủy';
+      default: return status;
     }
   };
 
@@ -60,8 +74,8 @@ export const Profile: React.FC = () => {
                 <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <User className="w-12 h-12 text-gray-600" />
                 </div>
-                <h2 className="font-bold text-lg">John Doe</h2>
-                <p className="text-gray-600 text-sm">john.doe@example.com</p>
+                <h2 className="font-bold text-lg">{currentUser?.name || currentUser?.firstName || 'Khách hàng'}</h2>
+                <p className="text-gray-600 text-sm">{currentUser?.email || 'Chưa cập nhật email'}</p>
               </div>
 
               <nav className="space-y-2">
@@ -97,11 +111,11 @@ export const Profile: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-gray-600 mb-1">Full Name</p>
-                  <p className="font-semibold">John Doe</p>
+                  <p className="font-semibold">{currentUser?.name || currentUser?.firstName || 'Khách hàng'}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 mb-1">Email</p>
-                  <p className="font-semibold">john.doe@example.com</p>
+                  <p className="font-semibold">{currentUser?.email || 'Chưa cập nhật email'}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 mb-1">Phone</p>
@@ -139,21 +153,25 @@ export const Profile: React.FC = () => {
               <h2 className="text-xl font-bold mb-6">Order History</h2>
 
               <div className="space-y-4">
-                {mockOrders.map((order) => (
+                {isLoadingOrders ? (
+                  <div className="text-center text-gray-500 py-4">Đang tải đơn hàng...</div>
+                ) : recentOrders.length === 0 ? (
+                  <div className="text-center text-gray-500 py-4">Chưa có đơn hàng nào</div>
+                ) : recentOrders.map((order) => (
                   <div key={order.id} className="bg-white rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="font-semibold">{order.id}</p>
-                        <p className="text-sm text-gray-600">{order.date}</p>
+                        <p className="font-semibold">{order.orderNumber}</p>
+                        <p className="text-sm text-gray-600">{new Date(order.orderDate).toLocaleDateString('vi-VN')}</p>
                       </div>
-                      <span className={`text-sm px-3 py-1 rounded-full ${getStatusColor(order.status)}`}>
-                        {order.status}
+                      <span className={`text-sm px-3 py-1 rounded-full ${getStatusColor(order.orderStatus)}`}>
+                        {getStatusLabel(order.orderStatus)}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                       <p className="text-gray-600">
-                        {order.items} {order.items === 1 ? 'item' : 'items'}
+                        {order.items?.length || 0} sản phẩm
                       </p>
                       <p className="font-bold text-primary">{formatPrice(order.total)}</p>
                     </div>
@@ -162,7 +180,7 @@ export const Profile: React.FC = () => {
               </div>
 
               <div className="text-center mt-6">
-                <Link to="/shop" className="text-secondary hover:underline">
+                <Link to="/orders" className="text-secondary hover:underline">
                   View All Orders
                 </Link>
               </div>

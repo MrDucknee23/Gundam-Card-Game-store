@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { orders, getPaymentMethodLabel } from '../data/orders';
 import type { OrderStatus, Order } from '../data/orders';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
@@ -26,11 +25,35 @@ export const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const order = orders.find(o => o.id === id);
-  const [orderStatus, setOrderStatus] = useState<OrderStatus>(order?.orderStatus || 'processing');
-  const [adminNotes, setAdminNotes] = useState(order?.notes || '');
+  const [order, setOrder] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>('processing');
+  const [adminNotes, setAdminNotes] = useState('');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Gọi API lấy chi tiết đơn hàng
+    fetch(`http://localhost:5000/api/orders/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Không tìm thấy đơn hàng');
+        return res.json();
+      })
+      .then((data) => {
+        setOrder(data);
+        setOrderStatus(data.orderStatus);
+        setAdminNotes(data.notes || '');
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Lỗi khi fetch chi tiết đơn hàng:', error);
+        setIsLoading(false);
+      });
+  }, [id]);
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Đang tải dữ liệu...</div>;
+  }
 
   if (!order) {
     return (
@@ -70,9 +93,21 @@ export const OrderDetail: React.FC = () => {
     });
   };
 
-  const handleUpdateStatus = () => {
-    toast.success('Trạng thái đơn hàng đã được cập nhật!');
-    // In real app, make API call here
+  const handleUpdateStatus = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderStatus })
+      });
+      if (res.ok) {
+        toast.success('Trạng thái đơn hàng đã được cập nhật!');
+      } else {
+        toast.error('Cập nhật trạng thái thất bại');
+      }
+    } catch (error) {
+      toast.error('Lỗi kết nối đến máy chủ');
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -85,10 +120,22 @@ export const OrderDetail: React.FC = () => {
     // In real app, open refund modal
   };
 
-  const handleSaveNotes = () => {
-    setIsEditingNotes(false);
-    toast.success('Ghi chú đã được lưu!');
-    // In real app, make API call here
+  const handleSaveNotes = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: adminNotes })
+      });
+      if (res.ok) {
+        setIsEditingNotes(false);
+        toast.success('Ghi chú đã được lưu!');
+      } else {
+        toast.error('Lỗi khi lưu ghi chú');
+      }
+    } catch (error) {
+      toast.error('Không thể kết nối đến máy chủ');
+    }
   };
 
   const handleSaveOrderChanges = (updatedOrder: Partial<Order>) => {
@@ -103,8 +150,8 @@ export const OrderDetail: React.FC = () => {
   const getTimelineStages = () => {
     const stages = [
       { key: 'processing', label: 'Đang xử lý', icon: Clock },
-      { key: 'shipped', label: 'Đã gửi hàng', icon: Truck },
-      { key: 'delivered', label: 'Đã giao hàng', icon: CheckCircle }
+      { key: 'shipped', label: 'Đang vận chuyển', icon: Truck },
+      { key: 'delivered', label: 'Giao thành công', icon: CheckCircle }
     ];
 
     const statusOrder = ['processing', 'shipped', 'delivered'];
@@ -426,7 +473,9 @@ export const OrderDetail: React.FC = () => {
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Phương thức thanh toán</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {getPaymentMethodLabel(order.paymentMethod)}
+                      {order.paymentMethod === 'bank' 
+                        ? 'Chuyển khoản ngân hàng' 
+                        : 'Thanh toán khi nhận hàng (COD)'}
                     </p>
                   </div>
                 </div>
@@ -452,8 +501,8 @@ export const OrderDetail: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                 >
                   <option value="processing">Đang xử lý</option>
-                  <option value="shipped">Đã gửi hàng</option>
-                  <option value="delivered">Đã giao hàng</option>
+                <option value="shipped">Đang vận chuyển</option>
+                <option value="delivered">Giao thành công</option>
                   <option value="cancelled">Đã hủy</option>
                 </select>
                 <button

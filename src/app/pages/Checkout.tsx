@@ -19,11 +19,24 @@ export const Checkout: React.FC = () => {
     postalCode: '',
     paymentMethod: 'cod'
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect to cart if empty - moved to useEffect to avoid setState during render
   useEffect(() => {
     if (items.length === 0) {
       navigate('/cart');
+    }
+
+    // Tự động điền thông tin nếu người dùng đã đăng nhập
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+        firstName: user.firstName || prev.firstName,
+        lastName: user.lastName || prev.lastName
+      }));
     }
   }, [items.length, navigate]);
 
@@ -41,7 +54,7 @@ export const Checkout: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
@@ -51,10 +64,55 @@ export const Checkout: React.FC = () => {
       return;
     }
 
-    // Simulate order placement
-    toast.success('Đặt hàng thành công!');
-    clearCart();
-    navigate('/');
+    setIsSubmitting(true);
+
+    try {
+      // Đóng gói dữ liệu đúng với Schema của Backend
+      const orderData = {
+        customer: {
+          name: `${formData.lastName} ${formData.firstName}`.trim(),
+          email: formData.email,
+          phone: formData.phone,
+          address: `${formData.address}, ${formData.city}${formData.postalCode ? `, ${formData.postalCode}` : ''}`
+        },
+        totalAmount: getTotalPrice(),
+        subtotal: getTotalPrice(),
+        shippingFee: 0, // Đang được thiết lập miễn phí ở UI
+        paymentStatus: formData.paymentMethod === 'cod' ? 'Chưa thanh toán' : 'Chờ thanh toán',
+        orderStatus: 'Đang xử lý',
+        paymentMethod: formData.paymentMethod,
+        items: items.map((item) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          productImage: item.product.images?.[0] || 'https://placehold.co/150x150?text=No+Image',
+          category: item.product.category || 'Sản phẩm'
+        })),
+        history: [{ note: 'Khách hàng tự đặt hàng qua Website' }]
+      };
+
+      // Gửi request lên API tạo đơn hàng
+      const response = await fetch('http://localhost:5000/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      if (response.ok) {
+        toast.success('Đặt hàng thành công!');
+        clearCart();
+        navigate('/orders'); // Chuyển hướng khách về trang lịch sử đơn hàng để xem đơn vừa đặt
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Có lỗi xảy ra khi đặt hàng');
+      }
+    } catch (error) {
+      console.error('Lỗi đặt hàng:', error);
+      toast.error('Không thể kết nối đến máy chủ');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Show loading or empty state while redirecting
@@ -243,9 +301,10 @@ export const Checkout: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="w-full mt-6 bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                  disabled={isSubmitting}
+                  className="w-full mt-6 bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 >
-                  Đặt hàng
+                  {isSubmitting ? 'Đang xử lý...' : 'Đặt hàng'}
                 </button>
               </div>
             </div>

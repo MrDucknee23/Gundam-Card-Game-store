@@ -25,13 +25,13 @@ const getRarityColor = (rarity?: string) => {
 const getGradeColor = (grade?: string) => {
   switch (grade) {
     case 'HG':
-      return 'bg-secondary text-white'; // Blue for High Grade
+      return 'bg-secondary text-white';
     case 'MG':
-      return 'bg-primary text-white'; // Red for Master Grade
+      return 'bg-primary text-white';
     case 'RG':
-      return 'bg-gray-900 text-white'; // Black for Real Grade
+      return 'bg-gray-900 text-white';
     case 'PG':
-      return 'bg-white text-black border border-gray-900'; // White for Perfect Grade (premium)
+      return 'bg-white text-black border border-gray-900';
     default:
       return 'bg-gray-900 text-white';
   }
@@ -57,7 +57,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     navigate(`/product/${product.id}`);
   };
 
-  // Get category display name
   const getCategoryName = () => {
     if (isGundamProduct) return 'Gundam';
     if (product.category === 'pokemon') return 'Pokémon Card';
@@ -90,15 +89,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           hover:-translate-y-1
         " 
       >
-        {/* ========================================
-            IMAGE AREA
-        ======================================== */}
+        {/* IMAGE AREA */}
         <div className="relative aspect-square overflow-hidden bg-gray-50 p-3">
-          {/* Product Image */}
           <div className="w-full h-full rounded-xl overflow-hidden">
             <img
-              src={product.images[0]}
+              src={product.images?.[0] || ''}
               alt={product.name}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className="
                 w-full 
                 h-full 
@@ -111,7 +108,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             />
           </div>
           
-          {/* Badge - Top Right Corner */}
           {product.grade && (
             <div className="absolute top-5 right-5 z-10">
               <Badge 
@@ -149,12 +145,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
 
-        {/* ========================================
-            CONTENT AREA
-        ======================================== */}
+        {/* CONTENT AREA */}
         <div className="p-5 flex flex-col flex-grow">
           
-          {/* Product Name */}
           <h3 
             className="
               text-lg
@@ -170,7 +163,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.name}
           </h3>
           
-          {/* Category - Very Close to Product Name */}
           <div className="flex items-center mt-0.5">
             <span 
               className="
@@ -179,14 +171,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 text-gray-500
                 uppercase
                 tracking-wide
-                letter-spacing-wide
               "
             >
               {getCategoryName()}
             </span>
           </div>
           
-          {/* Price */}
           <div className="pt-5">
             <p 
               className="
@@ -200,7 +190,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </p>
           </div>
 
-          {/* Add to Cart Button - Below Price */}
           <div className="pt-3">
             <button
               onClick={handleAddToCart}
@@ -227,7 +216,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </button>
           </div>
 
-          {/* Stock - Bottom Section */}
           <div className="pt-3 border-t border-gray-100 mt-auto">
             <div className="flex items-center justify-between">
               <span 
