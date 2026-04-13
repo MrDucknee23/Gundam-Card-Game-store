@@ -19,8 +19,8 @@ interface EditForm {
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   processing: { label: 'Đang xử lý', color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200',    icon: Clock       },
-  shipped:    { label: 'Đang giao',  color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Truck       },
-  delivered:  { label: 'Đã giao',   color: 'text-green-700',  bg: 'bg-green-50 border-green-200',   icon: CheckCircle },
+  shipped:    { label: 'Đang vận chuyển', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Truck       },
+  delivered:  { label: 'Giao thành công', color: 'text-green-700',  bg: 'bg-green-50 border-green-200',   icon: CheckCircle },
   cancelled:  { label: 'Đã hủy',    color: 'text-red-700',    bg: 'bg-red-50 border-red-200',       icon: XCircle     },
 };
 
@@ -144,22 +144,22 @@ export const OrderTracking: React.FC = () => {
   });
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/orders')
-      .then((res) => res.json())
+    fetch(`http://localhost:5000/api/orders/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Không tìm thấy đơn hàng');
+        return res.json();
+      })
       .then((data) => {
-        const found = data.find((o: Order) => o.id === id);
-        if (found) {
-          setOrder(found);
-          setOrderStatus(found.orderStatus);
-          setShippingInfo({
-            recipientName: found.customerName,
-            recipientPhone: found.customerPhone,
-            street: found.shippingAddress.street,
-            ward: found.shippingAddress.ward,
-            district: found.shippingAddress.district,
-            city: found.shippingAddress.city
-          });
-        }
+        setOrder(data);
+        setOrderStatus(data.orderStatus);
+        setShippingInfo({
+          recipientName: data.customerName,
+          recipientPhone: data.customerPhone,
+          street: data.shippingAddress.street,
+          ward: data.shippingAddress.ward,
+          district: data.shippingAddress.district,
+          city: data.shippingAddress.city
+        });
         setIsLoading(false);
       })
       .catch(err => { console.error(err); setIsLoading(false); });
@@ -195,10 +195,30 @@ export const OrderTracking: React.FC = () => {
   const cfg              = STATUS_CONFIG[orderStatus];
   const StatusIcon       = cfg.icon;
 
-  const handleSaveEdit = (form: EditForm) => {
-    setShippingInfo(form);
-    setShowEdit(false);
-    toast.success('Cập nhật thông tin nhận hàng thành công!');
+  const handleSaveEdit = async (form: EditForm) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${order.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: {
+            name: form.recipientName,
+            phone: form.recipientPhone,
+            email: order.customerEmail, // Giữ nguyên email
+            address: `${form.street}, ${form.ward}, ${form.district}, ${form.city}`
+          }
+        })
+      });
+      if (res.ok) {
+        setShippingInfo(form);
+        setShowEdit(false);
+        toast.success('Cập nhật thông tin nhận hàng thành công!');
+      } else {
+        toast.error('Cập nhật thất bại, vui lòng thử lại.');
+      }
+    } catch (error) {
+      toast.error('Lỗi kết nối máy chủ');
+    }
   };
 
   const handleConfirmCancel = () => {

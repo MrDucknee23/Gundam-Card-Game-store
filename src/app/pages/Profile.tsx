@@ -5,10 +5,19 @@ import { User, Package, MapPin, Heart } from 'lucide-react';
 export const Profile: React.FC = () => {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    // Gọi API lấy danh sách đơn hàng thật
-    fetch('http://localhost:5000/api/orders')
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    setCurrentUser(user);
+
+    if (!user?.email) {
+      setIsLoadingOrders(false);
+      return;
+    }
+
+    fetch(`http://localhost:5000/api/orders?email=${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         setRecentOrders(data.slice(0, 3)); // Chỉ lấy 3 đơn hàng mới nhất
@@ -44,9 +53,9 @@ export const Profile: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'delivered': return 'Đã gửi hàng';
+      case 'delivered': return 'Giao thành công';
       case 'processing': return 'Đang xử lý';
-      case 'shipped': return 'Đã giao hàng';
+      case 'shipped': return 'Đang vận chuyển';
       case 'cancelled': return 'Đã hủy';
       default: return status;
     }
@@ -65,8 +74,8 @@ export const Profile: React.FC = () => {
                 <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <User className="w-12 h-12 text-gray-600" />
                 </div>
-                <h2 className="font-bold text-lg">John Doe</h2>
-                <p className="text-gray-600 text-sm">john.doe@example.com</p>
+                <h2 className="font-bold text-lg">{currentUser?.name || currentUser?.firstName || 'Khách hàng'}</h2>
+                <p className="text-gray-600 text-sm">{currentUser?.email || 'Chưa cập nhật email'}</p>
               </div>
 
               <nav className="space-y-2">
@@ -102,11 +111,11 @@ export const Profile: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-gray-600 mb-1">Full Name</p>
-                  <p className="font-semibold">John Doe</p>
+                  <p className="font-semibold">{currentUser?.name || currentUser?.firstName || 'Khách hàng'}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 mb-1">Email</p>
-                  <p className="font-semibold">john.doe@example.com</p>
+                  <p className="font-semibold">{currentUser?.email || 'Chưa cập nhật email'}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 mb-1">Phone</p>

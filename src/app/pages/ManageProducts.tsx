@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { products as initialProducts, Product } from '../data/products';
 import { Pencil, Trash2 } from 'lucide-react';
 import { EditProductModal } from '../components/EditProductModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { toast } from 'sonner';
 
 export const ManageProducts: React.FC = () => {
-  const [products, setProducts] = React.useState<Product[]>(initialProducts);
-  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/products')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Lỗi khi fetch sản phẩm:', err);
+        setIsLoading(false);
+      });
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -19,12 +32,12 @@ export const ManageProducts: React.FC = () => {
     }).format(price);
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (product: any) => {
     setSelectedProduct(product);
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (product: Product) => {
+  const handleDelete = (product: any) => {
     setSelectedProduct(product);
     setIsDeleteModalOpen(true);
   };
@@ -36,20 +49,45 @@ export const ManageProducts: React.FC = () => {
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedProduct) {
-      setProducts(products.filter(p => p.id !== selectedProduct.id));
-      setIsDeleteModalOpen(false);
-      setSelectedProduct(null);
-      toast.success('Sản phẩm đã được xóa thành công!');
+      try {
+        const res = await fetch(`http://localhost:5000/api/products/${selectedProduct.id}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          setProducts(products.filter(p => p.id !== selectedProduct.id));
+          setIsDeleteModalOpen(false);
+          setSelectedProduct(null);
+          toast.success('Sản phẩm đã được xóa thành công!');
+        } else {
+          toast.error('Lỗi khi xóa sản phẩm');
+        }
+      } catch (err) {
+        toast.error('Lỗi kết nối máy chủ');
+      }
     }
   };
 
-  const handleSaveEdit = (updatedProduct: Product) => {
-    setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-    setIsEditModalOpen(false);
-    setSelectedProduct(null);
-    toast.success('Sản phẩm đã được cập nhật thành công!');
+  const handleSaveEdit = async (updatedProduct: any) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${updatedProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProduct)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(products.map(p => p.id === data.id ? data : p));
+        setIsEditModalOpen(false);
+        setSelectedProduct(null);
+        toast.success('Sản phẩm đã được cập nhật thành công!');
+      } else {
+        toast.error('Lỗi khi cập nhật sản phẩm');
+      }
+    } catch (err) {
+      toast.error('Lỗi kết nối máy chủ');
+    }
   };
 
   return (
@@ -79,12 +117,17 @@ export const ManageProducts: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {isLoading ? (
+                  <tr><td colSpan={6} className="text-center py-8 text-gray-500">Đang tải dữ liệu...</td></tr>
+                ) : products.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center py-8 text-gray-500">Chưa có sản phẩm nào.</td></tr>
+                ) : (
+                  products.map((product) => (
                   <tr key={product.id} className="border-t border-gray-200 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-4">
                         <img
-                          src={product.images[0]}
+                          src={product.images?.[0] || 'https://placehold.co/150x150?text=No+Image'}
                           alt={product.name}
                           className="w-16 h-16 object-cover rounded-lg"
                         />
@@ -125,7 +168,8 @@ export const ManageProducts: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

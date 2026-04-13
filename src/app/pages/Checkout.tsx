@@ -26,6 +26,18 @@ export const Checkout: React.FC = () => {
     if (items.length === 0) {
       navigate('/cart');
     }
+
+    // Tự động điền thông tin nếu người dùng đã đăng nhập
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+        firstName: user.firstName || prev.firstName,
+        lastName: user.lastName || prev.lastName
+      }));
+    }
   }, [items.length, navigate]);
 
   const formatPrice = (price: number) => {

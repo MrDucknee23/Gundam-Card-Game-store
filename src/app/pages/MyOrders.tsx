@@ -9,9 +9,16 @@ export const MyOrders: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Gọi API lấy danh sách hóa đơn từ Database
-    // Lưu ý: Trong thực tế khi có tính năng Login, bạn sẽ truyền thêm UserID để chỉ lấy đơn của user đó.
-    fetch('http://localhost:5000/api/orders')
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    
+    // Nếu chưa đăng nhập, không tải đơn hàng
+    if (!user?.email) {
+      setIsLoading(false);
+      return;
+    }
+
+    fetch(`http://localhost:5000/api/orders?email=${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         setOrders(data);

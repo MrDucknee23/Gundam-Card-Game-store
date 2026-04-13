@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { orders as mockOrders, getPaymentMethodLabel } from '../data/orders';
-import type { Order, OrderStatus, PaymentStatus } from '../data/orders';
+import { getPaymentMethodLabel } from '../data/orders';
+import type { OrderStatus, PaymentStatus } from '../data/orders';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import { Eye, Trash2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const OrderList: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all');
@@ -15,9 +16,16 @@ export const OrderList: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const itemsPerPage = 10;
 
+  useEffect(() => {
+    fetch('http://localhost:5000/api/orders')
+      .then((res) => res.json())
+      .then((data) => setOrders(data))
+      .catch((err) => console.error('Lỗi khi fetch đơn hàng:', err));
+  }, []);
+
   // Filter and search orders
   const filteredOrders = useMemo(() => {
-    return mockOrders.filter((order) => {
+    return orders.filter((order) => {
       const matchesSearch =
         searchQuery === '' ||
         order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -108,8 +116,9 @@ export const OrderList: React.FC = () => {
               >
                 <option value="all">Tất cả</option>
                 <option value="processing">Đang xử lý</option>
-                <option value="shipped">Đã giao hàng</option>
-                <option value="delivered">Đã gửi hàng</option>
+                <option value="shipped">Đang vận chuyển</option>
+                <option value="shipped">Đang vận chuyển</option>
+                <option value="delivered">Giao thành công</option>
                 <option value="cancelled">Đã hủy</option>
               </select>
             </div>
@@ -307,7 +316,7 @@ export const OrderList: React.FC = () => {
 
 // Order Details Modal Component
 interface OrderDetailsModalProps {
-  order: Order;
+  order: any;
   onClose: () => void;
 }
 
@@ -510,8 +519,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose })
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="processing">Đang xử lý</option>
-                <option value="shipped">Đã giao hàng</option>
-                <option value="delivered">Đã gửi hàng</option>
+                <option value="shipped">Đang vận chuyển</option>
+                <option value="delivered">Giao thành công</option>
                 <option value="cancelled">Đã hủy</option>
               </select>
               <button

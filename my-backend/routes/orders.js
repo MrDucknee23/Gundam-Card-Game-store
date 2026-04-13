@@ -5,14 +5,20 @@ const Order = require('../models/Order'); // Import Model của bạn
 // 1. Lấy danh sách toàn bộ đơn hàng
 router.get('/', async (req, res) => {
   try {
-    const dbOrders = await Order.find().sort({ _id: -1 }); // Sắp xếp theo _id để đơn mới nhất luôn ở trên cùng
+    let filter = {};
+    // Nếu có truyền email, chỉ lấy đơn hàng của email đó
+    if (req.query.email) {
+      filter['customer.email'] = req.query.email;
+    }
+
+    const dbOrders = await Order.find(filter).sort({ _id: -1 }); // Sắp xếp theo _id để đơn mới nhất luôn ở trên cùng
     
     // Format lại dữ liệu từ DB (Tiếng Việt) sang Interface của React (Tiếng Anh)
     const formattedOrders = dbOrders.map(order => {
       const mapOrderStatus = (status) => {
         if (status === 'Đang xử lý') return 'processing';
-        if (status === 'Đã giao hàng' || status === 'Đang giao') return 'shipped';
-        if (status === 'Đã gửi hàng') return 'delivered';
+        if (status === 'Đã giao hàng' || status === 'Đang giao' || status === 'Đang vận chuyển') return 'shipped';
+        if (status === 'Đã gửi hàng' || status === 'Giao thành công') return 'delivered';
         if (status === 'Đã hủy') return 'cancelled';
         return 'processing';
       };
@@ -66,8 +72,8 @@ router.get('/:id', async (req, res) => {
 
     const mapOrderStatus = (status) => {
       if (status === 'Đang xử lý') return 'processing';
-      if (status === 'Đã giao hàng' || status === 'Đang giao') return 'shipped';
-      if (status === 'Đã gửi hàng') return 'delivered';
+      if (status === 'Đã giao hàng' || status === 'Đang giao' || status === 'Đang vận chuyển') return 'shipped';
+      if (status === 'Đã gửi hàng' || status === 'Giao thành công') return 'delivered';
       if (status === 'Đã hủy') return 'cancelled';
       return 'processing';
     };
@@ -127,22 +133,42 @@ router.post('/', async (req, res) => {
 // 2. Cập nhật trạng thái đơn hàng
 router.put('/:id', async (req, res) => {
   try {
-    const { orderStatus } = req.body;
+    const updateData = { ...req.body };
     
-    // Map ngược lại từ Tiếng Anh sang Tiếng Việt để lưu vào DB
-    const mapToVi = {
-      'processing': 'Đang xử lý',
-      'shipped': 'Đã giao hàng',
-      'delivered': 'Đã gửi hàng',
-      'cancelled': 'Đã hủy'
-    };
+    // Map ngược lại từ Tiếng Anh sang Tiếng Việt để lưu vào DB nếu có cập nhật trạng thái
+    if (updateData.orderStatus) {
+      const mapToVi = {
+        'processing': 'Đang xử lý',
+        'shipped': 'Đang vận chuyển',
+        'delivered': 'Giao thành công',
+        'cancelled': 'Đã hủy'
+      };
+      updateData.orderStatus = mapToVi[updateData.orderStatus] || updateData.orderStatus;
+    }
 
-    const updatedOrder = await Order.findByIdAndUpdate(
-      req.params.id,
-      { orderStatus: mapToVi[orderStatus] || orderStatus },
-      { new: true }
-    );
-    res.json(updatedOrder);
+    // Xử lý cập nhật ghi chú nội bộ của Admin
+    if (updateData.notes !== undefined) {
+      const order = await Order.findById(req.params.id);
+      if (order && order.history) {
+        if (order.history.length > 0) {
+          order.history[0].note = updateData.notes;
+        } else {
+          order.history.push({ note: updateData.notes });
+        }
+        await order.save();
+      }
+      delete updateData.notes; // Xóa khỏi updateData để không lỗi schema
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      await Order.findByIdAndUpdate(
+        req.params.id,
+        { $set: updateData },
+        { new: true }
+      );
+    }
+    
+    res.json({ message: 'Cập nhật thành công' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
