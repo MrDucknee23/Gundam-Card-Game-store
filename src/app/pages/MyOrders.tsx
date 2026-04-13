@@ -64,7 +64,7 @@ export const MyOrders: React.FC = () => {
                         <h3 className="font-bold text-gray-900">{order.orderNumber}</h3>
                         <p className="text-sm text-gray-500">Ngày đặt: {formatDate(order.orderDate)}</p>
                         <p className="text-sm text-gray-500 mt-1">
-                          Thanh toán: <span className="font-medium text-gray-700">{order.paymentMethod === 'bank' ? 'Chuyển khoản' : 'COD'}</span>
+                          Thanh toán: <span className="font-medium text-gray-700">{order.paymentMethod === 'bank' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}</span>
                         </p>
                       </div>
                     </div>

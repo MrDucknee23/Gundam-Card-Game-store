@@ -82,7 +82,7 @@ export const ManageOrders: React.FC = () => {
                       <td className="px-6 py-4">
                         <StatusBadge status={order.paymentStatus} type="payment" />
                         <p className="text-xs text-gray-500 mt-2 font-medium">
-                          {(order as any).paymentMethod === 'bank' ? 'Chuyển khoản' : 'COD'}
+                          {(order as any).paymentMethod === 'bank' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}
                         </p>
                       </td>
                       <td className="px-6 py-4">

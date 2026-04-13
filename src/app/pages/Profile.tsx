@@ -1,257 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { User, Package, MapPin, Heart, ChevronRight, LogOut } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-
-const API_URL = 'http://localhost:5000';
+import { Link } from 'react-router';
+import { User, Package, MapPin, Heart } from 'lucide-react';
 
 export const Profile: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-  });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setEditData({
-        fullName: parsed.fullName || '',
-        email: parsed.email || '',
-        phone: parsed.phone || '',
-      });
-    }
-
-    // Gọi API lấy danh sách đơn hàng thực tế
+    // Gọi API lấy danh sách đơn hàng thật
     fetch('http://localhost:5000/api/orders')
       .then((res) => res.json())
       .then((data) => {
-        // Chỉ lấy 3 đơn hàng mới nhất để hiển thị ở trang tổng quan
-        setRecentOrders(data.slice(0, 3));
+        setRecentOrders(data.slice(0, 3)); // Chỉ lấy 3 đơn hàng mới nhất
+        setIsLoadingOrders(false);
       })
-      .catch((err) => console.error('Lỗi lấy đơn hàng:', err));
+      .catch((err) => {
+        console.error('Lỗi khi fetch đơn hàng:', err);
+        setIsLoadingOrders(false);
+      });
   }, []);
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
 
-  const getStatusConfig = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered':  return { label: 'Đã giao',    color: 'text-green-700 bg-green-100'   };
-      case 'processing': return { label: 'Đang xử lý', color: 'text-blue-700 bg-blue-100'     };
-      case 'shipped':    return { label: 'Đang giao',  color: 'text-purple-700 bg-purple-100' };
-      case 'cancelled':  return { label: 'Đã hủy',     color: 'text-red-700 bg-red-100'       };
-      default:           return { label: status,       color: 'text-gray-600 bg-gray-100'     };
+      case 'delivered':
+        return 'text-green-600 bg-green-100';
+      case 'processing':
+        return 'text-blue-600 bg-blue-100';
+      case 'shipped':
+        return 'text-purple-600 bg-purple-100';
+      case 'cancelled':
+        return 'text-red-600 bg-red-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const handleSaveEdit = async () => {
-    try {
-      // Lưu lên MongoDB
-      const res = await fetch(`${API_URL}/api/auth/profile/${user?.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName: editData.fullName, phone: editData.phone }),
-      });
-
-      if (res.ok) {
-        // Cập nhật localStorage
-        const stored = localStorage.getItem('user');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const updated = { ...parsed, fullName: editData.fullName, phone: editData.phone };
-          localStorage.setItem('user', JSON.stringify(updated));
-        }
-      }
-    } catch (err) {
-      console.error('Lỗi cập nhật:', err);
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'delivered': return 'Đã gửi hàng';
+      case 'processing': return 'Đang xử lý';
+      case 'shipped': return 'Đã giao hàng';
+      case 'cancelled': return 'Đã hủy';
+      default: return status;
     }
-    setIsEditing(false);
-  };
-
-  const getRoleLabel = () => {
-    if (user?.role === 'customer') return 'Khách hàng';
-    if (user?.role === 'admin') return 'Quản trị viên';
-    return 'Super Admin';
   };
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-black mb-8">Tài khoản của tôi</h1>
+        <h1 className="text-3xl font-bold text-black mb-8">My Profile</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
           <aside className="lg:col-span-1">
             <div className="bg-gray-50 rounded-xl p-6">
               <div className="text-center mb-6">
-                <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <User className="w-12 h-12 text-gray-500" />
+                <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <User className="w-12 h-12 text-gray-600" />
                 </div>
-                <h2 className="font-bold text-lg text-gray-900">{editData.fullName || 'Người dùng'}</h2>
-                <p className="text-gray-500 text-sm">{editData.email || ''}</p>
+                <h2 className="font-bold text-lg">John Doe</h2>
+                <p className="text-gray-600 text-sm">john.doe@example.com</p>
               </div>
-              <nav className="space-y-1">
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-primary border border-primary font-medium text-sm">
-                  <Package className="w-5 h-5" />Đơn hàng
+
+              <nav className="space-y-2">
+                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white text-primary border border-primary">
+                  <Package className="w-5 h-5" />
+                  <span>Orders</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors text-gray-600 text-sm">
-                  <MapPin className="w-5 h-5" />Địa chỉ giao hàng
+                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white transition-colors">
+                  <MapPin className="w-5 h-5" />
+                  <span>Addresses</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors text-gray-600 text-sm">
-                  <Heart className="w-5 h-5" />Sản phẩm yêu thích
+                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white transition-colors">
+                  <Heart className="w-5 h-5" />
+                  <span>Wishlist</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors text-gray-600 text-sm">
-                  <User className="w-5 h-5" />Thông tin tài khoản
-                </button>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors text-red-500 text-sm">
-                  <LogOut className="w-5 h-5" />Đăng xuất
+                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white transition-colors">
+                  <User className="w-5 h-5" />
+                  <span>Account Info</span>
                 </button>
               </nav>
             </div>
           </aside>
 
+          {/* Main Content */}
           <div className="lg:col-span-3">
+            {/* Personal Information */}
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Thông tin cá nhân</h2>
-                {!isEditing ? (
-                  <button onClick={() => setIsEditing(true)} className="text-primary text-sm hover:underline font-medium">Chỉnh sửa</button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={() => setIsEditing(false)} className="text-gray-500 text-sm hover:underline font-medium">Hủy</button>
-                    <button onClick={handleSaveEdit} className="text-primary text-sm hover:underline font-medium">Lưu</button>
-                  </div>
-                )}
+                <h2 className="text-xl font-bold">Personal Information</h2>
+                <button className="text-primary hover:underline">Edit</button>
               </div>
 
-              {!isEditing ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Họ và tên</p>
-                    <p className="font-semibold text-gray-900">{editData.fullName || '---'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Email</p>
-                    <p className="font-semibold text-gray-900">{editData.email || '---'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Số điện thoại</p>
-                    <p className="font-semibold text-gray-900">{editData.phone || 'Chưa cập nhật'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Thành viên từ</p>
-                    <p className="font-semibold text-gray-900">
-                      {user?.joinDate ? new Date(user.joinDate).toLocaleDateString('vi-VN') : '---'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Vai trò</p>
-                    <p className="font-semibold text-gray-900">{getRoleLabel()}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Trạng thái</p>
-                    <p className="font-semibold text-green-600">Đang hoạt động</p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-gray-600 mb-1">Full Name</p>
+                  <p className="font-semibold">John Doe</p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Họ và tên</p>
-                    <input type="text" value={editData.fullName} onChange={(e) => setEditData({...editData, fullName: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Email</p>
-                    <input type="email" value={editData.email} disabled className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-400 text-sm cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Số điện thoại</p>
-                    <input
-                      type="tel"
-                      value={editData.phone}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        setEditData({...editData, phone: val});
-                      }}
-                      inputMode="numeric"
-                      maxLength={10}
-                      placeholder="Nhập số điện thoại"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm mb-1">Vai trò</p>
-                    <p className="font-semibold text-gray-900">{getRoleLabel()}</p>
-                  </div>
+                <div>
+                  <p className="text-gray-600 mb-1">Email</p>
+                  <p className="font-semibold">john.doe@example.com</p>
                 </div>
-              )}
+                <div>
+                  <p className="text-gray-600 mb-1">Phone</p>
+                  <p className="font-semibold">+84 123 456 789</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 mb-1">Member Since</p>
+                  <p className="font-semibold">January 2026</p>
+                </div>
+              </div>
             </div>
 
+            {/* Shipping Address */}
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Địa chỉ giao hàng</h2>
-                <button className="text-primary text-sm hover:underline font-medium">Thêm mới</button>
+                <h2 className="text-xl font-bold">Shipping Address</h2>
+                <button className="text-primary hover:underline">Add New</button>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-gray-200">
+
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-semibold text-gray-900 mb-2">Địa chỉ nhà</p>
-                    <p className="text-gray-600 text-sm">123 Đường Lê Lợi</p>
-                    <p className="text-gray-600 text-sm">Quận 1, TP. Hồ Chí Minh</p>
-                    <p className="text-gray-600 text-sm">Việt Nam, 700000</p>
+                    <p className="font-semibold mb-2">Home Address</p>
+                    <p className="text-gray-600">123 Main Street</p>
+                    <p className="text-gray-600">District 1, Ho Chi Minh City</p>
+                    <p className="text-gray-600">Vietnam, 700000</p>
                   </div>
-                  <span className="text-xs bg-primary text-white px-2 py-1 rounded-lg">Mặc định</span>
+                  <span className="text-xs bg-primary text-white px-2 py-1 rounded">Default</span>
                 </div>
               </div>
             </div>
 
+            {/* Order History */}
             <div className="bg-gray-50 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Lịch sử đơn hàng</h2>
-                <Link to="/orders" className="text-primary text-sm font-medium hover:underline">Xem tất cả</Link>
-              </div>
-              <div className="space-y-3">
-              {recentOrders.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">Chưa có đơn hàng nào.</p>
-              ) : (
-                recentOrders.map((order) => {
-                  const { label, color } = getStatusConfig(order.orderStatus);
-                  const orderDate = new Date(order.orderDate).toLocaleDateString('vi-VN');
-                  return (
-                    <div key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="bg-white rounded-xl p-4 border border-gray-200 cursor-pointer hover:shadow-sm hover:border-gray-300 transition-all group">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <p className="font-semibold text-primary text-sm">{order.orderNumber}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{orderDate}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Thanh toán: <span className="font-medium text-gray-700">{order.paymentMethod === 'bank' ? 'Chuyển khoản' : 'COD'}</span>
-                          </p>
-                        </div>
-                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${color}`}>{label}</span>
+              <h2 className="text-xl font-bold mb-6">Order History</h2>
+
+              <div className="space-y-4">
+                {isLoadingOrders ? (
+                  <div className="text-center text-gray-500 py-4">Đang tải đơn hàng...</div>
+                ) : recentOrders.length === 0 ? (
+                  <div className="text-center text-gray-500 py-4">Chưa có đơn hàng nào</div>
+                ) : recentOrders.map((order) => (
+                  <div key={order.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-semibold">{order.orderNumber}</p>
+                        <p className="text-sm text-gray-600">{new Date(order.orderDate).toLocaleDateString('vi-VN')}</p>
                       </div>
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">{order.items?.length || 0} sản phẩm</p>
-                        <div className="flex items-center gap-1">
-                          <p className="font-bold text-gray-900 text-sm">{formatPrice(order.total)}</p>
-                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
-                        </div>
-                      </div>
+                      <span className={`text-sm px-3 py-1 rounded-full ${getStatusColor(order.orderStatus)}`}>
+                        {getStatusLabel(order.orderStatus)}
+                      </span>
                     </div>
-                  );
-                })
-              )}
+
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                      <p className="text-gray-600">
+                        {order.items?.length || 0} sản phẩm
+                      </p>
+                      <p className="font-bold text-primary">{formatPrice(order.total)}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="text-center mt-5">
-                <Link to="/orders" className="inline-block text-sm text-primary font-semibold hover:underline">Xem tất cả đơn hàng →</Link>
+
+              <div className="text-center mt-6">
+                <Link to="/orders" className="text-secondary hover:underline">
+                  View All Orders
+                </Link>
               </div>
             </div>
           </div>
