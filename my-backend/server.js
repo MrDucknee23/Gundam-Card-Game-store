@@ -15,8 +15,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'Server đang chạy!' });
 });
 
-// Thêm route products
 app.use('/api/products', require('./routes/products'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/auth', require('./routes/auth'));
 // Thêm route orders
 app.use('/api/orders', require('./routes/orders'));
 
