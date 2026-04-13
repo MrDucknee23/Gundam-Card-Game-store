@@ -14,6 +14,7 @@ export const Profile: React.FC = () => {
     email: '',
     phone: '',
   });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -25,13 +26,16 @@ export const Profile: React.FC = () => {
         phone: parsed.phone || '',
       });
     }
-  }, []);
 
-  const mockOrders = [
-    { id: 'ORD-001', date: '2026-03-25', total: 1250000, status: 'delivered',  items: 2 },
-    { id: 'ORD-002', date: '2026-03-20', total: 5500000, status: 'processing', items: 1 },
-    { id: 'ORD-003', date: '2026-03-15', total: 850000,  status: 'shipped',    items: 3 },
-  ];
+    // Gọi API lấy danh sách đơn hàng thực tế
+    fetch('http://localhost:5000/api/orders')
+      .then((res) => res.json())
+      .then((data) => {
+        // Chỉ lấy 3 đơn hàng mới nhất để hiển thị ở trang tổng quan
+        setRecentOrders(data.slice(0, 3));
+      })
+      .catch((err) => console.error('Lỗi lấy đơn hàng:', err));
+  }, []);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -216,19 +220,26 @@ export const Profile: React.FC = () => {
                 <Link to="/orders" className="text-primary text-sm font-medium hover:underline">Xem tất cả</Link>
               </div>
               <div className="space-y-3">
-                {mockOrders.map((order) => {
-                  const { label, color } = getStatusConfig(order.status);
+              {recentOrders.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-4">Chưa có đơn hàng nào.</p>
+              ) : (
+                recentOrders.map((order) => {
+                  const { label, color } = getStatusConfig(order.orderStatus);
+                  const orderDate = new Date(order.orderDate).toLocaleDateString('vi-VN');
                   return (
                     <div key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="bg-white rounded-xl p-4 border border-gray-200 cursor-pointer hover:shadow-sm hover:border-gray-300 transition-all group">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <p className="font-semibold text-primary text-sm">{order.id}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{order.date}</p>
+                          <p className="font-semibold text-primary text-sm">{order.orderNumber}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{orderDate}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Thanh toán: <span className="font-medium text-gray-700">{order.paymentMethod === 'bank' ? 'Chuyển khoản' : 'COD'}</span>
+                          </p>
                         </div>
                         <span className={`text-xs px-3 py-1 rounded-full font-medium ${color}`}>{label}</span>
                       </div>
                       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">{order.items} sản phẩm</p>
+                        <p className="text-sm text-gray-500">{order.items?.length || 0} sản phẩm</p>
                         <div className="flex items-center gap-1">
                           <p className="font-bold text-gray-900 text-sm">{formatPrice(order.total)}</p>
                           <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
@@ -236,7 +247,8 @@ export const Profile: React.FC = () => {
                       </div>
                     </div>
                   );
-                })}
+                })
+              )}
               </div>
               <div className="text-center mt-5">
                 <Link to="/orders" className="inline-block text-sm text-primary font-semibold hover:underline">Xem tất cả đơn hàng →</Link>

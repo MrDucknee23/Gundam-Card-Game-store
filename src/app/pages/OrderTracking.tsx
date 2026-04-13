@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { getPaymentMethodLabel } from '../data/orders';
 import type { Order, OrderStatus } from '../data/orders';
 import {
   ArrowLeft, Clock, Truck, CheckCircle, XCircle,
@@ -365,7 +364,9 @@ export const OrderTracking: React.FC = () => {
                 <div className="p-2 bg-indigo-50 rounded-lg flex-shrink-0"><CreditCard className="w-4 h-4 text-indigo-600" /></div>
                 <div>
                   <p className="text-xs text-gray-400">Phương thức</p>
-                  <p className="text-sm font-semibold text-gray-900 mt-0.5">{getPaymentMethodLabel(order.paymentMethod)}</p>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                  {order.paymentMethod === 'bank' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}
+                </p>
                   <span className={`inline-block mt-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : order.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                     {order.paymentStatus === 'paid' ? 'Đã thanh toán' : order.paymentStatus === 'pending' ? 'Chờ thanh toán' : 'Thanh toán lỗi'}
                   </span>
