@@ -18,7 +18,9 @@ export const Profile: React.FC = () => {
     address: '',
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
 
+  // Effect 1: Load thông tin cá nhân từ localStorage
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) {
@@ -30,16 +32,32 @@ export const Profile: React.FC = () => {
         address: parsed.address || '',
       });
     }
-
-    // Gọi API lấy danh sách đơn hàng thực tế
-    fetch('http://localhost:5000/api/orders')
-      .then((res) => res.json())
-      .then((data) => {
-        // Chỉ lấy 3 đơn hàng mới nhất để hiển thị ở trang tổng quan
-        setRecentOrders(data.slice(0, 3));
-      })
-      .catch((err) => console.error('Lỗi lấy đơn hàng:', err));
   }, []);
+
+  // Effect 2: Load đơn hàng theo email của user đang đăng nhập
+  useEffect(() => {
+    if (!user) return;
+
+    const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+
+    // Admin thấy tất cả, customer chỉ thấy đơn của mình
+    const url = isAdmin
+      ? `${API_URL}/api/orders`
+      : `${API_URL}/api/orders?email=${encodeURIComponent(user.email)}`;
+
+    setIsLoadingOrders(true);
+    fetch(url)
+      .then(async (res) => {
+        if (!res.ok) { setIsLoadingOrders(false); return; }
+        const data = await res.json();
+        setRecentOrders(Array.isArray(data) ? data.slice(0, 3) : []);
+        setIsLoadingOrders(false);
+      })
+      .catch((err) => {
+        console.error('Lỗi lấy đơn hàng:', err);
+        setIsLoadingOrders(false);
+      });
+  }, [user]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -271,7 +289,11 @@ export const Profile: React.FC = () => {
                 <Link to="/orders" className="text-primary text-sm font-medium hover:underline">Xem tất cả</Link>
               </div>
               <div className="space-y-3">
-              {recentOrders.length === 0 ? (
+              {isLoadingOrders ? (
+                <div className="text-center py-4">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : recentOrders.length === 0 ? (
                 <p className="text-gray-500 text-sm text-center py-4">Chưa có đơn hàng nào.</p>
               ) : (
                 recentOrders.map((order) => {
