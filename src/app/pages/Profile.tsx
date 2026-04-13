@@ -1,23 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router';
-import { User, Package, MapPin, Heart } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
+import { User, Package, MapPin, Heart, ChevronRight, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
+const API_URL = 'http://localhost:5000';
+const validateFullName = (name: string) => /^[A-Za-zÀ-ỹ\s]+$/.test(name);
+const validateAddress = (address: string) => /^[0-9A-Za-zÀ-ỹ\s,./-]+$/.test(address);
 
 export const Profile: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-    setCurrentUser(user);
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setCurrentUser(parsed);
+      setEditData({
+        fullName: parsed.fullName || '',
+        email: parsed.email || '',
+        phone: parsed.phone || '',
+        address: parsed.address || '',
+      });
+    }
 
-    if (!user?.email) {
+    const userEmail = stored ? JSON.parse(stored).email : null;
+    if (!userEmail) {
       setIsLoadingOrders(false);
       return;
     }
 
-    fetch(`http://localhost:5000/api/orders?email=${user.email}`)
+    fetch(`http://localhost:5000/api/orders?email=${userEmail}`)
       .then((res) => res.json())
       .then((data) => {
         setRecentOrders(data.slice(0, 3)); // Chỉ lấy 3 đơn hàng mới nhất
@@ -61,6 +84,61 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleSaveEdit = async () => {
+  // ✅ validate họ tên
+  if (!validateFullName(editData.fullName)) {
+    alert('Họ tên không được chứa số hoặc ký tự đặc biệt');
+    return;
+  }
+
+  // ✅ validate địa chỉ (nếu có)
+  if (editData.address && !validateAddress(editData.address)) {
+    alert('Địa chỉ không hợp lệ');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/auth/profile/${user?.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: editData.fullName.trim(),
+        phone: editData.phone,
+        address: editData.address.trim(),
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+
+      // ✅ update localStorage chuẩn
+      localStorage.setItem('user', JSON.stringify(data));
+
+      setEditData({
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+      });
+    }
+  } catch (err) {
+    console.error('Lỗi cập nhật:', err);
+  }
+
+  setIsEditing(false);
+};
+
+  const getRoleLabel = () => {
+    if (user?.role === 'customer') return 'Khách hàng';
+    if (user?.role === 'admin') return 'Quản trị viên';
+    return 'Super Admin';
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -81,19 +159,19 @@ export const Profile: React.FC = () => {
               <nav className="space-y-2">
                 <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white text-primary border border-primary">
                   <Package className="w-5 h-5" />
-                  <span>Orders</span>
+                  <span>Đơn hàng</span>
                 </button>
                 <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white transition-colors">
                   <MapPin className="w-5 h-5" />
-                  <span>Addresses</span>
+                  <span>Địa chỉ</span>
                 </button>
                 <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white transition-colors">
                   <Heart className="w-5 h-5" />
-                  <span>Wishlist</span>
+                  <span>Yêu thích</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white transition-colors">
-                  <User className="w-5 h-5" />
-                  <span>Account Info</span>
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors mt-8">
+                  <LogOut className="w-5 h-5" />
+                  <span>Đăng xuất</span>
                 </button>
               </nav>
             </div>
@@ -101,16 +179,15 @@ export const Profile: React.FC = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Personal Information */}
+            {/* Thông tin cá nhân */}
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Personal Information</h2>
-                <button className="text-primary hover:underline">Edit</button>
+                <h2 className="text-xl font-bold">Thông tin cá nhân</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-gray-600 mb-1">Full Name</p>
+                  <p className="text-gray-600 mb-1">Họ tên</p>
                   <p className="font-semibold">{currentUser?.name || currentUser?.firstName || 'Khách hàng'}</p>
                 </div>
                 <div>
@@ -118,39 +195,62 @@ export const Profile: React.FC = () => {
                   <p className="font-semibold">{currentUser?.email || 'Chưa cập nhật email'}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 mb-1">Phone</p>
-                  <p className="font-semibold">+84 123 456 789</p>
+                  <p className="text-gray-600 mb-1">Điện thoại</p>
+                  <p className="font-semibold">{currentUser?.phone || 'Chưa cập nhật'}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 mb-1">Member Since</p>
-                  <p className="font-semibold">January 2026</p>
+                  <p className="text-gray-600 mb-1">Quyền hạn</p>
+                  <p className="font-semibold">{getRoleLabel()}</p>
                 </div>
               </div>
             </div>
 
-            {/* Shipping Address */}
+            {/* Địa chỉ giao hàng */}
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Shipping Address</h2>
-                <button className="text-primary hover:underline">Add New</button>
+                <h2 className="text-xl font-bold text-gray-900">Địa chỉ giao hàng</h2>
+                {!isEditing && (
+                  <button onClick={() => setIsEditing(true)} className="text-primary text-sm hover:underline font-medium">Chỉnh sửa</button>
+                )}
               </div>
 
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold mb-2">Home Address</p>
-                    <p className="text-gray-600">123 Main Street</p>
-                    <p className="text-gray-600">District 1, Ho Chi Minh City</p>
-                    <p className="text-gray-600">Vietnam, 700000</p>
+              {!isEditing ? (
+                <div className="bg-white rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-2">Địa chỉ nhà</p>
+                      {editData.address ? (
+                        <p className="text-gray-600 text-sm">{editData.address}</p>
+                      ) : (
+                        <p className="text-gray-400 text-sm italic">Chưa có địa chỉ — bấm Chỉnh sửa để thêm</p>
+                      )}
+                    </div>
+                    {editData.address && (
+                      <span className="text-xs bg-primary text-white px-2 py-1 rounded-lg">Mặc định</span>
+                    )}
                   </div>
-                  <span className="text-xs bg-primary text-white px-2 py-1 rounded">Default</span>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Địa chỉ</p>
+                  <input
+                    type="text"
+                    value={editData.address}
+                    onChange={(e) => setEditData({...editData, address: e.target.value})}
+                    placeholder="123 Đường Lê Lợi, Quận 1, TP.HCM"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => setIsEditing(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">Hủy</button>
+                    <button onClick={handleSaveEdit} className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">Lưu địa chỉ</button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Order History */}
+            {/* Lịch sử đơn hàng */}
             <div className="bg-gray-50 rounded-xl p-6">
-              <h2 className="text-xl font-bold mb-6">Order History</h2>
+              <h2 className="text-xl font-bold mb-6">Lịch sử đơn hàng</h2>
 
               <div className="space-y-4">
                 {isLoadingOrders ? (
@@ -181,7 +281,7 @@ export const Profile: React.FC = () => {
 
               <div className="text-center mt-6">
                 <Link to="/orders" className="text-secondary hover:underline">
-                  View All Orders
+                  Xem tất cả đơn hàng
                 </Link>
               </div>
             </div>
