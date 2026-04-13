@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { getPaymentMethodLabel } from '../data/orders';
+import { orders as mockOrders, getPaymentMethodLabel } from '../data/orders';
 import type { Order, OrderStatus, PaymentStatus } from '../data/orders';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import { Eye, Trash2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -14,37 +14,15 @@ export const OrderList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const itemsPerPage = 10;
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Tích hợp lấy dữ liệu thực tế từ Backend API
-  useEffect(() => {
-    fetch('http://localhost:5000/api/orders')
-      .then((res) => res.json())
-      .then((data) => {
-        // Đảm bảo data là một mảng để tránh lỗi sập trang (Crash)
-        if (Array.isArray(data)) {
-          setOrders(data);
-        } else {
-          console.error('Dữ liệu API không hợp lệ:', data);
-          setOrders([]);
-        }
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        console.error('Lỗi khi lấy đơn hàng:', err);
-        setIsLoading(false);
-      });
-  }, []);
 
   // Filter and search orders
   const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
+    return mockOrders.filter((order) => {
       const matchesSearch =
         searchQuery === '' ||
-        order.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.customerEmail?.toLowerCase().includes(searchQuery.toLowerCase());
+        order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.customerEmail.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesStatus = statusFilter === 'all' || order.orderStatus === statusFilter;
       const matchesPayment = paymentFilter === 'all' || order.paymentStatus === paymentFilter;
@@ -61,13 +39,9 @@ export const OrderList: React.FC = () => {
   );
 
   const handleDeleteOrder = (orderId: string) => {
-    fetch(`http://localhost:5000/api/orders/${orderId}`, { method: 'DELETE' })
-      .then(() => {
-        // Cập nhật state sau khi xóa
-        setOrders((prev) => prev.filter((o) => o.id !== orderId));
-        setShowDeleteConfirm(null);
-      })
-      .catch((err) => console.error('Lỗi xóa đơn hàng:', err));
+    console.log('Delete order:', orderId);
+    setShowDeleteConfirm(null);
+    // In real app, make API call here
   };
 
   const formatCurrency = (amount: number) => {
@@ -86,14 +60,6 @@ export const OrderList: React.FC = () => {
       minute: '2-digit'
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg text-gray-600 font-medium">Đang tải danh sách đơn hàng...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -142,8 +108,8 @@ export const OrderList: React.FC = () => {
               >
                 <option value="all">Tất cả</option>
                 <option value="processing">Đang xử lý</option>
-                <option value="shipped">Đã gửi hàng</option>
-                <option value="delivered">Đã giao hàng</option>
+                <option value="shipped">Đã giao hàng</option>
+                <option value="delivered">Đã gửi hàng</option>
                 <option value="cancelled">Đã hủy</option>
               </select>
             </div>
@@ -366,14 +332,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose })
   };
 
   const handleUpdateStatus = () => {
-    fetch(`http://localhost:5000/api/orders/${order.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderStatus })
-    }).then(() => {
-      alert('Cập nhật trạng thái thành công!');
-      window.location.reload(); // Làm mới dữ liệu sau khi cập nhật
-    }).catch(err => console.error('Lỗi khi cập nhật:', err));
+    console.log('Update status to:', orderStatus);
+    // In real app, make API call here
+    onClose();
   };
 
   const handleCancelOrder = () => {
@@ -549,8 +510,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose })
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="processing">Đang xử lý</option>
-                <option value="shipped">Đã gửi hàng</option>
-                <option value="delivered">Đã giao hàng</option>
+                <option value="shipped">Đã giao hàng</option>
+                <option value="delivered">Đã gửi hàng</option>
                 <option value="cancelled">Đã hủy</option>
               </select>
               <button

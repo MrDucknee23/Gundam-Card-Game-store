@@ -11,8 +11,8 @@ router.get('/', async (req, res) => {
     const formattedOrders = dbOrders.map(order => {
       const mapOrderStatus = (status) => {
         if (status === 'Đang xử lý') return 'processing';
-        if (status === 'Đã gửi hàng' || status === 'Đang giao') return 'shipped';
-        if (status === 'Đã giao hàng') return 'delivered';
+        if (status === 'Đã giao hàng' || status === 'Đang giao') return 'shipped';
+        if (status === 'Đã gửi hàng') return 'delivered';
         if (status === 'Đã hủy') return 'cancelled';
         return 'processing';
       };
@@ -66,8 +66,8 @@ router.get('/:id', async (req, res) => {
 
     const mapOrderStatus = (status) => {
       if (status === 'Đang xử lý') return 'processing';
-      if (status === 'Đã gửi hàng' || status === 'Đang giao') return 'shipped';
-      if (status === 'Đã giao hàng') return 'delivered';
+      if (status === 'Đã giao hàng' || status === 'Đang giao') return 'shipped';
+      if (status === 'Đã gửi hàng') return 'delivered';
       if (status === 'Đã hủy') return 'cancelled';
       return 'processing';
     };
@@ -132,8 +132,8 @@ router.put('/:id', async (req, res) => {
     // Map ngược lại từ Tiếng Anh sang Tiếng Việt để lưu vào DB
     const mapToVi = {
       'processing': 'Đang xử lý',
-      'shipped': 'Đã gửi hàng',
-      'delivered': 'Đã giao hàng',
+      'shipped': 'Đã giao hàng',
+      'delivered': 'Đã gửi hàng',
       'cancelled': 'Đã hủy'
     };
 
