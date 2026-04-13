@@ -4,6 +4,8 @@ import { User, Package, MapPin, Heart, ChevronRight, LogOut } from 'lucide-react
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:5000';
+const validateFullName = (name: string) => /^[A-Za-zÀ-ỹ\s]+$/.test(name);
+const validateAddress = (address: string) => /^[0-9A-Za-zÀ-ỹ\s,./-]+$/.test(address);
 
 export const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ export const Profile: React.FC = () => {
     fullName: '',
     email: '',
     phone: '',
+    address: '',
   });
 
   useEffect(() => {
@@ -23,6 +26,7 @@ export const Profile: React.FC = () => {
         fullName: parsed.fullName || '',
         email: parsed.email || '',
         phone: parsed.phone || '',
+        address: parsed.address || '',
       });
     }
   }, []);
@@ -52,28 +56,48 @@ export const Profile: React.FC = () => {
   };
 
   const handleSaveEdit = async () => {
-    try {
-      // Lưu lên MongoDB
-      const res = await fetch(`${API_URL}/api/auth/profile/${user?.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName: editData.fullName, phone: editData.phone }),
-      });
+  // ✅ validate họ tên
+  if (!validateFullName(editData.fullName)) {
+    alert('Họ tên không được chứa số hoặc ký tự đặc biệt');
+    return;
+  }
 
-      if (res.ok) {
-        // Cập nhật localStorage
-        const stored = localStorage.getItem('user');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const updated = { ...parsed, fullName: editData.fullName, phone: editData.phone };
-          localStorage.setItem('user', JSON.stringify(updated));
-        }
-      }
-    } catch (err) {
-      console.error('Lỗi cập nhật:', err);
+  // ✅ validate địa chỉ (nếu có)
+  if (editData.address && !validateAddress(editData.address)) {
+    alert('Địa chỉ không hợp lệ');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/auth/profile/${user?.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: editData.fullName.trim(),
+        phone: editData.phone,
+        address: editData.address.trim(),
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+
+      // ✅ update localStorage chuẩn
+      localStorage.setItem('user', JSON.stringify(data));
+
+      setEditData({
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+      });
     }
-    setIsEditing(false);
-  };
+  } catch (err) {
+    console.error('Lỗi cập nhật:', err);
+  }
+
+  setIsEditing(false);
+};
 
   const getRoleLabel = () => {
     if (user?.role === 'customer') return 'Khách hàng';
@@ -117,6 +141,7 @@ export const Profile: React.FC = () => {
           </aside>
 
           <div className="lg:col-span-3">
+            {/* Thông tin cá nhân */}
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Thông tin cá nhân</h2>
@@ -192,24 +217,50 @@ export const Profile: React.FC = () => {
               )}
             </div>
 
+            {/* Địa chỉ giao hàng */}
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Địa chỉ giao hàng</h2>
-                <button className="text-primary text-sm hover:underline font-medium">Thêm mới</button>
+                {!isEditing && (
+                  <button onClick={() => setIsEditing(true)} className="text-primary text-sm hover:underline font-medium">Chỉnh sửa</button>
+                )}
               </div>
-              <div className="bg-white rounded-xl p-4 border border-gray-200">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-2">Địa chỉ nhà</p>
-                    <p className="text-gray-600 text-sm">123 Đường Lê Lợi</p>
-                    <p className="text-gray-600 text-sm">Quận 1, TP. Hồ Chí Minh</p>
-                    <p className="text-gray-600 text-sm">Việt Nam, 700000</p>
+
+              {!isEditing ? (
+                <div className="bg-white rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-2">Địa chỉ nhà</p>
+                      {editData.address ? (
+                        <p className="text-gray-600 text-sm">{editData.address}</p>
+                      ) : (
+                        <p className="text-gray-400 text-sm italic">Chưa có địa chỉ — bấm Chỉnh sửa để thêm</p>
+                      )}
+                    </div>
+                    {editData.address && (
+                      <span className="text-xs bg-primary text-white px-2 py-1 rounded-lg">Mặc định</span>
+                    )}
                   </div>
-                  <span className="text-xs bg-primary text-white px-2 py-1 rounded-lg">Mặc định</span>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Địa chỉ</p>
+                  <input
+                    type="text"
+                    value={editData.address}
+                    onChange={(e) => setEditData({...editData, address: e.target.value})}
+                    placeholder="123 Đường Lê Lợi, Quận 1, TP.HCM"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => setIsEditing(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">Hủy</button>
+                    <button onClick={handleSaveEdit} className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">Lưu địa chỉ</button>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Lịch sử đơn hàng */}
             <div className="bg-gray-50 rounded-xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Lịch sử đơn hàng</h2>

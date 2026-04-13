@@ -8,6 +8,7 @@ interface User {
   fullName: string;
   role: 'customer' | 'admin' | 'super_admin';
   phone?: string;
+  address?: string;
   joinDate?: string;
 }
 
@@ -16,7 +17,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string, isAdminLogin?: boolean) => Promise<boolean>;
-  register: (email: string, password: string, firstName: string, lastName: string) => Promise<boolean>;
+  register: (email: string, password: string, firstName: string, lastName: string, phone?: string, address?: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
 }
@@ -69,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fullName: data.fullName,
           role: data.role,
           phone: data.phone || '',
+          address: data.address || '',
           joinDate: data.joinDate || '',
         };
         setUser(loggedUser);
@@ -81,12 +83,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string, firstName: string, lastName: string): Promise<boolean> => {
+  const register = useCallback(async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    phone = '',
+    address = ''
+  ): Promise<boolean> => {
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName, lastName }),
+        body: JSON.stringify({ email, password, firstName, lastName, phone, address }),
       });
       if (!res.ok) return false;
       const data = await res.json();
@@ -96,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fullName: data.fullName,
         role: data.role,
         phone: data.phone || '',
+        address: data.address || '',
         joinDate: data.joinDate || '',
       };
       setUser(newUser);
