@@ -14,11 +14,31 @@ export const Login: React.FC = () => {
     password: '',
     confirmPassword: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
+    phone: '',
+    address: '',
   });
+
+  // ✅ VALIDATE
+  const validateName = (name: string) => /^[A-Za-zÀ-ỹ\s]+$/.test(name);
+  const validateAddress = (address: string) => /^[0-9A-Za-zÀ-ỹ\s,./-]+$/.test(address);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // ✅ FIX: chặn ký tự đặc biệt (trước chỉ chặn số)
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^[A-Za-zÀ-ỹ\s]*$/.test(value)) {
+      setFormData({ ...formData, [e.target.name]: value });
+    }
+  };
+
+  // giữ nguyên logic cũ
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9]/g, '');
+    setFormData({ ...formData, phone: val });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,12 +57,37 @@ export const Login: React.FC = () => {
         toast.error('Vui lòng điền đầy đủ thông tin');
       }
     } else {
+
+      // ✅ FIX: validate tên
+      if (!validateName(formData.firstName) || !validateName(formData.lastName)) {
+        toast.error('Họ tên không hợp lệ');
+        return;
+      }
+
+      // ✅ FIX: validate địa chỉ
+      if (formData.address && !validateAddress(formData.address)) {
+        toast.error('Địa chỉ không hợp lệ');
+        return;
+      }
+
+      if (formData.password.length < 8) {
+        toast.error('Mật khẩu phải có ít nhất 8 ký tự');
+        return;
+      }
       if (formData.password !== formData.confirmPassword) {
         toast.error('Mật khẩu không khớp');
         return;
       }
+
       if (formData.email && formData.password && formData.firstName && formData.lastName) {
-        const success = await register(formData.email, formData.password, formData.firstName, formData.lastName);
+        const success = await register(
+          formData.email,
+          formData.password,
+          formData.firstName.trim(),
+          formData.lastName.trim(),
+          formData.phone,
+          formData.address.trim(),
+        );
         if (success) {
           toast.success('Đăng ký thành công!');
           navigate('/profile');
@@ -70,32 +115,129 @@ export const Login: React.FC = () => {
         <div className="bg-gray-50 rounded-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">Họ</Label>
-                  <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required className="mt-1" />
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName">Họ</Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleNameChange}
+                      placeholder="Nguyễn"
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Tên</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleNameChange}
+                      placeholder="Văn A"
+                      required
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <Label htmlFor="lastName">Tên</Label>
-                  <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} required className="mt-1" />
+                  <Label htmlFor="phone">
+                    Số điện thoại
+                    <span className="text-gray-400 font-normal text-xs ml-1">(tùy chọn)</span>
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handlePhoneChange}
+                    placeholder="0909123456"
+                    inputMode="numeric"
+                    maxLength={10}
+                    className="mt-1"
+                  />
                 </div>
-              </div>
+
+                <div>
+                  <Label htmlFor="address">
+                    Địa chỉ
+                    <span className="text-gray-400 font-normal text-xs ml-1">(tùy chọn)</span>
+                  </Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={formData.address || ''} // ✅ FIX undefined
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^[0-9A-Za-zÀ-ỹ\s,./-]*$/.test(value)) {
+                        setFormData({ ...formData, address: value });
+                      }
+                    }}
+                    placeholder="123 Đường Lê Lợi, Quận 1, TP.HCM"
+                    className="mt-1"
+                  />
+                </div>
+              </>
             )}
 
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required className="mt-1" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="example@gmail.com"
+                required
+                className="mt-1"
+              />
             </div>
 
             <div>
               <Label htmlFor="password">Mật khẩu</Label>
-              <Input id="password" name="password" type="password" value={formData.password} onChange={handleInputChange} required className="mt-1" />
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder={isLogin ? '••••••••' : 'Ít nhất 8 ký tự'}
+                required
+                className="mt-1"
+              />
+              {!isLogin && formData.password.length > 0 && formData.password.length < 8 && (
+                <p className="text-red-500 text-xs mt-1">
+                  Cần thêm {8 - formData.password.length} ký tự nữa
+                </p>
+              )}
+              {!isLogin && formData.password.length >= 8 && (
+                <p className="text-green-500 text-xs mt-1">✓ Mật khẩu hợp lệ</p>
+              )}
             </div>
 
             {!isLogin && (
               <div>
                 <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-                <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleInputChange} required className="mt-1" />
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Nhập lại mật khẩu"
+                  required
+                  className="mt-1"
+                />
+                {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">Mật khẩu không khớp</p>
+                )}
+                {formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword && (
+                  <p className="text-green-500 text-xs mt-1">✓ Mật khẩu khớp</p>
+                )}
               </div>
             )}
 

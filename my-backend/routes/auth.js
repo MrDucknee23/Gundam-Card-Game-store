@@ -5,7 +5,7 @@ const User = require('../models/User');
 // Đăng ký
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, firstName, lastName, phone } = req.body;
+    const { email, password, firstName, lastName, phone, address } = req.body;
     
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ error: 'Email đã tồn tại' });
@@ -15,6 +15,7 @@ router.post('/register', async (req, res) => {
       email,
       password,
       phone: phone || '',
+      address: address || '',
       role: 'customer',
       status: 'active'
     });
@@ -26,6 +27,7 @@ router.post('/register', async (req, res) => {
       fullName: user.name, 
       role: user.role,
       phone: user.phone || '',
+      address: user.address || '',
       joinDate: user.createdAt,
     });
   } catch (err) {
@@ -47,8 +49,9 @@ router.post('/login', async (req, res) => {
       email: user.email, 
       fullName: user.name, 
       role: user.role,
-      phone: user.phone || '',      // ← thêm
-      joinDate: user.createdAt,     // ← thêm
+      phone: user.phone || '',
+      address: user.address || '',
+      joinDate: user.createdAt,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -58,10 +61,10 @@ router.post('/login', async (req, res) => {
 // Cập nhật thông tin cá nhân
 router.put('/profile/:id', async (req, res) => {
   try {
-    const { fullName, phone } = req.body;
+    const { fullName, phone, address } = req.body;
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name: fullName, phone },
+      { name: fullName, phone, address },
       { new: true }
     ).select('-password');
     
@@ -71,6 +74,7 @@ router.put('/profile/:id', async (req, res) => {
       fullName: user.name,
       role: user.role,
       phone: user.phone || '',
+      address: user.address || '',
       joinDate: user.createdAt,
     });
   } catch (err) {
