@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { getPaymentMethodLabel } from '../data/orders';
 import type { OrderStatus, Order } from '../data/orders';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
@@ -34,14 +33,13 @@ export const OrderDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/orders')
+    fetch(`http://localhost:5000/api/orders/${id}`)
       .then((res) => res.json())
       .then((data) => {
-        const foundOrder = data.find((o: Order) => o.id === id);
-        if (foundOrder) {
-          setOrder(foundOrder);
-          setOrderStatus(foundOrder.orderStatus);
-          setAdminNotes(foundOrder.notes || '');
+        if (data && data.id) {
+          setOrder(data);
+          setOrderStatus(data.orderStatus);
+          setAdminNotes(data.notes || '');
         }
         setIsLoading(false);
       })
@@ -428,7 +426,9 @@ export const OrderDetail: React.FC = () => {
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Phương thức thanh toán</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {getPaymentMethodLabel(order.paymentMethod)}
+                      {order.paymentMethod === 'bank' 
+                        ? 'Chuyển khoản ngân hàng' 
+                        : 'Thanh toán khi nhận hàng (COD)'}
                     </p>
                   </div>
                 </div>

@@ -22,7 +22,7 @@ import { ProductDetails } from './pages/ProductDetails';
 import { AdminStatistics } from './pages/AdminStatistics';
 import { AdminUsers } from './pages/AdminUsers';
 import { AdminAnalytics } from './pages/AdminAnalytics';
-import { OrderList } from './pages/OrderList';
+import { ManageOrders } from './pages/ManageOrders';
 import { OrderDetail } from './pages/OrderDetail';
 import { InventoryInbound } from './pages/InventoryInbound';
 import { InboundDetail } from './pages/InboundDetail';
@@ -61,7 +61,7 @@ export const router = createBrowserRouter([
       { path: 'products', Component: ManageProductsEnhanced },
       { path: 'products/:id', Component: ProductDetails },
       { path: 'products/:id/edit', Component: AddProduct },
-      { path: 'orders', Component: OrderList },
+      { path: 'orders', Component: ManageOrders },
       { path: 'orders/:id', Component: OrderDetail },
       { path: 'users', Component: AdminUsers },
       { path: 'statistics', Component: AdminStatistics },
