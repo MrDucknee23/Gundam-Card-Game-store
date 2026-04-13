@@ -317,8 +317,8 @@ export const orders: Order[] = [
 export const getOrderStatusLabel = (status: OrderStatus): string => {
   const labels: Record<OrderStatus, string> = {
     processing: 'Đang xử lý',
-    shipped: 'Đã giao hàng',
-    delivered: 'Đã gửi hàng',
+    shipped: 'Đang vận chuyển',
+    delivered: 'Giao thành công',
     cancelled: 'Đã hủy'
   };
   return labels[status];

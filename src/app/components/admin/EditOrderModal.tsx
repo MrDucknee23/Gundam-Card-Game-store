@@ -95,8 +95,8 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-gray-900"
               >
                 <option value="processing">Đang xử lý</option>
-                <option value="shipped">Đã gửi hàng</option>
-                <option value="delivered">Đã giao hàng</option>
+                <option value="shipped">Đang vận chuyển</option>
+                <option value="delivered">Giao thành công</option>
                 <option value="cancelled">Đã hủy</option>
               </select>
             </div>

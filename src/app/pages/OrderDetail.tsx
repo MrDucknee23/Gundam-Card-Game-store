@@ -120,10 +120,22 @@ export const OrderDetail: React.FC = () => {
     // In real app, open refund modal
   };
 
-  const handleSaveNotes = () => {
-    setIsEditingNotes(false);
-    toast.success('Ghi chú đã được lưu!');
-    // In real app, make API call here
+  const handleSaveNotes = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: adminNotes })
+      });
+      if (res.ok) {
+        setIsEditingNotes(false);
+        toast.success('Ghi chú đã được lưu!');
+      } else {
+        toast.error('Lỗi khi lưu ghi chú');
+      }
+    } catch (error) {
+      toast.error('Không thể kết nối đến máy chủ');
+    }
   };
 
   const handleSaveOrderChanges = (updatedOrder: Partial<Order>) => {
@@ -138,8 +150,8 @@ export const OrderDetail: React.FC = () => {
   const getTimelineStages = () => {
     const stages = [
       { key: 'processing', label: 'Đang xử lý', icon: Clock },
-      { key: 'shipped', label: 'Đã giao hàng', icon: Truck },
-      { key: 'delivered', label: 'Đã gửi hàng', icon: CheckCircle }
+      { key: 'shipped', label: 'Đang vận chuyển', icon: Truck },
+      { key: 'delivered', label: 'Giao thành công', icon: CheckCircle }
     ];
 
     const statusOrder = ['processing', 'shipped', 'delivered'];
@@ -489,8 +501,8 @@ export const OrderDetail: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                 >
                   <option value="processing">Đang xử lý</option>
-                <option value="shipped">Đã giao hàng</option>
-                <option value="delivered">Đã gửi hàng</option>
+                <option value="shipped">Đang vận chuyển</option>
+                <option value="delivered">Giao thành công</option>
                   <option value="cancelled">Đã hủy</option>
                 </select>
                 <button
