@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { orders, getPaymentMethodLabel } from '../data/orders';
+import { getPaymentMethodLabel } from '../data/orders';
 import type { Order, OrderStatus } from '../data/orders';
 import {
   ArrowLeft, Clock, Truck, CheckCircle, XCircle,
@@ -134,19 +134,39 @@ const CancelConfirmModal: React.FC<{
 export const OrderTracking: React.FC = () => {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const order    = orders.find((o) => o.id === id);
 
-  const [orderStatus,  setOrderStatus]  = useState<OrderStatus>(order?.orderStatus || 'processing');
+  const [order, setOrder] = useState<Order | null>(null);
+  const [orderStatus,  setOrderStatus]  = useState<OrderStatus>('processing');
   const [showEdit,     setShowEdit]     = useState(false);
   const [showCancel,   setShowCancel]   = useState(false);
+  const [isLoading,    setIsLoading]    = useState(true);
   const [shippingInfo, setShippingInfo] = useState({
-    recipientName:  order?.customerName              ?? '',
-    recipientPhone: order?.customerPhone             ?? '',
-    street:         order?.shippingAddress.street    ?? '',
-    ward:           order?.shippingAddress.ward      ?? '',
-    district:       order?.shippingAddress.district  ?? '',
-    city:           order?.shippingAddress.city      ?? '',
+    recipientName: '', recipientPhone: '', street: '', ward: '', district: '', city: ''
   });
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/orders')
+      .then((res) => res.json())
+      .then((data) => {
+        const found = data.find((o: Order) => o.id === id);
+        if (found) {
+          setOrder(found);
+          setOrderStatus(found.orderStatus);
+          setShippingInfo({
+            recipientName: found.customerName,
+            recipientPhone: found.customerPhone,
+            street: found.shippingAddress.street,
+            ward: found.shippingAddress.ward,
+            district: found.shippingAddress.district,
+            city: found.shippingAddress.city
+          });
+        }
+        setIsLoading(false);
+      })
+      .catch(err => { console.error(err); setIsLoading(false); });
+  }, [id]);
+
+  if (isLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Đang tải dữ liệu...</div>;
 
   if (!order) {
     return (
@@ -183,9 +203,15 @@ export const OrderTracking: React.FC = () => {
   };
 
   const handleConfirmCancel = () => {
-    setOrderStatus('cancelled');
-    setShowCancel(false);
-    toast.success('Đơn hàng đã được hủy thành công.');
+    fetch(`http://localhost:5000/api/orders/${order.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderStatus: 'cancelled' })
+    }).then(() => {
+      setOrderStatus('cancelled');
+      setShowCancel(false);
+      toast.success('Đơn hàng đã được hủy thành công.');
+    });
   };
 
   return (
