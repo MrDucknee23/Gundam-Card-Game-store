@@ -32,13 +32,13 @@ export const AdminLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const success = await login(formData.email, formData.password, true);
+      const loginError = await login(formData.email, formData.password, true);
       
-      if (success) {
+      if (!loginError) {
         toast.success('Đăng nhập admin thành công!');
         navigate('/admin');
       } else {
-        toast.error('Thông tin đăng nhập không đúng');
+        toast.error(loginError);
       }
     } catch (error) {
       toast.error('Đăng nhập thất bại. Vui lòng thử lại.');

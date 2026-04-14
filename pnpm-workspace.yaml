@@ -1,2 +1,8 @@
 packages:
-  - '.'
+  - 'client-admin'
+  - 'client-customer'
+  - 'server'
+allowBuilds:
+  '@tailwindcss/oxide': false
+  bcrypt: false
+  esbuild: false

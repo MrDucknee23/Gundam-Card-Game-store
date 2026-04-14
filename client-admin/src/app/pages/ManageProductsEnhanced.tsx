@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { products as initialProducts, Product, ProductCategory } from '../data/products';
+import { products as initialProducts, type Product, type ProductCategory } from '../data/products';
 import { Pencil, Trash2, Eye, Search, Filter, ChevronLeft, ChevronRight, Plus, Copy } from 'lucide-react';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { Breadcrumb } from '../components/Breadcrumb';

@@ -9,13 +9,21 @@ function requireAdmin(req, res, next) {
   return res.status(403).json({ error: 'Chỉ admin mới được phép thực hiện!' });
 }
 
-// 1. Lấy danh sách toàn bộ đơn hàng (admin)
-router.get('/', authenticateJWT, requireAdmin, async (req, res) => {
+// 1. Lấy danh sách đơn hàng
+//    - Admin: lấy tất cả (hoặc filter theo ?email=)
+//    - Customer: chỉ lấy đơn của chính mình theo email trong token
+router.get('/', authenticateJWT, async (req, res) => {
   try {
     let filter = {};
-    // Nếu có truyền email, chỉ lấy đơn hàng của email đó
-    if (req.query.email) {
-      filter['customer.email'] = req.query.email;
+    const isAdmin = req.user.role === 'admin';
+
+    if (isAdmin) {
+      if (req.query.email) {
+        filter['customer.email'] = req.query.email;
+      }
+    } else {
+      // Customer chỉ thấy đơn của chính mình
+      filter['customer.email'] = req.user.email;
     }
 
     const dbOrders = await Order.find(filter).sort({ _id: -1 }); // Sắp xếp theo _id để đơn mới nhất luôn ở trên cùng

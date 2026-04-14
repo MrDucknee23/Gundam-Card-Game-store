@@ -4,21 +4,26 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { ProductCard } from './ProductCard';
 import { ArrowButton } from './ArrowButton';
-import { getFeaturedProducts } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
+import type { Product } from '../data/products';
 
 interface FeaturedProductsProps {
   title?: string;
   subtitle?: string;
   showCarousel?: boolean;
+  products?: Product[];
 }
 
 export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ 
   title = 'Featured Products',
   subtitle = 'Top picks for you',
-  showCarousel = true
+  showCarousel = true,
+  products: propProducts
 }) => {
   const sliderRef = useRef<Slider>(null);
-  const featuredProducts = getFeaturedProducts();
+  const { products: apiProducts } = useProducts();
+  const allProducts = propProducts ?? apiProducts;
+  const featuredProducts = allProducts.filter(p => p.featured);
 
   if (featuredProducts.length === 0) {
     return null;

@@ -14,24 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import {
-  metricsCards,
-  revenueData,
-  ordersData,
-  categoryDataAll,
-  categoryDataGundam,
-  categoryDataCard,
-  topSellingProducts,
-  topCustomers,
-  recentOrders,
-  getStatusBadgeColor,
-  formatCurrency,
-  formatNumberShort,
-  formatDate,
-  DateRange,
-  CategoryFilter,
-  CategoryData
-} from '../data/analytics';
+import { metricsCards, revenueData, ordersData, categoryDataAll, categoryDataGundam, categoryDataCard, topSellingProducts, topCustomers, recentOrders, getStatusBadgeColor, formatCurrency, formatNumberShort, formatDate, type DateRange, type CategoryFilter, type CategoryData } from '../data/analytics';
 import { toast } from 'sonner';
 
 export const AdminAnalytics: React.FC = () => {

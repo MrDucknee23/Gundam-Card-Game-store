@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { ProductCategory, GundamGrade, CardRarity } from '../data/products';
+import type { ProductCategory, GundamGrade, CardRarity } from '../data/products';
 import { useProducts } from '../hooks/useProducts';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { Slider } from '../components/ui/slider';

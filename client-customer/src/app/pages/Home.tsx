@@ -5,7 +5,7 @@ import { CategoryCard } from '../components/CategoryCard';
 import { ProductCard } from '../components/ProductCard';
 import { ArrowButton } from '../components/ArrowButton';
 import { FeaturedProducts } from '../components/FeaturedProducts';
-import { products } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 import type { GundamGrade, ProductCategory } from '../data/products';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -17,6 +17,7 @@ export const Home: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<GundamGrade | null>(null);
   const [selectedCardCategory, setSelectedCardCategory] = useState<'pokemon' | 'onepiece' | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { products } = useProducts();
 
   const heroSlides = [
     {

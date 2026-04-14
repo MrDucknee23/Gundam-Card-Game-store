@@ -46,12 +46,12 @@ export const Login: React.FC = () => {
 
     if (isLogin) {
       if (formData.email && formData.password) {
-        const success = await login(formData.email, formData.password, false);
-        if (success) {
+        const loginError = await login(formData.email, formData.password, false);
+        if (!loginError) {
           toast.success('Đăng nhập thành công!');
           navigate('/profile');
         } else {
-          toast.error('Email hoặc mật khẩu không đúng');
+          toast.error(loginError);
         }
       } else {
         toast.error('Vui lòng điền đầy đủ thông tin');
@@ -80,7 +80,7 @@ export const Login: React.FC = () => {
       }
 
       if (formData.email && formData.password && formData.firstName && formData.lastName) {
-        const success = await register(
+        const registerError = await register(
           formData.email,
           formData.password,
           formData.firstName.trim(),
@@ -88,11 +88,11 @@ export const Login: React.FC = () => {
           formData.phone,
           formData.address.trim(),
         );
-        if (success) {
+        if (!registerError) {
           toast.success('Đăng ký thành công!');
           navigate('/profile');
         } else {
-          toast.error('Email đã tồn tại hoặc có lỗi xảy ra');
+          toast.error(registerError);
         }
       } else {
         toast.error('Vui lòng điền đầy đủ thông tin');

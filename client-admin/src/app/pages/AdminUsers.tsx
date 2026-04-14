@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
 import { Pencil, Lock, Unlock, Trash2 } from 'lucide-react';
-import { User, UserRole, UserStatus, getRoleBadgeColor, getStatusBadgeColor, formatCurrency } from '../data/users';
+import { type User, type UserRole, type UserStatus, getRoleBadgeColor, getStatusBadgeColor, formatCurrency } from '../data/users';
 import { useUsers } from '../hooks/useUsers';
 
 export const AdminUsers: React.FC = () => {

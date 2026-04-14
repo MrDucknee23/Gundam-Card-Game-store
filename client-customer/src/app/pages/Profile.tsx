@@ -47,7 +47,9 @@ export const Profile: React.FC = () => {
       : `${API_URL}/api/orders?email=${encodeURIComponent(user.email)}`;
 
     setIsLoadingOrders(true);
-    fetch(url)
+    fetch(url, {
+      headers: user.token ? { Authorization: `Bearer ${user.token}` } : {},
+    })
       .then(async (res) => {
         if (!res.ok) { setIsLoadingOrders(false); return; }
         const data = await res.json();

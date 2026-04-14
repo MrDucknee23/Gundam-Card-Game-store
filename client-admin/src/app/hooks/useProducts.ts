@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Product, ProductCategory, GundamGrade, CardRarity } from '../data/products';
+import type { Product, ProductCategory, GundamGrade, CardRarity } from '../data/products';
 
 const API_URL = 'http://localhost:5000';
 

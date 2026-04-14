@@ -17,13 +17,13 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string, isAdminLogin?: boolean) => Promise<boolean>;
-  register: (email: string, password: string, firstName: string, lastName: string, phone?: string, address?: string) => Promise<boolean>;
+  login: (email: string, password: string, isAdminLogin?: boolean) => Promise<string | null>;
+  register: (email: string, password: string, firstName: string, lastName: string, phone?: string, address?: string) => Promise<string | null>;
   logout: () => void;
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -33,55 +33,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const storedUser = localStorage.getItem('user');
-        if (storedUser) setUser(JSON.parse(storedUser));
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          if (parsed?.token) {
+            setUser(parsed);
+          } else {
+            localStorage.removeItem('user');
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading user from localStorage:', error);
+      localStorage.removeItem('user');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string, isAdminLogin = false): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string, isAdminLogin = false): Promise<string | null> => {
     try {
-      if (isAdminLogin) {
-        if (email === 'admin@gundamstore.com' && password === 'admin123') {
-          const adminUser: User = { id: '1', email, fullName: 'System Administrator', role: 'super_admin' };
-          setUser(adminUser);
-          localStorage.setItem('user', JSON.stringify(adminUser));
-          return true;
-        } else if (email.includes('@admin') && password) {
-          const adminUser: User = { id: '2', email, fullName: 'Admin User', role: 'admin' };
-          setUser(adminUser);
-          localStorage.setItem('user', JSON.stringify(adminUser));
-          return true;
-        }
-        return false;
-      } else {
-        const res = await fetch(`${API_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-        if (!res.ok) return false;
-        const data = await res.json();
-        const loggedUser: User = {
-          id: data.id,
-          email: data.email,
-          fullName: data.fullName,
-          role: data.role,
-          phone: data.phone || '',
-          address: data.address || '',
-          joinDate: data.joinDate || '',
-          token: data.token,
-        };
-        setUser(loggedUser);
-        localStorage.setItem('user', JSON.stringify(loggedUser));
-        return true;
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return err.error || 'Đăng nhập thất bại';
       }
+      const data = await res.json();
+      if (isAdminLogin && data.role !== 'admin' && data.role !== 'super_admin') {
+        return 'Tài khoản không có quyền admin';
+      }
+      const loggedUser: User = {
+        id: data.id,
+        email: data.email,
+        fullName: data.fullName,
+        role: data.role,
+        phone: data.phone || '',
+        address: data.address || '',
+        joinDate: data.joinDate || '',
+        token: data.token,
+      };
+      setUser(loggedUser);
+      localStorage.setItem('user', JSON.stringify(loggedUser));
+      return null;
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      return 'Lỗi kết nối server';
     }
   }, []);
 
@@ -92,14 +91,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     lastName: string,
     phone = '',
     address = ''
-  ): Promise<boolean> => {
+  ): Promise<string | null> => {
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, firstName, lastName, phone, address }),
       });
-      if (!res.ok) return false;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return err.error || 'Đăng ký thất bại';
+      }
       const data = await res.json();
       const newUser: User = {
         id: data.id,
@@ -113,10 +115,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setUser(newUser);
       localStorage.setItem('user', JSON.stringify(newUser));
-      return true;
+      return null;
     } catch (error) {
       console.error('Register error:', error);
-      return false;
+      return 'Lỗi kết nối server';
     }
   }, []);
 

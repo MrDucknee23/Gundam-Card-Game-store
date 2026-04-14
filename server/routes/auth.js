@@ -10,8 +10,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'gundam_secret_key';
 router.post('/register', async (req, res) => {
   try {
     const { email, password, firstName, lastName, phone, address } = req.body;
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ error: 'Email đã tồn tại' });
+
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) return res.status(400).json({ error: 'Email đã tồn tại' });
+
+    if (phone) {
+      const existingPhone = await User.findOne({ phone });
+      if (existingPhone) return res.status(400).json({ error: 'Số điện thoại đã được sử dụng' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
@@ -25,6 +31,10 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
+
+    // Sinh JWT ngay sau khi đăng ký (auto login)
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+
     res.status(201).json({ 
       id: user._id, 
       email: user.email, 
@@ -33,6 +43,7 @@ router.post('/register', async (req, res) => {
       phone: user.phone || '',
       address: user.address || '',
       joinDate: user.createdAt,
+      token,
     });
   } catch (err) {
     res.status(400).json({ error: err.message });
