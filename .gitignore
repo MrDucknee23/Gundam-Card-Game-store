@@ -1,8 +1,5 @@
 # Dependencies
 node_modules
-<<<<<<< HEAD
-.env
-=======
 node_modules/.vite
 
 # Environment variables (NEVER commit these)
@@ -18,4 +15,3 @@ dist
 .DS_Store
 Thumbs.db
 *.local
->>>>>>> c27dcdde (Update user validation and address management)

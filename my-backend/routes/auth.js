@@ -42,9 +42,7 @@ const formatUserResponse = (user) => ({
 router.post('/register', async (req, res) => {
   try {
     const { email, password, firstName, lastName, phone, address } = req.body;
-<<<<<<< HEAD
-    
-=======
+    const { email, password, firstName, lastName, phone, address } = req.body;
 
     if (!isValidName(firstName) || !isValidName(lastName)) {
       return res.status(400).json({
@@ -63,8 +61,6 @@ router.post('/register', async (req, res) => {
         error: 'Địa chỉ không được chứa ký tự đặc biệt',
       });
     }
-
->>>>>>> c27dcdde (Update user validation and address management)
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ error: 'Email đã tồn tại' });
@@ -78,10 +74,6 @@ router.post('/register', async (req, res) => {
       name: fullName,
       email,
       password,
-<<<<<<< HEAD
-      phone: phone || '',
-      address: address || '',
-=======
       phone: cleanPhone,
       address: cleanAddress,
       addresses: [
@@ -93,7 +85,6 @@ router.post('/register', async (req, res) => {
           isDefault: true,
         },
       ],
->>>>>>> c27dcdde (Update user validation and address management)
       role: 'customer',
       status: 'active',
     });

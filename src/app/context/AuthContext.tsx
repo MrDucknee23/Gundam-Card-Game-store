@@ -19,10 +19,7 @@ interface User {
   role: 'customer' | 'admin' | 'super_admin';
   phone?: string;
   address?: string;
-<<<<<<< HEAD
-=======
   addresses?: ShippingAddress[];
->>>>>>> c27dcdde (Update user validation and address management)
   joinDate?: string;
 }
 
@@ -31,9 +28,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string, isAdminLogin?: boolean) => Promise<boolean>;
-<<<<<<< HEAD
-  register: (email: string, password: string, firstName: string, lastName: string, phone?: string, address?: string) => Promise<boolean>;
-=======
   register: (
     email: string,
     password: string,
@@ -42,7 +36,6 @@ interface AuthContextType {
     phone: string,
     address: string
   ) => Promise<boolean>;
->>>>>>> c27dcdde (Update user validation and address management)
   logout: () => void;
   loading: boolean;
 }

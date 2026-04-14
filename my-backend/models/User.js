@@ -12,11 +12,7 @@ const UserSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   phone: String,
-  address: String,
-<<<<<<< HEAD
-=======
   addresses: { type: [AddressSchema], default: [] },
->>>>>>> c27dcdde (Update user validation and address management)
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
   password: String,
   ordersCount: { type: Number, default: 0 },

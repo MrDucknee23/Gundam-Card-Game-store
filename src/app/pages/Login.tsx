@@ -36,20 +36,6 @@ export const Login: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-<<<<<<< HEAD
-  // ✅ FIX: chặn ký tự đặc biệt (trước chỉ chặn số)
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^[A-Za-zÀ-ỹ\s]*$/.test(value)) {
-      setFormData({ ...formData, [e.target.name]: value });
-    }
-  };
-
-  // giữ nguyên logic cũ
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/[^0-9]/g, '');
-    setFormData({ ...formData, phone: val });
-=======
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -69,7 +55,7 @@ export const Login: React.FC = () => {
       ...formData,
       address: cleanAddressInput(e.target.value),
     });
->>>>>>> c27dcdde (Update user validation and address management)
+  };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
