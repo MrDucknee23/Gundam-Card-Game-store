@@ -1,11 +1,45 @@
+# Gundam Card Game Store
 
-  # Gundam Card Game E-commerce
+This is a monorepo for a Gundam Card Game store application, including admin, customer, and backend server modules.
 
-  This is a code bundle for Gundam Card Game E-commerce. The original project is available at https://www.figma.com/design/KRdoaTqSA5ncwpQ6T7Ial6/Gundam-Card-Game-E-commerce.
+## Structure
+- `client-admin/`: Admin dashboard (frontend)
+- `client-customer/`: Customer-facing frontend
+- `server/`: Node.js backend (Express)
 
-  ## Running the code
+## Getting Started
 
-  Run `npm i` to install the dependencies.
+### Prerequisites
+- Node.js (v16+ recommended)
+- pnpm (or npm/yarn)
 
-  Run `npm run dev` to start the development server.
-  
+### Install dependencies
+```
+pnpm install
+```
+
+### Run Backend
+```
+cd server
+node server.js
+```
+
+### Run Admin Frontend
+```
+cd client-admin
+pnpm install
+pnpm run dev
+```
+
+### Run Customer Frontend
+```
+cd client-customer
+pnpm install
+pnpm run dev
+```
+
+## Environment Variables
+- Place your environment variables in `server/.env` and as needed in frontend folders.
+
+## License
+MIT
