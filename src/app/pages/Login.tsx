@@ -4,11 +4,20 @@ import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import {
+  cleanAddressInput,
+  cleanNameInput,
+  cleanPhoneInput,
+  isValidAddress,
+  isValidName,
+  isValidPhone,
+} from '../utils/validators';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,6 +36,7 @@ export const Login: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+<<<<<<< HEAD
   // ✅ FIX: chặn ký tự đặc biệt (trước chỉ chặn số)
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -39,6 +49,27 @@ export const Login: React.FC = () => {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9]/g, '');
     setFormData({ ...formData, phone: val });
+=======
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: cleanNameInput(e.target.value),
+    });
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      phone: cleanPhoneInput(e.target.value),
+    });
+  };
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      address: cleanAddressInput(e.target.value),
+    });
+>>>>>>> c27dcdde (Update user validation and address management)
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,6 +78,7 @@ export const Login: React.FC = () => {
     if (isLogin) {
       if (formData.email && formData.password) {
         const success = await login(formData.email, formData.password, false);
+
         if (success) {
           toast.success('Đăng nhập thành công!');
           navigate('/profile');
@@ -56,6 +88,7 @@ export const Login: React.FC = () => {
       } else {
         toast.error('Vui lòng điền đầy đủ thông tin');
       }
+<<<<<<< HEAD
     } else {
 
       // ✅ FIX: validate tên
@@ -94,9 +127,70 @@ export const Login: React.FC = () => {
         } else {
           toast.error('Email đã tồn tại hoặc có lỗi xảy ra');
         }
+=======
+
+      return;
+    }
+
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      toast.error('Vui lòng nhập đầy đủ họ và tên');
+      return;
+    }
+
+    if (!isValidName(formData.firstName) || !isValidName(formData.lastName)) {
+      toast.error('Họ tên không được chứa số hoặc ký tự đặc biệt');
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      toast.error('Vui lòng nhập số điện thoại');
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      toast.error('Số điện thoại chỉ được nhập số và phải từ 9 đến 11 chữ số');
+      return;
+    }
+
+    if (!formData.address.trim()) {
+      toast.error('Vui lòng nhập địa chỉ');
+      return;
+    }
+
+    if (!isValidAddress(formData.address)) {
+      toast.error('Địa chỉ không được chứa ký tự đặc biệt');
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      toast.error('Mật khẩu phải có ít nhất 8 ký tự');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Mật khẩu không khớp');
+      return;
+    }
+
+    if (formData.email && formData.password && formData.firstName && formData.lastName) {
+      const success = await register(
+        formData.email,
+        formData.password,
+        formData.firstName.trim(),
+        formData.lastName.trim(),
+        formData.phone.trim(),
+        formData.address.trim()
+      );
+
+      if (success) {
+        toast.success('Đăng ký thành công!');
+        navigate('/profile');
+>>>>>>> c27dcdde (Update user validation and address management)
       } else {
-        toast.error('Vui lòng điền đầy đủ thông tin');
+        toast.error('Email đã tồn tại hoặc có lỗi xảy ra');
       }
+    } else {
+      toast.error('Vui lòng điền đầy đủ thông tin');
     }
   };
 
@@ -129,6 +223,10 @@ export const Login: React.FC = () => {
                       className="mt-1"
                     />
                   </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> c27dcdde (Update user validation and address management)
                   <div>
                     <Label htmlFor="lastName">Tên</Label>
                     <Input
@@ -144,10 +242,14 @@ export const Login: React.FC = () => {
                 </div>
 
                 <div>
+<<<<<<< HEAD
                   <Label htmlFor="phone">
                     Số điện thoại
                     <span className="text-gray-400 font-normal text-xs ml-1">(tùy chọn)</span>
                   </Label>
+=======
+                  <Label htmlFor="phone">Số điện thoại</Label>
+>>>>>>> c27dcdde (Update user validation and address management)
                   <Input
                     id="phone"
                     name="phone"
@@ -156,12 +258,18 @@ export const Login: React.FC = () => {
                     onChange={handlePhoneChange}
                     placeholder="0909123456"
                     inputMode="numeric"
+<<<<<<< HEAD
                     maxLength={10}
+=======
+                    maxLength={11}
+                    required
+>>>>>>> c27dcdde (Update user validation and address management)
                     className="mt-1"
                   />
                 </div>
 
                 <div>
+<<<<<<< HEAD
                   <Label htmlFor="address">
                     Địa chỉ
                     <span className="text-gray-400 font-normal text-xs ml-1">(tùy chọn)</span>
@@ -177,6 +285,16 @@ export const Login: React.FC = () => {
                       }
                     }}
                     placeholder="123 Đường Lê Lợi, Quận 1, TP.HCM"
+=======
+                  <Label htmlFor="address">Địa chỉ</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleAddressChange}
+                    placeholder="123 Đường Lê Lợi Quận 1 TP Hồ Chí Minh"
+                    required
+>>>>>>> c27dcdde (Update user validation and address management)
                     className="mt-1"
                   />
                 </div>
@@ -209,13 +327,23 @@ export const Login: React.FC = () => {
                 required
                 className="mt-1"
               />
+<<<<<<< HEAD
+=======
+
+>>>>>>> c27dcdde (Update user validation and address management)
               {!isLogin && formData.password.length > 0 && formData.password.length < 8 && (
                 <p className="text-red-500 text-xs mt-1">
                   Cần thêm {8 - formData.password.length} ký tự nữa
                 </p>
               )}
+<<<<<<< HEAD
               {!isLogin && formData.password.length >= 8 && (
                 <p className="text-green-500 text-xs mt-1">✓ Mật khẩu hợp lệ</p>
+=======
+
+              {!isLogin && formData.password.length >= 8 && (
+                <p className="text-green-500 text-xs mt-1">Mật khẩu hợp lệ</p>
+>>>>>>> c27dcdde (Update user validation and address management)
               )}
             </div>
 
@@ -232,11 +360,21 @@ export const Login: React.FC = () => {
                   required
                   className="mt-1"
                 />
+<<<<<<< HEAD
                 {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword && (
                   <p className="text-red-500 text-xs mt-1">Mật khẩu không khớp</p>
                 )}
                 {formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword && (
                   <p className="text-green-500 text-xs mt-1">✓ Mật khẩu khớp</p>
+=======
+
+                {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">Mật khẩu không khớp</p>
+                )}
+
+                {formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword && (
+                  <p className="text-green-500 text-xs mt-1">Mật khẩu khớp</p>
+>>>>>>> c27dcdde (Update user validation and address management)
                 )}
               </div>
             )}
@@ -258,7 +396,7 @@ export const Login: React.FC = () => {
           {isLogin && (
             <div className="mt-4 text-center">
               <Link to="/admin/login" className="text-sm text-gray-600 hover:text-primary">
-                Đăng nhập Admin →
+                Đăng nhập Admin
               </Link>
             </div>
           )}

@@ -1,10 +1,22 @@
 const mongoose = require('mongoose');
 
+const AddressSchema = new mongoose.Schema({
+  label: { type: String, default: 'Địa chỉ nhà' },
+  receiverName: { type: String, default: '' },
+  receiverPhone: { type: String, default: '' },
+  address: { type: String, required: true },
+  isDefault: { type: Boolean, default: false },
+}, { _id: true });
+
 const UserSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   phone: String,
   address: String,
+<<<<<<< HEAD
+=======
+  addresses: { type: [AddressSchema], default: [] },
+>>>>>>> c27dcdde (Update user validation and address management)
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
   password: String,
   ordersCount: { type: Number, default: 0 },

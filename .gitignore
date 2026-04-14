@@ -1,2 +1,21 @@
+# Dependencies
 node_modules
+<<<<<<< HEAD
 .env
+=======
+node_modules/.vite
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.*.local
+my-backend/.env
+
+# Build output
+dist
+
+# Editor & OS
+.DS_Store
+Thumbs.db
+*.local
+>>>>>>> c27dcdde (Update user validation and address management)
