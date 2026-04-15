@@ -32,10 +32,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const storedUser = localStorage.getItem('user');
-        if (storedUser) setUser(JSON.parse(storedUser));
+
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          const isStoredAdmin = parsedUser?.role === 'admin' || parsedUser?.role === 'super_admin';
+
+          if (isStoredAdmin) {
+            localStorage.removeItem('user');
+          } else {
+            setUser(parsedUser);
+          }
+        }
       }
     } catch (error) {
-      console.error('Error loading user from localStorage:', error);
+      console.error('Error restoring user from localStorage:', error);
+      localStorage.removeItem('user');
     } finally {
       setLoading(false);
     }
@@ -48,11 +59,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const adminUser: User = { id: '1', email, fullName: 'System Administrator', role: 'super_admin' };
           setUser(adminUser);
           localStorage.setItem('user', JSON.stringify(adminUser));
+          localStorage.removeItem('guestOrderEmail');
+          localStorage.removeItem('guestOrderPhone');
+          localStorage.removeItem('guestOrderName');
           return true;
         } else if (email.includes('@admin') && password) {
           const adminUser: User = { id: '2', email, fullName: 'Admin User', role: 'admin' };
           setUser(adminUser);
           localStorage.setItem('user', JSON.stringify(adminUser));
+          localStorage.removeItem('guestOrderEmail');
+          localStorage.removeItem('guestOrderPhone');
+          localStorage.removeItem('guestOrderName');
           return true;
         }
         return false;
@@ -75,6 +92,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(loggedUser);
         localStorage.setItem('user', JSON.stringify(loggedUser));
+        localStorage.removeItem('guestOrderEmail');
+        localStorage.removeItem('guestOrderPhone');
+        localStorage.removeItem('guestOrderName');
         return true;
       }
     } catch (error) {
@@ -110,6 +130,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setUser(newUser);
       localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.removeItem('guestOrderEmail');
+      localStorage.removeItem('guestOrderPhone');
+      localStorage.removeItem('guestOrderName');
       return true;
     } catch (error) {
       console.error('Register error:', error);

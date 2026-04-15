@@ -139,13 +139,32 @@ export const OrderTracking: React.FC = () => {
   const [showEdit,     setShowEdit]     = useState(false);
   const [showCancel,   setShowCancel]   = useState(false);
   const [isLoading,    setIsLoading]    = useState(true);
+  const [errorMessage, setErrorMessage] = useState('Không tìm thấy đơn hàng');
   const [shippingInfo, setShippingInfo] = useState({
     recipientName: '', recipientPhone: '', street: '', ward: '', district: '', city: ''
   });
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/orders/${id}`)
+    const userStr = localStorage.getItem('user');
+    const guestEmail = localStorage.getItem('guestOrderEmail') || '';
+    const guestPhone = localStorage.getItem('guestOrderPhone') || '';
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    const params = new URLSearchParams();
+    if (user?.email) {
+      params.set('email', user.email);
+    } else if (guestEmail) {
+      params.set('email', guestEmail);
+      if (guestPhone) {
+        params.set('phone', guestPhone);
+      }
+    }
+
+    const queryString = params.toString();
+
+    fetch(`http://localhost:5000/api/orders/${id}${queryString ? `?${queryString}` : ''}`)
       .then((res) => {
+        if (res.status === 403) throw new Error('Bạn chỉ có thể xem đơn hàng của chính mình');
         if (!res.ok) throw new Error('Không tìm thấy đơn hàng');
         return res.json();
       })
@@ -162,7 +181,11 @@ export const OrderTracking: React.FC = () => {
         });
         setIsLoading(false);
       })
-      .catch(err => { console.error(err); setIsLoading(false); });
+      .catch(err => {
+        console.error(err);
+        setErrorMessage(err.message || 'Không tìm thấy đơn hàng');
+        setIsLoading(false);
+      });
   }, [id]);
 
   if (isLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Đang tải dữ liệu...</div>;
@@ -172,7 +195,7 @@ export const OrderTracking: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-10">
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-700 mb-2">Không tìm thấy đơn hàng</h2>
+          <h2 className="text-xl font-bold text-gray-700 mb-2">{errorMessage}</h2>
           <Link to="/orders" className="text-primary text-sm font-medium hover:underline">
             ← Quay lại đơn hàng của tôi
           </Link>

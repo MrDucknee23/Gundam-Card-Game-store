@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -7,8 +7,9 @@ import { toast } from 'sonner';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, register } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(location.state?.mode !== 'register');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -22,6 +23,12 @@ export const Login: React.FC = () => {
   // ✅ VALIDATE
   const validateName = (name: string) => /^[A-Za-zÀ-ỹ\s]+$/.test(name);
   const validateAddress = (address: string) => /^[0-9A-Za-zÀ-ỹ\s,./-]+$/.test(address);
+
+  useEffect(() => {
+    if (location.state?.mode === 'register') {
+      setIsLogin(false);
+    }
+  }, [location.state]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -249,10 +256,22 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-3">
             <button onClick={() => setIsLogin(!isLogin)} className="text-secondary hover:underline">
               {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
             </button>
+
+            {isLogin && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/shop')}
+                  className="text-sm text-primary hover:underline font-medium"
+                >
+                  Tiếp tục mua hàng với guest
+                </button>
+              </div>
+            )}
           </div>
 
           {isLogin && (

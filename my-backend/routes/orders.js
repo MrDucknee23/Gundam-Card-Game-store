@@ -6,9 +6,13 @@ const Order = require('../models/Order'); // Import Model của bạn
 router.get('/', async (req, res) => {
   try {
     let filter = {};
-    // Nếu có truyền email, chỉ lấy đơn hàng của email đó
+
+    // Nếu có truyền email hoặc số điện thoại, chỉ lấy đơn hàng của người đó
     if (req.query.email) {
       filter['customer.email'] = req.query.email;
+    }
+    if (req.query.phone) {
+      filter['customer.phone'] = req.query.phone;
     }
 
     const dbOrders = await Order.find(filter).sort({ _id: -1 }); // Sắp xếp theo _id để đơn mới nhất luôn ở trên cùng
@@ -69,6 +73,17 @@ router.get('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+
+    const requestedEmail = typeof req.query.email === 'string' ? req.query.email.trim() : '';
+    const requestedPhone = typeof req.query.phone === 'string' ? req.query.phone.trim() : '';
+
+    if (requestedEmail && order.customer?.email !== requestedEmail) {
+      return res.status(403).json({ message: 'Bạn không có quyền xem đơn hàng này' });
+    }
+
+    if (requestedPhone && order.customer?.phone !== requestedPhone) {
+      return res.status(403).json({ message: 'Bạn không có quyền xem đơn hàng này' });
+    }
 
     const mapOrderStatus = (status) => {
       if (status === 'Đang xử lý') return 'processing';

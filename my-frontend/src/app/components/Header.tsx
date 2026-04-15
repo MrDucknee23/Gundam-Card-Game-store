@@ -103,6 +103,13 @@ export const Header: React.FC = () => {
                     >
                       Hồ sơ
                     </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-2 text-black hover:bg-gray-50 transition-colors"
+                    >
+                      Đơn hàng của tôi
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-black hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -114,9 +121,41 @@ export const Header: React.FC = () => {
                 )}
               </div>
             ) : (
-              <Link to="/login" className="hover:opacity-80 transition-opacity">
-                <User className="w-6 h-6 text-white" />
-              </Link>
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <User className="w-6 h-6 text-white" />
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-2 text-black hover:bg-gray-50 transition-colors"
+                    >
+                      Đăng nhập
+                    </Link>
+                    <Link
+                      to="/login"
+                      state={{ mode: 'register' }}
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-2 text-black hover:bg-gray-50 transition-colors"
+                    >
+                      Đăng ký
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-2 text-black hover:bg-gray-50 transition-colors"
+                    >
+                      Xem đơn hàng
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

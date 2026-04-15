@@ -31,11 +31,17 @@ export const Checkout: React.FC = () => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
+      const fullNameParts = (user.fullName || '').trim().split(/\s+/).filter(Boolean);
+      const inferredLastName = fullNameParts.length > 1 ? fullNameParts.pop() || '' : '';
+      const inferredFirstName = fullNameParts.join(' ');
+
       setFormData(prev => ({
         ...prev,
         email: user.email || prev.email,
-        firstName: user.firstName || prev.firstName,
-        lastName: user.lastName || prev.lastName
+        firstName: user.firstName || inferredFirstName || prev.firstName,
+        lastName: user.lastName || inferredLastName || prev.lastName,
+        phone: user.phone || prev.phone,
+        address: user.address || prev.address,
       }));
     }
   }, [items.length, navigate]);
@@ -99,13 +105,24 @@ export const Checkout: React.FC = () => {
         body: JSON.stringify(orderData)
       });
 
+      const responseData = await response.json();
+
       if (response.ok) {
+        localStorage.setItem('guestOrderEmail', formData.email);
+        localStorage.setItem('guestOrderPhone', formData.phone);
+        localStorage.setItem('guestOrderName', `${formData.firstName} ${formData.lastName}`.trim());
+
         toast.success('Đặt hàng thành công!');
         clearCart();
-        navigate('/orders'); // Chuyển hướng khách về trang lịch sử đơn hàng để xem đơn vừa đặt
+
+        const createdOrderId = responseData._id || responseData.id;
+        if (createdOrderId) {
+          navigate(`/orders/${createdOrderId}`);
+        } else {
+          navigate('/orders');
+        }
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Có lỗi xảy ra khi đặt hàng');
+        toast.error(responseData.message || 'Có lỗi xảy ra khi đặt hàng');
       }
     } catch (error) {
       console.error('Lỗi đặt hàng:', error);
@@ -129,6 +146,12 @@ export const Checkout: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Checkout Form */}
             <div className="lg:col-span-2 space-y-6">
+              {!localStorage.getItem('user') && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                  Bạn đang đặt hàng với tư cách guest. Không cần đăng nhập, chỉ cần điền thông tin nhận hàng để hoàn tất đơn.
+                </div>
+              )}
+
               {/* Personal Information */}
               <div className="bg-gray-50 rounded-xl p-6">
                 <h2 className="text-xl font-bold mb-6">Thông tin cá nhân</h2>
