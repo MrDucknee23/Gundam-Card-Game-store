@@ -5,12 +5,14 @@ import { useAuth } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:5000';
 const validateFullName = (name: string) => /^[A-Za-zÀ-ỹ\s]+$/.test(name);
+const validatePhone = (phone: string) => /^\d{10}$/.test(phone);
 const validateAddress = (address: string) => /^[0-9A-Za-zÀ-ỹ\s,./-]+$/.test(address);
 
 export const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [editData, setEditData] = useState({
     fullName: '',
     email: '',
@@ -21,13 +23,17 @@ export const Profile: React.FC = () => {
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  const getDisplayName = (profile = currentUser) => {
+    return profile?.fullName || profile?.name || profile?.firstName || 'Khách hàng';
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) {
       const parsed = JSON.parse(stored);
       setCurrentUser(parsed);
       setEditData({
-        fullName: parsed.fullName || '',
+        fullName: parsed.fullName || parsed.name || parsed.firstName || '',
         email: parsed.email || '',
         phone: parsed.phone || '',
         address: parsed.address || '',
@@ -40,10 +46,10 @@ export const Profile: React.FC = () => {
       return;
     }
 
-    fetch(`http://localhost:5000/api/orders?email=${userEmail}`)
+    fetch(`${API_URL}/api/orders?email=${encodeURIComponent(userEmail)}`)
       .then((res) => res.json())
       .then((data) => {
-        setRecentOrders(data.slice(0, 3)); // Chỉ lấy 3 đơn hàng mới nhất
+        setRecentOrders(data.slice(0, 3));
         setIsLoadingOrders(false);
       })
       .catch((err) => {
@@ -90,52 +96,84 @@ export const Profile: React.FC = () => {
   };
 
   const handleSaveEdit = async () => {
-  // ✅ validate họ tên
-  if (!validateFullName(editData.fullName)) {
-    alert('Họ tên không được chứa số hoặc ký tự đặc biệt');
-    return;
-  }
-
-  // ✅ validate địa chỉ (nếu có)
-  if (editData.address && !validateAddress(editData.address)) {
-    alert('Địa chỉ không hợp lệ');
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/api/auth/profile/${user?.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fullName: editData.fullName.trim(),
-        phone: editData.phone,
-        address: editData.address.trim(),
-      }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-
-      // ✅ update localStorage chuẩn
-      localStorage.setItem('user', JSON.stringify(data));
-
-      setEditData({
-        fullName: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-      });
+    if (!validateFullName(editData.fullName)) {
+      alert('Họ tên không được chứa số hoặc ký tự đặc biệt');
+      return;
     }
-  } catch (err) {
-    console.error('Lỗi cập nhật:', err);
-  }
 
-  setIsEditing(false);
-};
+    if (editData.phone && !validatePhone(editData.phone)) {
+      alert('Số điện thoại phải gồm đúng 10 chữ số và không chứa ký tự đặc biệt');
+      return;
+    }
+
+    if (editData.address && !validateAddress(editData.address)) {
+      alert('Địa chỉ không hợp lệ');
+      return;
+    }
+
+    if (!user?.id && !currentUser?.id) {
+      alert('Không tìm thấy thông tin tài khoản để cập nhật');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/profile/${user?.id || currentUser?.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: editData.fullName.trim(),
+          phone: editData.phone,
+          address: editData.address.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const updatedUser = {
+          ...currentUser,
+          ...data,
+          name: data.fullName,
+        };
+
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
+
+        setEditData({
+          fullName: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+        });
+      } else {
+        const error = await res.json().catch(() => null);
+        alert(error?.error || 'Cập nhật thông tin thất bại');
+        return;
+      }
+    } catch (err) {
+      console.error('Lỗi cập nhật:', err);
+      alert('Có lỗi xảy ra khi cập nhật thông tin');
+      return;
+    }
+
+    setIsEditingProfile(false);
+    setIsEditingAddress(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditData({
+      fullName: currentUser?.fullName || currentUser?.name || currentUser?.firstName || '',
+      email: currentUser?.email || '',
+      phone: currentUser?.phone || '',
+      address: currentUser?.address || '',
+    });
+    setIsEditingProfile(false);
+    setIsEditingAddress(false);
+  };
 
   const getRoleLabel = () => {
-    if (user?.role === 'customer') return 'Khách hàng';
-    if (user?.role === 'admin') return 'Quản trị viên';
+    const role = user?.role || currentUser?.role;
+    if (role === 'customer') return 'Khách hàng';
+    if (role === 'admin') return 'Quản trị viên';
     return 'Super Admin';
   };
 
@@ -152,7 +190,7 @@ export const Profile: React.FC = () => {
                 <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <User className="w-12 h-12 text-gray-600" />
                 </div>
-                <h2 className="font-bold text-lg">{currentUser?.name || currentUser?.firstName || 'Khách hàng'}</h2>
+                <h2 className="font-bold text-lg">{getDisplayName()}</h2>
                 <p className="text-gray-600 text-sm">{currentUser?.email || 'Chưa cập nhật email'}</p>
               </div>
 
@@ -183,38 +221,88 @@ export const Profile: React.FC = () => {
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Thông tin cá nhân</h2>
+                {!isEditingProfile && (
+                  <button onClick={() => setIsEditingProfile(true)} className="text-primary text-sm hover:underline font-medium">Sửa thông tin</button>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-gray-600 mb-1">Họ tên</p>
-                  <p className="font-semibold">{currentUser?.name || currentUser?.firstName || 'Khách hàng'}</p>
+              {!isEditingProfile ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-gray-600 mb-1">Họ tên</p>
+                    <p className="font-semibold">{getDisplayName()}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-1">Email</p>
+                    <p className="font-semibold">{currentUser?.email || 'Chưa cập nhật email'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-1">Điện thoại</p>
+                    <p className="font-semibold">{currentUser?.phone || 'Chưa cập nhật'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-1">Quyền hạn</p>
+                    <p className="font-semibold">{getRoleLabel()}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-600 mb-1">Email</p>
-                  <p className="font-semibold">{currentUser?.email || 'Chưa cập nhật email'}</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-gray-500 text-sm mb-2">Họ tên</p>
+                    <input
+                      type="text"
+                      value={editData.fullName}
+                      onChange={(e) => setEditData({...editData, fullName: e.target.value})}
+                      placeholder="Nhập họ tên"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm mb-2">Email</p>
+                    <input
+                      type="email"
+                      value={editData.email}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 text-sm cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm mb-2">Điện thoại</p>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={10}
+                      value={editData.phone}
+                      onChange={(e) => {
+                        const phoneValue = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setEditData({...editData, phone: phoneValue});
+                      }}
+                      placeholder="Nhập số điện thoại"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm mb-2">Quyền hạn</p>
+                    <div className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm font-semibold">{getRoleLabel()}</div>
+                  </div>
+                  <div className="md:col-span-2 flex gap-2">
+                    <button onClick={handleCancelEdit} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">Hủy</button>
+                    <button onClick={handleSaveEdit} className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">Lưu thông tin</button>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-600 mb-1">Điện thoại</p>
-                  <p className="font-semibold">{currentUser?.phone || 'Chưa cập nhật'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 mb-1">Quyền hạn</p>
-                  <p className="font-semibold">{getRoleLabel()}</p>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Địa chỉ giao hàng */}
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Địa chỉ giao hàng</h2>
-                {!isEditing && (
-                  <button onClick={() => setIsEditing(true)} className="text-primary text-sm hover:underline font-medium">Chỉnh sửa</button>
+                {!isEditingAddress && (
+                  <button onClick={() => setIsEditingAddress(true)} className="text-primary text-sm hover:underline font-medium">Chỉnh sửa</button>
                 )}
               </div>
 
-              {!isEditing ? (
+              {!isEditingAddress ? (
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                   <div className="flex items-start justify-between">
                     <div>
@@ -241,7 +329,7 @@ export const Profile: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
                   />
                   <div className="flex gap-2 mt-3">
-                    <button onClick={() => setIsEditing(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">Hủy</button>
+                    <button onClick={handleCancelEdit} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">Hủy</button>
                     <button onClick={handleSaveEdit} className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">Lưu địa chỉ</button>
                   </div>
                 </div>
