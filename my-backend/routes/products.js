@@ -2,6 +2,53 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 
+const validCategories = new Set(['gundam', 'pokemon', 'onepiece']);
+
+const sanitizeProductPayload = (body) => ({
+  name: typeof body.name === 'string' ? body.name.trim() : '',
+  description: typeof body.description === 'string' ? body.description.trim() : '',
+  price: Number(body.price),
+  stock: Number(body.stock),
+  category: body.category,
+  images: Array.isArray(body.images) ? body.images.filter((image) => typeof image === 'string' && image.trim() !== '') : [],
+  scale: typeof body.scale === 'string' ? body.scale.trim() : undefined,
+  grade: typeof body.grade === 'string' ? body.grade.trim() : undefined,
+  material: typeof body.material === 'string' ? body.material.trim() : undefined,
+  rarity: typeof body.rarity === 'string' ? body.rarity.trim() : undefined,
+  cardType: typeof body.cardType === 'string' ? body.cardType.trim() : undefined,
+  featured: Boolean(body.featured),
+});
+
+const validateProductPayload = (payload) => {
+  const errors = [];
+
+  if (!payload.name) {
+    errors.push('Ten san pham la bat buoc');
+  }
+
+  if (!validCategories.has(payload.category)) {
+    errors.push('Danh muc san pham khong hop le');
+  }
+
+  if (!Number.isFinite(payload.price) || payload.price < 0) {
+    errors.push('Gia san pham khong hop le');
+  }
+
+  if (!Number.isFinite(payload.stock) || payload.stock < 0) {
+    errors.push('So luong ton kho khong hop le');
+  }
+
+  if (!Array.isArray(payload.images) || payload.images.length === 0) {
+    errors.push('San pham phai co it nhat mot hinh anh');
+  }
+
+  if (Array.isArray(payload.images) && payload.images.length > 10) {
+    errors.push('San pham chi duoc toi da 10 hinh anh');
+  }
+
+  return errors;
+};
+
 // 1. Lấy danh sách toàn bộ sản phẩm
 router.get('/', async (req, res) => {
   try {
@@ -31,7 +78,14 @@ router.get('/:id', async (req, res) => {
 // 3. Thêm sản phẩm mới
 router.post('/', async (req, res) => {
   try {
-    const newProduct = new Product(req.body);
+    const payload = sanitizeProductPayload(req.body);
+    const errors = validateProductPayload(payload);
+
+    if (errors.length > 0) {
+      return res.status(400).json({ message: errors[0], errors });
+    }
+
+    const newProduct = new Product(payload);
     const saved = await newProduct.save();
     res.status(201).json({ ...saved.toObject(), id: saved._id.toString() });
   } catch (err) {
@@ -42,7 +96,14 @@ router.post('/', async (req, res) => {
 // 4. Cập nhật sản phẩm
 router.put('/:id', async (req, res) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const payload = sanitizeProductPayload(req.body);
+    const errors = validateProductPayload(payload);
+
+    if (errors.length > 0) {
+      return res.status(400).json({ message: errors[0], errors });
+    }
+
+    const updated = await Product.findByIdAndUpdate(req.params.id, payload, { new: true });
     if (!updated) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
     res.json({ ...updated.toObject(), id: updated._id.toString() });
   } catch (err) {

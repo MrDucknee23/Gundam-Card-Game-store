@@ -4,21 +4,47 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { ProductCard } from './ProductCard';
 import { ArrowButton } from './ArrowButton';
-import { getFeaturedProducts } from '../data/products';
+import { Product } from '../types/product';
 
 interface FeaturedProductsProps {
   title?: string;
   subtitle?: string;
   showCarousel?: boolean;
+  products?: Product[];
+  loading?: boolean;
+  error?: string | null;
 }
 
 export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ 
   title = 'Featured Products',
   subtitle = 'Top picks for you',
-  showCarousel = true
+  showCarousel = true,
+  products = [],
+  loading = false,
+  error = null,
 }) => {
   const sliderRef = useRef<Slider>(null);
-  const featuredProducts = getFeaturedProducts();
+  const featuredProducts = products.filter((product) => product.featured).slice(0, 8);
+
+  if (loading) {
+    return (
+      <section className="py-12 bg-black group">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-gray-400">Đang tải sản phẩm nổi bật...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-12 bg-black group">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-red-400">{error}</p>
+        </div>
+      </section>
+    );
+  }
 
   if (featuredProducts.length === 0) {
     return null;

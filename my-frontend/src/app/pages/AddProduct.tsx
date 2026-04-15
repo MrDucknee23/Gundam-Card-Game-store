@@ -1,36 +1,143 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import { Input } from '../components/ui/input';
+import { Checkbox } from '../components/ui/checkbox';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { ProductCategory, GundamGrade, CardRarity } from '../data/products';
+import { ProductCategory, GundamGrade, CardRarity } from '../types/product';
 import { toast } from 'sonner';
+import { createProduct, fetchProductById, ProductPayload, updateProduct } from '../utils/productApi';
+
+const emptyFormData = {
+  name: '',
+  category: '' as ProductCategory | '',
+  price: '',
+  description: '',
+  stock: '',
+  grade: '' as GundamGrade | '',
+  rarity: '' as CardRarity | '',
+  scale: '',
+  material: '',
+  cardType: '',
+  featured: false
+};
+
+const formatVietnamesePrice = (value: string) => {
+  const digitsOnly = value.replace(/\D/g, '');
+
+  if (digitsOnly === '') {
+    return '';
+  }
+
+  return digitsOnly.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+const isValidVietnamesePrice = (value: string) => {
+  if (value === '') {
+    return false;
+  }
+
+  return /^\d{1,3}(\.\d{3})*$|^\d+$/.test(value);
+};
+
+const normalizeVietnamesePrice = (value: string) => value.replace(/\./g, '');
+
+const MAX_PRODUCT_IMAGES = 10;
+const MAX_SUB_IMAGES = MAX_PRODUCT_IMAGES - 1;
 
 export const AddProduct: React.FC = () => {
   const navigate = useNavigate();
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    category: '' as ProductCategory | '',
-    price: '',
-    description: '',
-    stock: '',
-    grade: '' as GundamGrade | '',
-    rarity: '' as CardRarity | '',
-    scale: '',
-    material: '',
-    cardType: ''
-  });
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = Boolean(id);
+
+  const [formData, setFormData] = useState(emptyFormData);
 
   const [mainImage, setMainImage] = useState<string>('');
   const [subImages, setSubImages] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(isEditMode);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
+    const { name, value } = e.target;
+
+    setFormData((currentData) => {
+      if (name === 'category') {
+        return {
+          ...currentData,
+          category: value as ProductCategory | '',
+          grade: '',
+          rarity: '',
+          scale: '',
+          material: '',
+          cardType: '',
+          featured: currentData.featured
+        };
+      }
+
+      return {
+        ...currentData,
+        [name]: value
+      };
     });
   };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+
+    if (/[^\d.]/.test(rawValue) || rawValue.includes('-')) {
+      return;
+    }
+
+    setFormData((currentData) => ({
+      ...currentData,
+      price: formatVietnamesePrice(rawValue)
+    }));
+  };
+
+  const handlePriceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['-', '+', ',', 'e', 'E', ' '].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    if (!isEditMode || !id) {
+      setIsLoadingProduct(false);
+      return;
+    }
+
+    const loadProduct = async () => {
+      try {
+        setIsLoadingProduct(true);
+        const product = await fetchProductById(id);
+
+        setFormData({
+          name: product.name,
+          category: product.category,
+          price: formatVietnamesePrice(String(product.price)),
+          description: product.description,
+          stock: String(product.stock),
+          grade: (product.grade as GundamGrade | undefined) || '',
+          rarity: (product.rarity as CardRarity | undefined) || '',
+          scale: product.scale || '',
+          material: product.material || '',
+          cardType: product.cardType || '',
+          featured: Boolean(product.featured)
+        });
+
+        const [primaryImage, ...secondaryImages] = product.images;
+        setMainImage(primaryImage || '');
+        setSubImages(secondaryImages);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Không thể tải sản phẩm');
+        navigate('/admin/products');
+      } finally {
+        setIsLoadingProduct(false);
+      }
+    };
+
+    loadProduct();
+  }, [id, isEditMode, navigate]);
 
   const handleMainImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,8 +153,8 @@ export const AddProduct: React.FC = () => {
   const handleSubImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []) as File[];
     
-    if (subImages.length + files.length > 4) {
-      toast.error('Maximum 4 sub-images allowed');
+    if (subImages.length + files.length > MAX_SUB_IMAGES) {
+      toast.error(`Toi da ${MAX_SUB_IMAGES} anh phu duoc phep`);
       return;
     }
 
@@ -72,51 +179,98 @@ export const AddProduct: React.FC = () => {
     setSubImages(prev => prev.map((img, i) => i === imageIndex ? currentMain : img));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const buildPayload = (): ProductPayload => {
+    const images = [mainImage, ...subImages].filter((image) => image.trim() !== '');
+    const isCardCategory = formData.category === 'pokemon' || formData.category === 'onepiece';
+
+    return {
+      name: formData.name.trim(),
+      category: formData.category as ProductCategory,
+      price: Number(normalizeVietnamesePrice(formData.price)),
+      description: formData.description.trim(),
+      stock: Number(formData.stock),
+      images,
+      grade: formData.category === 'gundam' ? formData.grade || undefined : undefined,
+      scale: formData.category === 'gundam' ? formData.scale.trim() || undefined : undefined,
+      material: formData.category === 'gundam' ? formData.material.trim() || undefined : undefined,
+      rarity: isCardCategory ? formData.rarity || undefined : undefined,
+      cardType: isCardCategory ? formData.cardType.trim() || undefined : undefined,
+      featured: formData.featured,
+    };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const normalizedPrice = normalizeVietnamesePrice(formData.price);
+    const parsedStock = Number(formData.stock);
 
     // Validation
     if (!formData.name || !formData.category || !formData.price || !formData.description || !formData.stock) {
-      toast.error('Please fill in all required fields');
+      toast.error('Vui lòng nhập đầy đủ các trường bắt buộc');
+      return;
+    }
+
+    if (!isValidVietnamesePrice(formData.price) || normalizedPrice === '' || formData.price.includes('-')) {
+      toast.error('Giá phải đúng định dạng tiền Việt, ví dụ: 23.500 hoặc 1.000.000');
+      return;
+    }
+
+    if (!Number.isInteger(parsedStock) || parsedStock < 0) {
+      toast.error('Tồn kho phải là số nguyên không âm');
       return;
     }
 
     if (!mainImage) {
-      toast.error('Please upload a main image');
+      toast.error('Vui lòng tải lên ảnh chính của sản phẩm');
       return;
     }
 
-    // Mock product creation
-    toast.success('Product added successfully!');
-    navigate('/admin');
+    try {
+      setIsSubmitting(true);
+      const payload = buildPayload();
+
+      if (isEditMode && id) {
+        await updateProduct(id, payload);
+        toast.success('Cập nhật sản phẩm thành công');
+      } else {
+        await createProduct(payload);
+        toast.success('Thêm sản phẩm thành công');
+      }
+
+      navigate('/admin/products');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể lưu sản phẩm');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
-    setFormData({
-      name: '',
-      category: '',
-      price: '',
-      description: '',
-      stock: '',
-      grade: '',
-      rarity: '',
-      scale: '',
-      material: '',
-      cardType: ''
-    });
+    setFormData(emptyFormData);
     setMainImage('');
     setSubImages([]);
   };
 
   const isCardCategory = formData.category === 'pokemon' || formData.category === 'onepiece';
 
+  if (isLoadingProduct) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600 text-lg">Đang tải thông tin sản phẩm...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-black mb-2">Admin Panel - Add Product</h1>
-          <p className="text-gray-600">Create a new product listing with complete details and images</p>
+          <h1 className="text-black mb-2">{isEditMode ? 'Admin Panel - Chỉnh sửa sản phẩm' : 'Admin Panel - Thêm sản phẩm'}</h1>
+          <p className="text-gray-600">
+            {isEditMode ? 'Cập nhật thông tin sản phẩm và đồng bộ dữ liệu lên toàn bộ hệ thống' : 'Tạo sản phẩm mới và đồng bộ dữ liệu lên toàn bộ hệ thống'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -161,12 +315,15 @@ export const AddProduct: React.FC = () => {
                   <Input
                     id="price"
                     name="price"
-                    type="number"
+                    type="text"
                     value={formData.price}
-                    onChange={handleInputChange}
+                    onChange={handlePriceChange}
+                    onKeyDown={handlePriceKeyDown}
+                    inputMode="numeric"
+                    autoComplete="off"
                     required
                     className="mt-2 bg-white border-gray-200 text-black focus:border-primary"
-                    placeholder="0"
+                    placeholder="1.000.000"
                   />
                 </div>
               </div>
@@ -183,6 +340,24 @@ export const AddProduct: React.FC = () => {
                   className="mt-2 bg-white border-gray-200 text-black focus:border-primary resize-none"
                   placeholder="Detailed product description"
                 />
+              </div>
+
+              <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <Checkbox
+                  id="featured"
+                  checked={formData.featured}
+                  onCheckedChange={(checked) => {
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      featured: checked === true
+                    }));
+                  }}
+                  className="mt-0.5"
+                />
+                <div>
+                  <Label htmlFor="featured" className="text-black cursor-pointer">Đánh dấu là sản phẩm nổi bật</Label>
+                  <p className="text-sm text-gray-500 mt-1">Sản phẩm nổi bật sẽ được ưu tiên hiển thị ở khu vực featured trên trang chủ.</p>
+                </div>
               </div>
 
               <div>
@@ -345,7 +520,7 @@ export const AddProduct: React.FC = () => {
 
             {/* Sub Images Upload */}
             <div>
-              <Label className="text-black mb-3 block">Sub Images (Max 4)</Label>
+              <Label className="text-black mb-3 block">Sub Images (Max 9)</Label>
               <p className="text-sm text-gray-500 mb-3">Click on a thumbnail to swap it with the main image</p>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -369,7 +544,7 @@ export const AddProduct: React.FC = () => {
                   </div>
                 ))}
                 
-                {subImages.length < 4 && (
+                {subImages.length < MAX_SUB_IMAGES && (
                   <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary transition-colors bg-gray-50">
                     <div className="text-center p-4">
                       <div className="w-12 h-12 mx-auto mb-2 bg-primary/10 rounded-full flex items-center justify-center">
@@ -394,16 +569,18 @@ export const AddProduct: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               type="submit"
+              disabled={isSubmitting}
               className="flex-1 bg-primary hover:bg-primary/90 text-white py-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
             >
-              Add Product
+              {isSubmitting ? 'Đang lưu...' : isEditMode ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}
             </button>
             <button
               type="button"
               onClick={handleReset}
+              disabled={isSubmitting}
               className="flex-1 bg-white hover:bg-gray-100 text-black border-2 border-gray-300 hover:border-gray-400 py-4 rounded-lg font-semibold transition-all"
             >
-              Reset Form
+              Đặt lại biểu mẫu
             </button>
           </div>
         </form>

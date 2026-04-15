@@ -1,19 +1,67 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { products as allProducts } from '../data/products';
+import { Product } from '../types/product';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { Pencil, Trash2, Copy, ArrowLeft, Package, DollarSign, Calendar, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '../utils/clipboard';
+import { createProduct, deleteProduct, fetchProductById, ProductPayload } from '../utils/productApi';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const product = allProducts.find(p => p.id === id);
+  useEffect(() => {
+    if (!id) {
+      setError('Không tìm thấy sản phẩm');
+      setLoading(false);
+      return;
+    }
+
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchProductById(id);
+        setProduct(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Không thể tải sản phẩm');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProduct();
+  }, [id]);
+
+  const buildProductPayload = (currentProduct: Product): ProductPayload => ({
+    name: currentProduct.name,
+    category: currentProduct.category,
+    price: currentProduct.price,
+    description: currentProduct.description,
+    stock: currentProduct.stock,
+    images: currentProduct.images,
+    grade: currentProduct.grade || undefined,
+    rarity: currentProduct.rarity || undefined,
+    scale: currentProduct.scale || undefined,
+    material: currentProduct.material || undefined,
+    cardType: currentProduct.cardType || undefined,
+    featured: currentProduct.featured,
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600 text-lg">Đang tải chi tiết sản phẩm...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -22,7 +70,7 @@ export const ProductDetails: React.FC = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy sản phẩm</h2>
-            <p className="text-gray-600 mb-6">Sản phẩm bạn đang tìm không tồn tại hoặc đã bị xóa.</p>
+            <p className="text-gray-600 mb-6">{error || 'Sản phẩm bạn đang tìm không tồn tại hoặc đã bị xóa.'}</p>
             <Link
               to="/admin/products"
               className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
@@ -64,14 +112,28 @@ export const ProductDetails: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    toast.success('Sản phẩm đã được xóa thành công!');
-    navigate('/admin/products');
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteProduct(product.id);
+      setIsDeleteModalOpen(false);
+      toast.success('Sản phẩm đã được xóa thành công!');
+      navigate('/admin/products');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể xóa sản phẩm');
+    }
   };
 
-  const handleDuplicate = () => {
-    toast.success('Sản phẩm đã được sao chép!');
-    navigate('/admin/products');
+  const handleDuplicate = async () => {
+    try {
+      const duplicatedProduct = await createProduct({
+        ...buildProductPayload(product),
+        name: `${product.name} (Copy)`
+      });
+      toast.success('Sản phẩm đã được sao chép!');
+      navigate(`/admin/products/${duplicatedProduct.id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể sao chép sản phẩm');
+    }
   };
 
   return (
@@ -184,6 +246,11 @@ export const ProductDetails: React.FC = () => {
                     >
                       {status.label}
                     </span>
+                    {product.featured && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border border-amber-200 bg-amber-100 text-amber-800">
+                        Noi bat
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

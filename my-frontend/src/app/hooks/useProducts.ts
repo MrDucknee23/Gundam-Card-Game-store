@@ -1,27 +1,28 @@
-import { useState, useEffect } from 'react';
-import { Product, ProductCategory, GundamGrade, CardRarity } from '../data/products';
-
-const API_URL = 'http://localhost:5000';
+import { useState, useEffect, useCallback } from 'react';
+import { Product } from '../types/product';
+import { fetchProducts } from '../utils/productApi';
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/products`)
-      .then(res => res.json())
-      .then(data => {
-        // MongoDB dùng _id, map lại thành id cho frontend dùng được
-        const mapped = data.map((p: any) => ({ ...p, id: p.id || p._id }));
-        setProducts(mapped);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError('Không thể tải sản phẩm');
-        setLoading(false);
-      });
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchProducts();
+      setProducts(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tải sản phẩm');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { products, loading, error };
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  return { products, loading, error, refetch: loadProducts };
 };

@@ -5,14 +5,15 @@ import { CategoryCard } from '../components/CategoryCard';
 import { ProductCard } from '../components/ProductCard';
 import { ArrowButton } from '../components/ArrowButton';
 import { FeaturedProducts } from '../components/FeaturedProducts';
-import { products } from '../data/products';
-import type { GundamGrade, ProductCategory } from '../data/products';
+import type { GundamGrade, ProductCategory } from '../types/product';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import limitedEditionImage from '../../imports/image-10.png';
+import { useProducts } from '../hooks/useProducts';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { products, loading, error } = useProducts();
   const sliderRef = useRef<Slider>(null);
   const [selectedGrade, setSelectedGrade] = useState<GundamGrade | null>(null);
   const [selectedCardCategory, setSelectedCardCategory] = useState<Exclude<ProductCategory, 'gundam'> | null>(null);
@@ -192,6 +193,9 @@ export const Home: React.FC = () => {
         title="Featured Products"
         subtitle="Top picks for you"
         showCarousel={true}
+        products={products}
+        loading={loading}
+        error={error}
       />
 
       {/* Gundam Section */}
@@ -217,11 +221,17 @@ export const Home: React.FC = () => {
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {gundamProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-center text-gray-500">Đang tải sản phẩm Gundam...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {gundamProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
 
         <div className="text-center mt-8">
           <button
@@ -259,11 +269,17 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Product Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-500">
-            {cardGameProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {loading ? (
+            <p className="text-center text-gray-500">Đang tải sản phẩm the bai...</p>
+          ) : error ? (
+            <p className="text-center text-red-500">{error}</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-500">
+              {cardGameProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-8">
             <button

@@ -1,5 +1,15 @@
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+import { Button } from './ui/button';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -16,70 +26,47 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   itemName,
   itemType = 'sản phẩm'
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        {/* Overlay */}
-        <div 
-          className="fixed inset-0 transition-opacity bg-black bg-opacity-50"
-          onClick={onClose}
-        ></div>
-
-        {/* Modal */}
-        <div className="inline-block w-full max-w-md my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
-              </div>
-              <h2 className="text-xl font-bold text-black">Xác nhận xóa</h2>
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <AlertDialogContent className="max-w-md rounded-2xl border-gray-200 p-0 overflow-hidden">
+        <AlertDialogHeader className="px-6 py-4 border-b border-gray-200 gap-4 text-left">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <AlertDialogTitle className="text-xl font-bold text-black">
+              Xác nhận xóa
+            </AlertDialogTitle>
           </div>
-
-          {/* Content */}
-          <div className="px-6 py-6">
-            <p className="text-gray-700 mb-2">
-              Bạn có chắc chắn muốn xóa {itemType} này không?
-            </p>
-            <p className="text-black font-semibold mb-4">
-              "{itemName}"
-            </p>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-800">
-                <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. {itemType.charAt(0).toUpperCase() + itemType.slice(1)} sẽ bị xóa vĩnh viễn khỏi hệ thống.
+          <AlertDialogDescription asChild>
+            <div className="space-y-4 text-left">
+              <p className="text-gray-700">
+                Bạn có chắc chắn muốn xóa {itemType} này không?
               </p>
+              <p className="text-black font-semibold break-words">
+                &quot;{itemName}&quot;
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800">
+                  <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. {itemType.charAt(0).toUpperCase() + itemType.slice(1)} sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={() => {
-                onConfirm();
-                onClose();
-              }}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
-            >
-              Xóa
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 sm:justify-end">
+          <AlertDialogCancel className="mt-0 border-gray-300 font-semibold text-gray-700 hover:bg-gray-100">
+            Hủy
+          </AlertDialogCancel>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            className="bg-red-600 font-semibold text-white hover:bg-red-700"
+          >
+            Xóa
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };

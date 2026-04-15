@@ -1,5 +1,5 @@
 import React from 'react';
-import { GundamGrade, ProductCategory } from '../data/products';
+import { GundamGrade, ProductCategory } from '../types/product';
 
 interface CategoryCardProps {
   grade?: GundamGrade;

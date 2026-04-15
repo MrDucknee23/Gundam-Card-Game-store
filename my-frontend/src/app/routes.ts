@@ -16,7 +16,6 @@ import { MyOrders } from './pages/MyOrders';
 import { OrderTracking } from './pages/OrderTracking';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AddProduct } from './pages/AddProduct';
-import { ManageProducts } from './pages/ManageProducts';
 import { ManageProductsEnhanced } from './pages/ManageProductsEnhanced';
 import { ProductDetails } from './pages/ProductDetails';
 import { AdminStatistics } from './pages/AdminStatistics';

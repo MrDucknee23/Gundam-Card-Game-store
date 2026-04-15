@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Upload, Trash2 } from 'lucide-react';
-import { Product, ProductCategory, GundamGrade, CardRarity } from '../data/products';
+import { Product, ProductCategory, GundamGrade, CardRarity } from '../types/product';
+
+const MAX_PRODUCT_IMAGES = 10;
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -45,6 +47,26 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSetMainImage = (index: number) => {
+    if (index === 0) {
+      setSelectedMainImage(0);
+      return;
+    }
+
+    setFormData(prev => {
+      const nextImages = [...prev.images];
+      const [newMainImage] = nextImages.splice(index, 1);
+      nextImages.unshift(newMainImage);
+
+      return {
+        ...prev,
+        images: nextImages,
+      };
+    });
+
+    setSelectedMainImage(0);
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -68,7 +90,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const handleAddImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && formData.images.length < 5) {
+    if (file && formData.images.length < MAX_PRODUCT_IMAGES) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(prev => ({
@@ -250,7 +272,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               {/* Images */}
               <div>
                 <label className="block text-sm font-semibold text-black mb-2">
-                  Hình ảnh (Tối đa 5 ảnh)
+                  Hình ảnh (Tối đa 10 ảnh)
                 </label>
                 
                 {/* Main Image Preview */}
@@ -279,7 +301,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                           ? 'border-primary ring-2 ring-primary/20'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      onClick={() => setSelectedMainImage(index)}
+                      onClick={() => handleSetMainImage(index)}
                     >
                       <img
                         src={image}
@@ -308,7 +330,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   ))}
 
                   {/* Add New Image */}
-                  {formData.images.length < 5 && (
+                  {formData.images.length < MAX_PRODUCT_IMAGES && (
                     <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-primary cursor-pointer flex items-center justify-center transition-colors bg-gray-50 hover:bg-gray-100">
                       <div className="text-center">
                         <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
@@ -325,7 +347,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 </div>
 
                 <p className="text-xs text-gray-500 mt-2">
-                  Click vào ảnh để đặt làm ảnh chính. Hover để thay đổi hoặc xóa.
+                  Click vào ảnh để đặt làm ảnh chính và đưa ảnh đó lên đầu danh sách. Hover để thay đổi hoặc xóa.
                 </p>
               </div>
             </div>

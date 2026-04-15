@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { products as initialProducts, Product, ProductCategory } from '../data/products';
+import { Product, ProductCategory } from '../types/product';
 import { Pencil, Trash2, Eye, Search, Filter, ChevronLeft, ChevronRight, Plus, Copy } from 'lucide-react';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { toast } from 'sonner';
+import { useProducts } from '../hooks/useProducts';
+import { createProduct, deleteProduct, ProductPayload } from '../utils/productApi';
 
 type ProductStatus = 'active' | 'out_of_stock' | 'draft';
 type SortField = 'name' | 'price' | 'stock';
@@ -12,7 +14,8 @@ type SortOrder = 'asc' | 'desc';
 
 export const ManageProductsEnhanced: React.FC = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const { products: fetchedProducts, loading, error } = useProducts();
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ProductCategory | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('all');
@@ -24,6 +27,10 @@ export const ManageProductsEnhanced: React.FC = () => {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    setProducts(fetchedProducts);
+  }, [fetchedProducts]);
 
   // Get product status
   const getProductStatus = (product: Product): ProductStatus => {
@@ -108,23 +115,51 @@ export const ManageProductsEnhanced: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const buildProductPayload = (product: Product): ProductPayload => ({
+    name: product.name,
+    category: product.category,
+    price: product.price,
+    description: product.description,
+    stock: product.stock,
+    images: product.images,
+    grade: product.grade || undefined,
+    rarity: product.rarity || undefined,
+    scale: product.scale || undefined,
+    material: product.material || undefined,
+    cardType: product.cardType || undefined,
+    featured: product.featured,
+  });
+
+  const handleConfirmDelete = async () => {
     if (selectedProduct) {
-      setProducts(products.filter(p => p.id !== selectedProduct.id));
-      setIsDeleteModalOpen(false);
-      setSelectedProduct(null);
-      toast.success('Sản phẩm đã được xóa thành công!');
+      try {
+        await deleteProduct(selectedProduct.id);
+        setProducts((currentProducts) => currentProducts.filter((product) => product.id !== selectedProduct.id));
+        setSelectedProducts((currentSelected) => {
+          const nextSelected = new Set(currentSelected);
+          nextSelected.delete(selectedProduct.id);
+          return nextSelected;
+        });
+        setIsDeleteModalOpen(false);
+        setSelectedProduct(null);
+        toast.success('Sản phẩm đã được xóa thành công!');
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Không thể xóa sản phẩm');
+      }
     }
   };
 
-  const handleDuplicate = (product: Product) => {
-    const newProduct = {
-      ...product,
-      id: `${product.id}-copy-${Date.now()}`,
-      name: `${product.name} (Copy)`
-    };
-    setProducts([newProduct, ...products]);
-    toast.success('Sản phẩm đã được sao chép!');
+  const handleDuplicate = async (product: Product) => {
+    try {
+      const duplicatedProduct = await createProduct({
+        ...buildProductPayload(product),
+        name: `${product.name} (Copy)`
+      });
+      setProducts((currentProducts) => [duplicatedProduct, ...currentProducts]);
+      toast.success('Sản phẩm đã được sao chép!');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể sao chép sản phẩm');
+    }
   };
 
   const handleToggleSelect = (productId: string) => {
@@ -144,6 +179,22 @@ export const ManageProductsEnhanced: React.FC = () => {
       setSelectedProducts(new Set(paginatedProducts.map(p => p.id)));
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600 text-lg">Đang tải danh sách sản phẩm...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

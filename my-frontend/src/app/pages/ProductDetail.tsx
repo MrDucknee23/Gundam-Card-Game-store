@@ -1,20 +1,91 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { getProductById } from '../data/products';
+import { Product } from '../types/product';
 import { useCart } from '../context/CartContext';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchProductById } from '../utils/productApi';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '../components/ui/carousel';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  
-  const product = id ? getProductById(id) : undefined;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        const currentProduct = await fetchProductById(id);
+        setProduct(currentProduct);
+      } catch {
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProduct();
+  }, [id]);
+
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    const syncSelectedImage = () => {
+      setSelectedImage(carouselApi.selectedScrollSnap());
+    };
+
+    syncSelectedImage();
+    carouselApi.on('select', syncSelectedImage);
+    carouselApi.on('reInit', syncSelectedImage);
+
+    return () => {
+      carouselApi.off('select', syncSelectedImage);
+      carouselApi.off('reInit', syncSelectedImage);
+    };
+  }, [carouselApi]);
+
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    carouselApi.scrollTo(selectedImage);
+  }, [carouselApi, selectedImage]);
+
+  useEffect(() => {
+    setSelectedImage(0);
+    setQuantity(1);
+  }, [product?.id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-500 text-lg">Đang tải sản phẩm...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -102,16 +173,34 @@ export const ProductDetail: React.FC = () => {
           {/* Image Gallery */}
           <div>
             {/* Main Image */}
-            <div className="relative aspect-square bg-gray-900 rounded-xl overflow-hidden mb-4 border border-gray-800">
-              <img
-                src={product.images[selectedImage]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <Carousel
+              setApi={setCarouselApi}
+              opts={{ loop: product.images.length > 1 }}
+              className="mb-4"
+            >
+              <CarouselContent>
+                {product.images.map((image, index) => (
+                  <CarouselItem key={`${product.id}-${index}`}>
+                    <div className="relative aspect-square bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
+                      <img
+                        src={image}
+                        alt={`${product.name} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {product.images.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-4 border-gray-700 bg-black/70 text-white hover:bg-black/85 hover:text-white disabled:bg-black/30" />
+                  <CarouselNext className="right-4 border-gray-700 bg-black/70 text-white hover:bg-black/85 hover:text-white disabled:bg-black/30" />
+                </>
+              )}
+            </Carousel>
 
             {/* Thumbnail Images */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5">
               {product.images.map((image, index) => (
                 <button
                   key={index}

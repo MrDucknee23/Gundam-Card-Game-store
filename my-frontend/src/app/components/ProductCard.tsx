@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Product } from '../data/products';
+import { Product } from '../types/product';
 import { Badge } from './ui/badge';
 
 interface ProductCardProps {

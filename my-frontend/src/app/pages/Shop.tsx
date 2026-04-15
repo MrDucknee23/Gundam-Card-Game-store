@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { ProductCategory, GundamGrade, CardRarity } from '../data/products';
+import { ProductCategory, GundamGrade, CardRarity } from '../types/product';
 import { useProducts } from '../hooks/useProducts';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { Slider } from '../components/ui/slider';
@@ -11,6 +11,7 @@ import { Input } from '../components/ui/input';
 export const Shop: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { products, loading, error } = useProducts(); // ← thêm dòng này
+  const maxAvailablePrice = Math.max(10000000, ...products.map((product) => product.price));
 
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | ''>('');
   const [selectedGrade, setSelectedGrade] = useState<GundamGrade | ''>('');
@@ -25,6 +26,16 @@ export const Shop: React.FC = () => {
       setSelectedCategory(category);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (products.length === 0) {
+      return;
+    }
+
+    setPriceRange([0, maxAvailablePrice]);
+    setMinPriceInput('0');
+    setMaxPriceInput(maxAvailablePrice.toString());
+  }, [products, maxAvailablePrice]);
 
   // ← thêm loading/error state
   if (loading) return (
@@ -62,9 +73,9 @@ export const Shop: React.FC = () => {
 
   const handleMaxPriceInputChange = (value: string) => {
     setMaxPriceInput(value);
-    const numValue = parseInt(value) || 10000000;
+    const numValue = parseInt(value) || maxAvailablePrice;
     if (numValue >= priceRange[0]) {
-      setPriceRange([priceRange[0], numValue]);
+      setPriceRange([priceRange[0], Math.min(numValue, maxAvailablePrice)]);
     }
   };
 
@@ -177,7 +188,7 @@ export const Shop: React.FC = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="space-y-4">
-                    <Slider min={0} max={10000000} step={100000} value={priceRange} onValueChange={handlePriceRangeChange} className="mb-4" />
+                    <Slider min={0} max={maxAvailablePrice} step={100000} value={priceRange} onValueChange={handlePriceRangeChange} className="mb-4" />
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Tối thiểu</label>
