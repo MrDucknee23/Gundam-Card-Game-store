@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import type { Order } from '../data/orders'; // Import interface Order của bạn
+import { formatCurrency } from '../utils/format';
 
 export const ManageOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -22,13 +23,6 @@ export const ManageOrders: React.FC = () => {
         setIsLoading(false);
       });
   }, []);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN');

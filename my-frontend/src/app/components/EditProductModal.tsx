@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, Trash2 } from 'lucide-react';
 import { Product, ProductCategory, GundamGrade, CardRarity } from '../types/product';
+import { useCategories } from '../hooks/useCategories';
 
 const MAX_PRODUCT_IMAGES = 10;
 
@@ -32,11 +33,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const [selectedMainImage, setSelectedMainImage] = useState(0);
 
-  const categories: { value: ProductCategory; label: string }[] = [
-    { value: 'gundam', label: 'Gundam' },
-    { value: 'pokemon', label: 'Pokémon' },
-    { value: 'onepiece', label: 'One Piece' }
-  ];
+  const { categories: categoriesData } = useCategories();
+  const categories = categoriesData.map(c => ({ value: c.slug as ProductCategory, label: c.label }));
 
   const gundamGrades: GundamGrade[] = ['HG', 'MG', 'RG', 'PG'];
   const rarities: CardRarity[] = ['Common', 'Rare', 'Super Rare', 'Ultra Rare'];

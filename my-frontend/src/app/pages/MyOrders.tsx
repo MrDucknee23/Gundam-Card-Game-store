@@ -4,6 +4,7 @@ import { Package, ChevronRight, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
+import { formatCurrency } from '../utils/format';
 
 export const MyOrders: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
@@ -77,13 +78,6 @@ export const MyOrders: React.FC = () => {
     }
 
     await fetchOrders(lookupForm.email, lookupForm.phone, true);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
   };
 
   const formatDate = (dateString: string) => {

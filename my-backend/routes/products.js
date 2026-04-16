@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 
-const validCategories = new Set(['gundam', 'pokemon', 'onepiece']);
+const getValidCategories = async () => {
+  const cats = await Category.find({}, 'slug');
+  return new Set(cats.map(c => c.slug));
+};
 
 const sanitizeProductPayload = (body) => ({
   name: typeof body.name === 'string' ? body.name.trim() : '',
@@ -19,13 +23,14 @@ const sanitizeProductPayload = (body) => ({
   featured: Boolean(body.featured),
 });
 
-const validateProductPayload = (payload) => {
+const validateProductPayload = async (payload) => {
   const errors = [];
 
   if (!payload.name) {
     errors.push('Ten san pham la bat buoc');
   }
 
+  const validCategories = await getValidCategories();
   if (!validCategories.has(payload.category)) {
     errors.push('Danh muc san pham khong hop le');
   }
@@ -79,7 +84,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const payload = sanitizeProductPayload(req.body);
-    const errors = validateProductPayload(payload);
+    const errors = await validateProductPayload(payload);
 
     if (errors.length > 0) {
       return res.status(400).json({ message: errors[0], errors });
@@ -97,7 +102,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const payload = sanitizeProductPayload(req.body);
-    const errors = validateProductPayload(payload);
+    const errors = await validateProductPayload(payload);
 
     if (errors.length > 0) {
       return res.status(400).json({ message: errors[0], errors });

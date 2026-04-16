@@ -15,7 +15,7 @@ interface FeaturedProductsProps {
   error?: string | null;
 }
 
-export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ 
+export const FeaturedProducts: React.FC<FeaturedProductsProps> = React.memo(({ 
   title = 'Featured Products',
   subtitle = 'Top picks for you',
   showCarousel = true,
@@ -160,4 +160,4 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
       </div>
     </section>
   );
-};
+});

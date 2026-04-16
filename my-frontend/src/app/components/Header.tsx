@@ -110,6 +110,15 @@ export const Header: React.FC = () => {
                     >
                       Đơn hàng của tôi
                     </Link>
+                    {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-4 py-2 text-primary font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        ← Admin Portal
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-black hover:bg-gray-50 transition-colors flex items-center gap-2"

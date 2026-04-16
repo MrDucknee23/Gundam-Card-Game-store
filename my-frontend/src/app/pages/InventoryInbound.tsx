@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { inbounds, getInboundStatusLabel } from '../data/inbounds';
 import type { Inbound, InboundStatus } from '../data/inbounds';
 import { Search, Filter, Plus, Eye, Package } from 'lucide-react';
+import { formatCurrency } from '../utils/format';
 
 export const InventoryInbound: React.FC = () => {
   const navigate = useNavigate();
@@ -10,13 +11,6 @@ export const InventoryInbound: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<InboundStatus | 'all'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('vi-VN', {

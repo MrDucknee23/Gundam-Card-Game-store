@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { inbounds, getInboundStatusLabel, getPaymentStatusLabel } from '../data/inbounds';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { formatCurrency } from '../utils/format';
 import {
   ArrowLeft,
   Printer,
@@ -48,13 +49,6 @@ export const InboundDetail: React.FC = () => {
       </div>
     );
   }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('vi-VN', {

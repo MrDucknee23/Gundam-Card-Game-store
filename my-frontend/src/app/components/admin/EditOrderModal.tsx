@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { Order, OrderStatus } from '../../data/orders';
+import { formatCurrency } from '../../utils/format';
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -38,14 +39,6 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
       // You can add shipping address parsing logic here if needed
     });
     onClose();
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   const calculateSubtotal = () => {

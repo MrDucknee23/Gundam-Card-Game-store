@@ -7,6 +7,7 @@ import { Textarea } from '../components/ui/textarea';
 import { ProductCategory, GundamGrade, CardRarity } from '../types/product';
 import { toast } from 'sonner';
 import { createProduct, fetchProductById, ProductPayload, updateProduct } from '../utils/productApi';
+import { useCategories } from '../hooks/useCategories';
 
 const emptyFormData = {
   name: '',
@@ -49,6 +50,7 @@ export const AddProduct: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = Boolean(id);
+  const { categories } = useCategories();
 
   const [formData, setFormData] = useState(emptyFormData);
 
@@ -304,9 +306,9 @@ export const AddProduct: React.FC = () => {
                     className="mt-2 w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-black focus:outline-none focus:border-primary transition-colors"
                   >
                     <option value="">Select category</option>
-                    <option value="gundam">Gundam</option>
-                    <option value="pokemon">Pokémon</option>
-                    <option value="onepiece">One Piece</option>
+                    {categories.map(cat => (
+                      <option key={cat.slug} value={cat.slug}>{cat.label}</option>
+                    ))}
                   </select>
                 </div>
 

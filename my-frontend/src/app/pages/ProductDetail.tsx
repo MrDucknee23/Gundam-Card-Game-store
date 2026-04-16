@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchProductById } from '../utils/productApi';
+import { formatPrice } from '../utils/format';
 import {
   Carousel,
   CarouselApi,
@@ -102,13 +103,6 @@ export const ProductDetail: React.FC = () => {
       </div>
     );
   }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
 
   const getRarityColor = (rarity?: string) => {
     switch (rarity) {

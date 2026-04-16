@@ -7,6 +7,7 @@ import {
   Pencil, X, AlertTriangle, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency } from '../utils/format';
 
 interface EditForm {
   recipientName:  string;
@@ -203,9 +204,6 @@ export const OrderTracking: React.FC = () => {
       </div>
     );
   }
-
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString('vi-VN', {

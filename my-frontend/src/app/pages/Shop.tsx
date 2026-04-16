@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCategory, GundamGrade, CardRarity } from '../types/product';
 import { useProducts } from '../hooks/useProducts';
+import { useCategories } from '../hooks/useCategories';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { Slider } from '../components/ui/slider';
 import { Input } from '../components/ui/input';
+import { formatPriceNumber } from '../utils/format';
 
 export const Shop: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { products, loading, error } = useProducts(); // ← thêm dòng này
+  const { products, loading, error } = useProducts();
+  const { categories } = useCategories();
   const maxAvailablePrice = Math.max(10000000, ...products.map((product) => product.price));
 
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | ''>('');
@@ -18,7 +21,7 @@ export const Shop: React.FC = () => {
   const [selectedRarity, setSelectedRarity] = useState<CardRarity | ''>('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [minPriceInput, setMinPriceInput] = useState('0');
-  const [maxPriceInput, setMaxPriceInput] = useState('10000000');
+  const [maxPriceInput, setMaxPriceInput] = useState(formatPriceNumber(10000000));
 
   useEffect(() => {
     const category = searchParams.get('category') as ProductCategory;
@@ -34,7 +37,7 @@ export const Shop: React.FC = () => {
 
     setPriceRange([0, maxAvailablePrice]);
     setMinPriceInput('0');
-    setMaxPriceInput(maxAvailablePrice.toString());
+    setMaxPriceInput(formatPriceNumber(maxAvailablePrice));
   }, [products, maxAvailablePrice]);
 
   // ← thêm loading/error state
@@ -59,27 +62,31 @@ export const Shop: React.FC = () => {
   const handlePriceRangeChange = (value: number[]) => {
     const newRange: [number, number] = [value[0], value[1]];
     setPriceRange(newRange);
-    setMinPriceInput(value[0].toString());
-    setMaxPriceInput(value[1].toString());
+    setMinPriceInput(formatPriceNumber(value[0]));
+    setMaxPriceInput(formatPriceNumber(value[1]));
   };
 
+  const parsePriceInput = (value: string) => parseInt(value.replace(/\./g, '')) || 0;
+
   const handleMinPriceInputChange = (value: string) => {
-    setMinPriceInput(value);
-    const numValue = parseInt(value) || 0;
+    const raw = value.replace(/[^\d.]/g, '');
+    const numValue = parsePriceInput(raw);
+    setMinPriceInput(numValue ? formatPriceNumber(numValue) : raw);
     if (numValue <= priceRange[1]) {
       setPriceRange([numValue, priceRange[1]]);
     }
   };
 
   const handleMaxPriceInputChange = (value: string) => {
-    setMaxPriceInput(value);
-    const numValue = parseInt(value) || maxAvailablePrice;
+    const raw = value.replace(/[^\d.]/g, '');
+    const numValue = parsePriceInput(raw) || maxAvailablePrice;
+    setMaxPriceInput(numValue ? formatPriceNumber(numValue) : raw);
     if (numValue >= priceRange[0]) {
       setPriceRange([priceRange[0], Math.min(numValue, maxAvailablePrice)]);
     }
   };
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = useMemo(() => products.filter(product => {
     if (selectedCategory && product.category !== selectedCategory) return false;
     if (selectedGrade && product.grade !== selectedGrade) return false;
     if (selectedRarity && product.rarity !== selectedRarity) return false;
@@ -91,11 +98,9 @@ export const Shop: React.FC = () => {
              product.description.toLowerCase().includes(query);
     }
     return true;
-  });
+  }), [products, selectedCategory, selectedGrade, selectedRarity, priceRange, searchParams]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN').format(price);
-  };
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -119,18 +124,12 @@ export const Shop: React.FC = () => {
                       <input type="radio" name="category" checked={selectedCategory === ''} onChange={() => handleCategoryChange('')} className="w-4 h-4 text-primary accent-primary" />
                       <span>Tất cả sản phẩm</span>
                     </label>
-                    <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                      <input type="radio" name="category" checked={selectedCategory === 'gundam'} onChange={() => handleCategoryChange('gundam')} className="w-4 h-4 text-primary accent-primary" />
-                      <span>Gundam</span>
-                    </label>
-                    <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                      <input type="radio" name="category" checked={selectedCategory === 'pokemon'} onChange={() => handleCategoryChange('pokemon')} className="w-4 h-4 text-primary accent-primary" />
-                      <span>Pokémon</span>
-                    </label>
-                    <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                      <input type="radio" name="category" checked={selectedCategory === 'onepiece'} onChange={() => handleCategoryChange('onepiece')} className="w-4 h-4 text-primary accent-primary" />
-                      <span>One Piece</span>
-                    </label>
+                    {categories.map(cat => (
+                      <label key={cat.slug} className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
+                        <input type="radio" name="category" checked={selectedCategory === cat.slug} onChange={() => handleCategoryChange(cat.slug)} className="w-4 h-4 text-primary accent-primary" />
+                        <span>{cat.label}</span>
+                      </label>
+                    ))}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -192,15 +191,15 @@ export const Shop: React.FC = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Tối thiểu</label>
-                        <Input type="number" value={minPriceInput} onChange={(e) => handleMinPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
+                        <Input type="text" value={minPriceInput} onChange={(e) => handleMinPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Tối đa</label>
-                        <Input type="number" value={maxPriceInput} onChange={(e) => handleMaxPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
+                        <Input type="text" value={maxPriceInput} onChange={(e) => handleMaxPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
                       </div>
                     </div>
                     <p className="text-sm text-gray-600">
-                      {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])} VND
+                      {formatPriceNumber(priceRange[0])} - {formatPriceNumber(priceRange[1])} VND
                     </p>
                   </div>
                 </CollapsibleContent>

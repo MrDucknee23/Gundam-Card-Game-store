@@ -1,4 +1,4 @@
-export type ProductCategory = 'gundam' | 'pokemon' | 'onepiece';
+export type ProductCategory = 'gundam' | 'pokemon' | 'onepiece' | (string & {});
 export type GundamGrade = 'HG' | 'MG' | 'RG' | 'PG';
 export type CardRarity = 'Common' | 'Rare' | 'Super Rare' | 'Ultra Rare';
 

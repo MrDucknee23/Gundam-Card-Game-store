@@ -4,6 +4,7 @@ import type { OrderStatus, Order } from '../data/orders';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import { EditOrderModal } from '../components/admin/EditOrderModal';
+import { formatCurrency } from '../utils/format';
 import {
   ArrowLeft,
   Pencil,
@@ -75,13 +76,6 @@ export const OrderDetail: React.FC = () => {
       </div>
     );
   }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('vi-VN', {

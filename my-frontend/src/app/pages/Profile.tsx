@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { User, Package, MapPin, Heart, ChevronRight, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { formatPrice } from '../utils/format';
 
 const API_URL = 'http://localhost:5000';
 const validateFullName = (name: string) => /^[A-Za-zÀ-ỹ\s]+$/.test(name);
@@ -57,13 +58,6 @@ export const Profile: React.FC = () => {
         setIsLoadingOrders(false);
       });
   }, []);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

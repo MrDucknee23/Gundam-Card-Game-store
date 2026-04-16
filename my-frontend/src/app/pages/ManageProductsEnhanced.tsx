@@ -7,6 +7,8 @@ import { Breadcrumb } from '../components/Breadcrumb';
 import { toast } from 'sonner';
 import { useProducts } from '../hooks/useProducts';
 import { createProduct, deleteProduct, ProductPayload } from '../utils/productApi';
+import { useCategories } from '../hooks/useCategories';
+import { formatPrice } from '../utils/format';
 
 type ProductStatus = 'active' | 'out_of_stock' | 'draft';
 type SortField = 'name' | 'price' | 'stock';
@@ -15,6 +17,7 @@ type SortOrder = 'asc' | 'desc';
 export const ManageProductsEnhanced: React.FC = () => {
   const navigate = useNavigate();
   const { products: fetchedProducts, loading, error } = useProducts();
+  const { categories } = useCategories();
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ProductCategory | 'all'>('all');
@@ -85,20 +88,9 @@ export const ManageProductsEnhanced: React.FC = () => {
     currentPage * itemsPerPage
   );
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
-
   const getCategoryLabel = (category: ProductCategory) => {
-    const labels: Record<ProductCategory, string> = {
-      gundam: 'Gundam',
-      pokemon: 'Pokémon',
-      onepiece: 'One Piece'
-    };
-    return labels[category];
+    const cat = categories.find(c => c.slug === category);
+    return cat ? cat.label : category;
   };
 
   const handleSort = (field: SortField) => {
@@ -259,9 +251,9 @@ export const ManageProductsEnhanced: React.FC = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="all">Tất cả</option>
-                <option value="gundam">Gundam</option>
-                <option value="pokemon">Pokémon</option>
-                <option value="onepiece">One Piece</option>
+                {categories.map(cat => (
+                  <option key={cat.slug} value={cat.slug}>{cat.label}</option>
+                ))}
               </select>
             </div>
 

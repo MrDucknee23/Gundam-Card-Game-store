@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import { formatPrice } from '../utils/format';
 
 export const Checkout: React.FC = () => {
   const { items, getTotalPrice, clearCart } = useCart();
@@ -45,13 +46,6 @@ export const Checkout: React.FC = () => {
       }));
     }
   }, [items.length, navigate]);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { formatCurrency } from '../utils/format';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -166,14 +167,6 @@ export const AdminDashboard: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
 
   const exportData = (format: 'csv' | 'excel') => {
     console.log(`Exporting data as ${format}...`);

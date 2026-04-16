@@ -17,11 +17,12 @@ export const AdminLayout: React.FC = () => {
 
   const menuItems = [
     { path: '/admin', label: 'Dashboard' },
+    { path: '/admin/categories', label: 'Danh mục' },
     { path: '/admin/products', label: 'Quản lý sản phẩm' },
     { path: '/admin/orders', label: 'Quản lý đơn hàng' },
-    { path: '/admin/inventory/inbound', label: 'Nhập hàng' },
     { path: '/admin/users', label: 'Người dùng' },
-    { path: '/admin/analytics', label: 'Phân tích & báo cáo' }
+    { path: '/admin/inventory/inbound', label: 'Nhập hàng' }
+    
   ];
 
   return (

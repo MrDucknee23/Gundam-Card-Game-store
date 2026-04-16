@@ -7,6 +7,7 @@ import { Pencil, Trash2, Copy, ArrowLeft, Package, DollarSign, Calendar, Tag } f
 import { toast } from 'sonner';
 import { copyToClipboard } from '../utils/clipboard';
 import { createProduct, deleteProduct, fetchProductById, ProductPayload } from '../utils/productApi';
+import { formatPrice } from '../utils/format';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,13 +84,6 @@ export const ProductDetails: React.FC = () => {
       </div>
     );
   }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {

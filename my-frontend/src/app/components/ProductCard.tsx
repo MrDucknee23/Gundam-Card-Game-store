@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Product } from '../types/product';
 import { Badge } from './ui/badge';
+import { formatPrice } from '../utils/format';
 
 interface ProductCardProps {
   product: Product;
@@ -37,16 +38,9 @@ const getGradeColor = (grade?: string) => {
   }
 };
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
 
   const isCardProduct = product.category === 'pokemon' || product.category === 'onepiece';
   const isGundamProduct = product.category === 'gundam';
@@ -95,6 +89,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <img
               src={product.images?.[0] || ''}
               alt={product.name}
+              loading="lazy"
+              decoding="async"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className="
                 w-full 
@@ -236,4 +232,4 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
     </Link>
   );
-};
+});

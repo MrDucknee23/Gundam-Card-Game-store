@@ -3,17 +3,11 @@ import { Link, useNavigate } from 'react-router';
 import { useCart } from '../context/CartContext';
 import { Input } from '../components/ui/input';
 import { Trash2 } from 'lucide-react';
+import { formatPrice } from '../utils/format';
 
 export const Cart: React.FC = () => {
   const { items, updateQuantity, removeFromCart, getTotalPrice } = useCart();
   const navigate = useNavigate();
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
 
   if (items.length === 0) {
     return (
