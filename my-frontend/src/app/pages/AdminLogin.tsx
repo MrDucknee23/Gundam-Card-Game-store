@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export const AdminLogin: React.FC = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -50,7 +52,6 @@ export const AdminLogin: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-block mb-4">
             <div className="w-16 h-16 bg-primary rounded-lg flex items-center justify-center">
@@ -69,11 +70,11 @@ export const AdminLogin: React.FC = () => {
               </svg>
             </div>
           </div>
+
           <h1 className="text-black mb-2">Cổng quản trị Admin</h1>
           <p className="text-gray-600">Đăng nhập để truy cập trang quản trị</p>
         </div>
 
-        {/* Login Form */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -97,20 +98,30 @@ export const AdminLogin: React.FC = () => {
               <Label htmlFor="password" className="text-black mb-2 block">
                 Mật khẩu
               </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="••••••••"
-                required
-                className="bg-white border-gray-300 text-black placeholder:text-gray-400 focus:border-primary"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  required
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400 focus:border-primary pr-12"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isLoading}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
-            {/* Demo Credentials Info */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-2">Thông tin đăng nhập Demo:</p>
               <p className="text-sm text-black font-mono">admin@gundamstore.com</p>
@@ -133,7 +144,6 @@ export const AdminLogin: React.FC = () => {
             </button>
           </form>
 
-          {/* Back to Customer Login */}
           <div className="mt-6 text-center">
             <Link 
               to="/login" 
@@ -144,7 +154,6 @@ export const AdminLogin: React.FC = () => {
           </div>
         </div>
 
-        {/* Security Notice */}
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
             Khu vực bảo mật. Nghiêm cấm truy cập trái phép.

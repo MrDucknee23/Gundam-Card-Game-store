@@ -8,7 +8,6 @@ import { FeaturedProducts } from '../components/FeaturedProducts';
 import type { GundamGrade, ProductCategory } from '../types/product';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import limitedEditionImage from '../../imports/image-10.png';
 import { useProducts } from '../hooks/useProducts';
 
 export const Home: React.FC = () => {
@@ -25,7 +24,7 @@ export const Home: React.FC = () => {
       subtitle: 'Bộ mô hình cao cấp từ HG đến Perfect Grade',
       cta: 'Mua Gundam',
       link: '/shop?category=gundam',
-      image: 'https://images.unsplash.com/photo-1664460244070-b00f551389cc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjBtb2RlbCUyMGkptCUyMHByZW1pdW0lMjBkaXNwbGF5fGVufDF8fHx8MTc3NDg3NTU0MXww&ixlib=rb-4.1.0&q=80&w=1080'
+      image: '/images/herobanner2.jpg'
     },
     {
       title: 'Sưu tầm thẻ bài huyền thoại',
@@ -39,7 +38,7 @@ export const Home: React.FC = () => {
       subtitle: 'Thẻ bài hiếm độc quyền và bộ mô hình đặc biệt',
       cta: 'Xem bộ sưu tập',
       link: '/shop',
-      image: limitedEditionImage
+      image: '/images/image-10.png'
     },
     {
       title: 'Chất lượng cao cấp đảm bảo',
@@ -53,7 +52,7 @@ export const Home: React.FC = () => {
       subtitle: 'Kết nối với các nhà sưu tầm trên toàn thế giới',
       cta: 'Bắt đầu',
       link: '/about',
-      image: 'https://images.unsplash.com/photo-1556866149-a42ffe6478ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob2JieSUyMGNvbGxlY3RvciUyMGNvbW11bml0eSUyMHdvcmtzcGFjZXxlbnwxfHx8fDE3NzQ4NzU1NDJ8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      image: '/images/herobanner1.jpg'
     }
   ];
 

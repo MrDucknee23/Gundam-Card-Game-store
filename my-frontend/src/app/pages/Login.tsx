@@ -4,12 +4,15 @@ import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(location.state?.mode !== 'register');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,7 +23,6 @@ export const Login: React.FC = () => {
     address: '',
   });
 
-  // ✅ VALIDATE
   const validateName = (name: string) => /^[A-Za-zÀ-ỹ\s]+$/.test(name);
   const validateAddress = (address: string) => /^[0-9A-Za-zÀ-ỹ\s,./-]+$/.test(address);
 
@@ -34,7 +36,6 @@ export const Login: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✅ FIX: chặn ký tự đặc biệt (trước chỉ chặn số)
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^[A-Za-zÀ-ỹ\s]*$/.test(value)) {
@@ -42,7 +43,6 @@ export const Login: React.FC = () => {
     }
   };
 
-  // giữ nguyên logic cũ
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9]/g, '');
     setFormData({ ...formData, phone: val });
@@ -64,23 +64,21 @@ export const Login: React.FC = () => {
         toast.error('Vui lòng điền đầy đủ thông tin');
       }
     } else {
-
-      // ✅ FIX: validate tên
       if (!validateName(formData.firstName) || !validateName(formData.lastName)) {
         toast.error('Họ tên không hợp lệ');
         return;
       }
 
-      // ✅ FIX: validate địa chỉ
       if (formData.address && !validateAddress(formData.address)) {
         toast.error('Địa chỉ không hợp lệ');
         return;
       }
 
-      if (formData.password.length < 8) {
+      if (formData.password.length <= 8)  {
         toast.error('Mật khẩu phải có ít nhất 8 ký tự');
         return;
       }
+
       if (formData.password !== formData.confirmPassword) {
         toast.error('Mật khẩu không khớp');
         return;
@@ -95,6 +93,7 @@ export const Login: React.FC = () => {
           formData.phone,
           formData.address.trim(),
         );
+
         if (success) {
           toast.success('Đăng ký thành công!');
           navigate('/profile');
@@ -136,6 +135,7 @@ export const Login: React.FC = () => {
                       className="mt-1"
                     />
                   </div>
+
                   <div>
                     <Label htmlFor="lastName">Tên</Label>
                     <Input
@@ -176,7 +176,7 @@ export const Login: React.FC = () => {
                   <Input
                     id="address"
                     name="address"
-                    value={formData.address || ''} // ✅ FIX undefined
+                    value={formData.address || ''}
                     onChange={(e) => {
                       const value = e.target.value;
                       if (/^[0-9A-Za-zÀ-ỹ\s,./-]*$/.test(value)) {
@@ -206,21 +206,33 @@ export const Login: React.FC = () => {
 
             <div>
               <Label htmlFor="password">Mật khẩu</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder={isLogin ? '••••••••' : 'Ít nhất 8 ký tự'}
-                required
-                className="mt-1"
-              />
+              <div className="relative mt-1">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder={isLogin ? '••••••••' : 'Ít nhất 8 ký tự'}
+                  required
+                  className="pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary"
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
               {!isLogin && formData.password.length > 0 && formData.password.length < 8 && (
                 <p className="text-red-500 text-xs mt-1">
                   Cần thêm {8 - formData.password.length} ký tự nữa
                 </p>
               )}
+
               {!isLogin && formData.password.length >= 8 && (
                 <p className="text-green-500 text-xs mt-1">✓ Mật khẩu hợp lệ</p>
               )}
@@ -229,19 +241,31 @@ export const Login: React.FC = () => {
             {!isLogin && (
               <div>
                 <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="Nhập lại mật khẩu"
-                  required
-                  className="mt-1"
-                />
+                <div className="relative mt-1">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    placeholder="Nhập lại mật khẩu"
+                    required
+                    className="pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((current) => !current)}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary"
+                    aria-label={showConfirmPassword ? 'Ẩn xác nhận mật khẩu' : 'Hiện xác nhận mật khẩu'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
                 {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword && (
                   <p className="text-red-500 text-xs mt-1">Mật khẩu không khớp</p>
                 )}
+
                 {formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword && (
                   <p className="text-green-500 text-xs mt-1">✓ Mật khẩu khớp</p>
                 )}
@@ -257,7 +281,11 @@ export const Login: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center space-y-3">
-            <button onClick={() => setIsLogin(!isLogin)} className="text-secondary hover:underline">
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-secondary hover:underline"
+            >
               {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
             </button>
 
