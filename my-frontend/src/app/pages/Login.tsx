@@ -4,7 +4,37 @@ import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff } from 'lucide-react';
+
+const EyeClosedIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 10 Q7 17 12 17 Q17 17 22 10" />
+    <line x1="6"  y1="16"    x2="4.5"  y2="19.5" />
+    <line x1="12" y1="17.5"  x2="12"   y2="21"   />
+    <line x1="18" y1="16"    x2="19.5" y2="19.5"  />
+  </svg>
+);
+
+const SharinganEye: React.FC<{ size?: number }> = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="48" fill="#CC0000" />
+    <circle cx="50" cy="50" r="48" fill="none" stroke="#1a0000" strokeWidth="4" />
+    <circle cx="50" cy="50" r="32" fill="none" stroke="#1a0000" strokeWidth="3" />
+    <circle cx="50" cy="50" r="13" fill="#1a0000" />
+    <g transform="rotate(0, 50, 50)">
+      <circle cx="50" cy="22" r="7" fill="#1a0000" />
+      <ellipse cx="50" cy="30" rx="4" ry="7" fill="#1a0000" transform="rotate(0,50,30)" />
+    </g>
+    <g transform="rotate(120, 50, 50)">
+      <circle cx="50" cy="22" r="7" fill="#1a0000" />
+      <ellipse cx="50" cy="30" rx="4" ry="7" fill="#1a0000" />
+    </g>
+    <g transform="rotate(240, 50, 50)">
+      <circle cx="50" cy="22" r="7" fill="#1a0000" />
+      <ellipse cx="50" cy="30" rx="4" ry="7" fill="#1a0000" />
+    </g>
+    <circle cx="41" cy="41" r="5" fill="rgba(255,255,255,0.18)" />
+  </svg>
+);
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -68,22 +98,18 @@ export const Login: React.FC = () => {
         toast.error('Họ tên không hợp lệ');
         return;
       }
-
       if (formData.address && !validateAddress(formData.address)) {
         toast.error('Địa chỉ không hợp lệ');
         return;
       }
-
-      if (formData.password.length <= 8)  {
+      if (formData.password.length <= 8) {
         toast.error('Mật khẩu phải có ít nhất 8 ký tự');
         return;
       }
-
       if (formData.password !== formData.confirmPassword) {
         toast.error('Mật khẩu không khớp');
         return;
       }
-
       if (formData.email && formData.password && formData.firstName && formData.lastName) {
         const success = await register(
           formData.email,
@@ -93,7 +119,6 @@ export const Login: React.FC = () => {
           formData.phone,
           formData.address.trim(),
         );
-
         if (success) {
           toast.success('Đăng ký thành công!');
           navigate('/profile');
@@ -125,28 +150,11 @@ export const Login: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">Họ</Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleNameChange}
-                      placeholder="Nguyễn"
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleNameChange} placeholder="Nguyễn" required className="mt-1" />
                   </div>
-
                   <div>
                     <Label htmlFor="lastName">Tên</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleNameChange}
-                      placeholder="Văn A"
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleNameChange} placeholder="Văn A" required className="mt-1" />
                   </div>
                 </div>
 
@@ -155,17 +163,7 @@ export const Login: React.FC = () => {
                     Số điện thoại
                     <span className="text-gray-400 font-normal text-xs ml-1">(tùy chọn)</span>
                   </Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handlePhoneChange}
-                    placeholder="0909123456"
-                    inputMode="numeric"
-                    maxLength={10}
-                    className="mt-1"
-                  />
+                  <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handlePhoneChange} placeholder="0909123456" inputMode="numeric" maxLength={10} className="mt-1" />
                 </div>
 
                 <div>
@@ -174,9 +172,7 @@ export const Login: React.FC = () => {
                     <span className="text-gray-400 font-normal text-xs ml-1">(tùy chọn)</span>
                   </Label>
                   <Input
-                    id="address"
-                    name="address"
-                    value={formData.address || ''}
+                    id="address" name="address" value={formData.address || ''}
                     onChange={(e) => {
                       const value = e.target.value;
                       if (/^[0-9A-Za-zÀ-ỹ\s,./-]*$/.test(value)) {
@@ -192,16 +188,7 @@ export const Login: React.FC = () => {
 
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="example@gmail.com"
-                required
-                className="mt-1"
-              />
+              <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="example@gmail.com" required className="mt-1" />
             </div>
 
             <div>
@@ -219,20 +206,17 @@ export const Login: React.FC = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary"
+                  onClick={() => setShowPassword((c) => !c)}
+                  className="absolute inset-y-0 right-3 flex items-center hover:scale-110 transition-transform"
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <SharinganEye size={22} /> : <EyeClosedIcon />}
                 </button>
               </div>
 
               {!isLogin && formData.password.length > 0 && formData.password.length < 8 && (
-                <p className="text-red-500 text-xs mt-1">
-                  Cần thêm {8 - formData.password.length} ký tự nữa
-                </p>
+                <p className="text-red-500 text-xs mt-1">Cần thêm {8 - formData.password.length} ký tự nữa</p>
               )}
-
               {!isLogin && formData.password.length >= 8 && (
                 <p className="text-green-500 text-xs mt-1">✓ Mật khẩu hợp lệ</p>
               )}
@@ -254,18 +238,17 @@ export const Login: React.FC = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword((current) => !current)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary"
+                    onClick={() => setShowConfirmPassword((c) => !c)}
+                    className="absolute inset-y-0 right-3 flex items-center hover:scale-110 transition-transform"
                     aria-label={showConfirmPassword ? 'Ẩn xác nhận mật khẩu' : 'Hiện xác nhận mật khẩu'}
                   >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showConfirmPassword ? <SharinganEye size={22} /> : <EyeClosedIcon />}
                   </button>
                 </div>
 
                 {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword && (
                   <p className="text-red-500 text-xs mt-1">Mật khẩu không khớp</p>
                 )}
-
                 {formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword && (
                   <p className="text-green-500 text-xs mt-1">✓ Mật khẩu khớp</p>
                 )}
@@ -281,21 +264,13 @@ export const Login: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center space-y-3">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-secondary hover:underline"
-            >
+            <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-secondary hover:underline">
               {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
             </button>
 
             {isLogin && (
               <div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/shop')}
-                  className="text-sm text-primary hover:underline font-medium"
-                >
+                <button type="button" onClick={() => navigate('/shop')} className="text-sm text-primary hover:underline font-medium">
                   Tiếp tục mua hàng với guest
                 </button>
               </div>
