@@ -40,19 +40,6 @@ export const Shop: React.FC = () => {
     setMaxPriceInput(formatPriceNumber(maxAvailablePrice));
   }, [products, maxAvailablePrice]);
 
-  // ← thêm loading/error state
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500 text-lg">Đang tải sản phẩm...</p>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-red-500 text-lg">{error}</p>
-    </div>
-  );
-
   const handleCategoryChange = (category: ProductCategory | '') => {
     setSelectedCategory(category);
     setSelectedGrade('');
@@ -100,6 +87,18 @@ export const Shop: React.FC = () => {
     return true;
   }), [products, selectedCategory, selectedGrade, selectedRarity, priceRange, searchParams]);
 
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-gray-500 text-lg">Đang tải sản phẩm...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-red-500 text-lg">{error}</p>
+    </div>
+  );
+
 
 
   return (
@@ -134,13 +133,13 @@ export const Shop: React.FC = () => {
                 </CollapsibleContent>
               </Collapsible>
 
-              {selectedCategory === 'gundam' && (
-                <Collapsible defaultOpen className="mb-6">
-                  <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
-                    Cấp độ
-                    <ChevronDown className="w-5 h-5 text-primary transition-transform duration-300 group-data-[state=open]:rotate-180" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
+              <Collapsible defaultOpen className="mb-6">
+                <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
+                  Cấp độ
+                  <ChevronDown className="w-5 h-5 text-primary transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  {selectedCategory === 'gundam' && (
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
                         <input type="radio" name="grade" checked={selectedGrade === ''} onChange={() => setSelectedGrade('')} className="w-4 h-4 text-primary accent-primary" />
@@ -153,17 +152,17 @@ export const Shop: React.FC = () => {
                         </label>
                       ))}
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
 
-              {(selectedCategory === 'pokemon' || selectedCategory === 'onepiece') && (
-                <Collapsible defaultOpen className="mb-6">
-                  <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
-                    Độ hiếm
-                    <ChevronDown className="w-5 h-5 text-primary transition-transform duration-300 group-data-[state=open]:rotate-180" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
+              <Collapsible defaultOpen className="mb-6">
+                <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
+                  Độ hiếm
+                  <ChevronDown className="w-5 h-5 text-primary transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  {(selectedCategory === 'pokemon' || selectedCategory === 'onepiece') && (
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
                         <input type="radio" name="rarity" checked={selectedRarity === ''} onChange={() => setSelectedRarity('')} className="w-4 h-4 text-primary accent-primary" />
@@ -176,9 +175,9 @@ export const Shop: React.FC = () => {
                         </label>
                       ))}
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
 
               <Collapsible defaultOpen className="mb-6">
                 <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
