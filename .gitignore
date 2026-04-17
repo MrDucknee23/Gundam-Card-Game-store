@@ -1,58 +1,17 @@
-# ======================
-# NODE MODULES
-# ======================
-node_modules/
-my-backend/node_modules/
+# Dependencies
+node_modules
+node_modules/.vite
 
-# ======================
-# ENV FILES
-# ======================
+# Environment variables (NEVER commit these)
 .env
-.env.*
+.env.local
+.env.*.local
 my-backend/.env
 
-# ======================
-# BUILD FILES
-# ======================
-dist/
-build/
-.my-backend/dist/
+# Build output
+dist
 
-# ======================
-# LOG FILES
-# ======================
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-
-# ======================
-# OS FILES
-# ======================
+# Editor & OS
 .DS_Store
 Thumbs.db
-
-# ======================
-# IDE / EDITOR
-# ======================
-.vscode/
-.idea/
-
-# ======================
-# CACHE
-# ======================
-.cache/
-.tmp/
-
-# ======================
-# PACKAGE LOCK (optional)
-# ======================
-# Nếu dùng pnpm thì có thể ignore mấy cái này
-# package-lock.json
-# yarn.lock
-
-# ======================
-# VITE
-# ======================
-vite.svg
+*.local

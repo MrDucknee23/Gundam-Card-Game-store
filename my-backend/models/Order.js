@@ -13,7 +13,6 @@ const orderSchema = new mongoose.Schema({
   shippingFee: { type: Number, default: 0 },
   paymentStatus: { type: String, default: 'Chưa thanh toán' },
   orderStatus: { type: String, default: 'Đang xử lý' },
-  paymentMethod: { type: String, default: 'cod' },
   items: [
     {
       productName: { type: String, required: true },

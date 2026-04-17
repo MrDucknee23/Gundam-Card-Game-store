@@ -21,7 +21,7 @@ const dummyOrders = [
         productName: 'Mô hình Gundam Aerial 1/144 HG',
         quantity: 2,
         price: 500000,
-        productImage: 'https://placehold.co/150x150?text=Gundam+Aerial'
+        productImage: 'https://via.placeholder.com/150?text=Gundam+Aerial'
       }
     ],
     history: [{ note: 'Khách hàng đặt hàng lần đầu' }]
@@ -44,13 +44,13 @@ const dummyOrders = [
         productName: 'Mô hình Gundam Barbatos Lupus Rex 1/100',
         quantity: 1,
         price: 1500000,
-        productImage: 'https://placehold.co/150x150?text=Barbatos'
+        productImage: 'https://via.placeholder.com/150?text=Barbatos'
       },
       {
         productName: 'Bộ dụng cụ lắp ráp Gundam Cơ Bản',
         quantity: 2,
         price: 500000,
-        productImage: 'https://placehold.co/150x150?text=Tool+Set'
+        productImage: 'https://via.placeholder.com/150?text=Tool+Set'
       }
     ],
     history: [{ note: 'Giao hàng thành công ngày hôm qua' }]
@@ -73,7 +73,7 @@ const dummyOrders = [
         productName: 'Gundam RX-78-2 Entry Grade',
         quantity: 1,
         price: 700000,
-        productImage: 'https://placehold.co/150x150?text=RX-78-2'
+        productImage: 'https://via.placeholder.com/150?text=RX-78-2'
       }
     ],
     history: [{ note: 'Khách yêu cầu hủy do đặt nhầm' }]
