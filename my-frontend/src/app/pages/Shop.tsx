@@ -40,6 +40,20 @@ export const Shop: React.FC = () => {
     setMaxPriceInput(formatPriceNumber(maxAvailablePrice));
   }, [products, maxAvailablePrice]);
 
+  const filteredProducts = useMemo(() => products.filter(product => {
+    if (selectedCategory && product.category !== selectedCategory) return false;
+    if (selectedGrade && product.grade !== selectedGrade) return false;
+    if (selectedRarity && product.rarity !== selectedRarity) return false;
+    if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return product.name.toLowerCase().includes(query) ||
+             product.description.toLowerCase().includes(query);
+    }
+    return true;
+  }), [products, selectedCategory, selectedGrade, selectedRarity, priceRange, searchParams]);
+
   // ← thêm loading/error state
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -85,20 +99,6 @@ export const Shop: React.FC = () => {
       setPriceRange([priceRange[0], Math.min(numValue, maxAvailablePrice)]);
     }
   };
-
-  const filteredProducts = useMemo(() => products.filter(product => {
-    if (selectedCategory && product.category !== selectedCategory) return false;
-    if (selectedGrade && product.grade !== selectedGrade) return false;
-    if (selectedRarity && product.rarity !== selectedRarity) return false;
-    if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
-    const searchQuery = searchParams.get('search');
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return product.name.toLowerCase().includes(query) ||
-             product.description.toLowerCase().includes(query);
-    }
-    return true;
-  }), [products, selectedCategory, selectedGrade, selectedRarity, priceRange, searchParams]);
 
 
 

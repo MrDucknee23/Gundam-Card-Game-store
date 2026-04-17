@@ -35,18 +35,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          const isStoredAdmin = parsedUser?.role === 'admin' || parsedUser?.role === 'super_admin';
+          const hasValidSession = parsedUser?.id && parsedUser?.email && parsedUser?.role;
 
-          if (isStoredAdmin) {
-            localStorage.removeItem('user');
-          } else {
+          if (hasValidSession) {
             setUser(parsedUser);
+          } else {
+            localStorage.removeItem('user');
           }
         }
       }
     } catch (error) {
       console.error('Error restoring user from localStorage:', error);
-      localStorage.removeItem('user');
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('user');
+      }
     } finally {
       setLoading(false);
     }
