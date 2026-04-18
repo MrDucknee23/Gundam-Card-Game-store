@@ -140,28 +140,36 @@ export const Header: React.FC = () => {
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
-                    <Link
-                      to="/login"
-                      onClick={() => setShowUserMenu(false)}
-                      className="block px-4 py-2 text-black hover:bg-gray-50 transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate('/login', { state: { mode: 'login' } });
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-black hover:bg-gray-50 transition-colors"
                     >
                       Đăng nhập
-                    </Link>
-                    <Link
-                      to="/login"
-                      state={{ mode: 'register' }}
-                      onClick={() => setShowUserMenu(false)}
-                      className="block px-4 py-2 text-black hover:bg-gray-50 transition-colors"
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate('/login', { state: { mode: 'register' } });
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-black hover:bg-gray-50 transition-colors"
                     >
                       Đăng ký
-                    </Link>
-                    <Link
-                      to="/orders"
-                      onClick={() => setShowUserMenu(false)}
-                      className="block px-4 py-2 text-black hover:bg-gray-50 transition-colors"
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate('/orders');
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-black hover:bg-gray-50 transition-colors"
                     >
                       Xem đơn hàng
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>

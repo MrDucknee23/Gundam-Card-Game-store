@@ -59,6 +59,11 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (location.state?.mode === 'register') {
       setIsLogin(false);
+      return;
+    }
+
+    if (location.state?.mode === 'login') {
+      setIsLogin(true);
     }
   }, [location.state]);
 

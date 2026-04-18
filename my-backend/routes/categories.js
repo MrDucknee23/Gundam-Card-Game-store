@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
 
@@ -57,7 +58,19 @@ const seedDefaults = async () => {
     console.log('✅ Đã seed 3 danh mục mặc định');
   }
 };
-seedDefaults().catch(err => console.error('Seed categories error:', err));
+
+const runSeedWhenDbReady = () => {
+  if (mongoose.connection.readyState === 1) {
+    seedDefaults().catch(err => console.error('Seed categories error:', err));
+    return;
+  }
+
+  mongoose.connection.once('connected', () => {
+    seedDefaults().catch(err => console.error('Seed categories error:', err));
+  });
+};
+
+runSeedWhenDbReady();
 
 // 1. Lấy tất cả danh mục
 router.get('/', async (req, res) => {

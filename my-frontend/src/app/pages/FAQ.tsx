@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { 
   MessageCircle, 
   BookOpen, 
@@ -6,6 +7,8 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { toast } from 'sonner';
+import { buildApiUrl } from '../utils/api';
 
 // ===========================
 // TYPES & INTERFACES
@@ -17,13 +20,15 @@ interface FAQItem {
   category: 'product' | 'shipping' | 'payment' | 'warranty' | 'return';
 }
 
+type SupportCategoryId = 'live-chat' | 'guide' | 'tracking';
+
 interface SupportCardData {
   id: number;
+  supportId: SupportCategoryId;
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
   ctaText: string;
-  ctaAction: () => void;
 }
 
 interface Category {
@@ -166,29 +171,68 @@ const faqData: FAQItem[] = [
 const supportCardsData: SupportCardData[] = [
   {
     id: 1,
+    supportId: 'live-chat',
     icon: MessageCircle,
     title: 'Live Chat',
     description: 'Trò chuyện trực tiếp với đội ngũ hỗ trợ 24/7',
-    ctaText: 'Bắt đầu chat',
-    ctaAction: () => alert('🎯 Live Chat sẽ được kích hoạt (Demo)')
+    ctaText: 'Bắt đầu chat'
   },
   {
     id: 2,
+    supportId: 'guide',
     icon: BookOpen,
     title: 'Hướng dẫn chi tiết',
     description: 'Xem các hướng dẫn về sản phẩm và dịch vụ',
-    ctaText: 'Xem hướng dẫn',
-    ctaAction: () => alert('📖 Chuyển đến trang hướng dẫn (Demo)')
+    ctaText: 'Xem hướng dẫn'
   },
   {
     id: 3,
+    supportId: 'tracking',
     icon: Package,
     title: 'Theo dõi đơn hàng',
     description: 'Kiểm tra tình trạng vận chuyển realtime',
-    ctaText: 'Theo dõi ngay',
-    ctaAction: () => alert('📦 Chuyển đến trang theo dõi (Demo)')
+    ctaText: 'Theo dõi ngay'
   }
 ];
+
+const guideShortcuts: Array<{ id: number; title: string; description: string; category: FAQItem['category'] }> = [
+  {
+    id: 1,
+    title: 'Hướng dẫn chọn mô hình đúng grade',
+    description: 'So sánh HG, RG, MG, PG và gợi ý theo ngân sách giống trung tâm hỗ trợ Shopee.',
+    category: 'product',
+  },
+  {
+    id: 2,
+    title: 'Hướng dẫn thanh toán và xác nhận đơn',
+    description: 'Cách thanh toán COD/chuyển khoản, kiểm tra đơn đã xác nhận hay chưa.',
+    category: 'payment',
+  },
+  {
+    id: 3,
+    title: 'Hướng dẫn giao hàng, đổi trả và bảo hành',
+    description: 'Các mốc vận chuyển, thời gian nhận hàng và xử lý khi phát sinh vấn đề.',
+    category: 'shipping',
+  },
+];
+
+const getChatReply = (message: string) => {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes('đơn') || normalized.includes('ship') || normalized.includes('giao')) {
+    return 'Bạn có thể vào mục "Theo dõi đơn hàng" ngay bên trên, nhập mã đơn + email để xem tiến trình realtime như Shopee.';
+  }
+
+  if (normalized.includes('thanh toán') || normalized.includes('cod') || normalized.includes('chuyển khoản')) {
+    return 'Shop hỗ trợ COD và chuyển khoản. Với đơn lớn, bạn có thể được yêu cầu đặt cọc. Mình đã có phần hướng dẫn chi tiết trong danh mục "Hướng dẫn chi tiết".';
+  }
+
+  if (normalized.includes('đổi') || normalized.includes('trả') || normalized.includes('bảo hành')) {
+    return 'Bạn được hỗ trợ đổi trả theo chính sách từng loại sản phẩm. Hãy mở danh mục "Đổi trả" hoặc "Bảo hành" bên dưới để xem điều kiện cụ thể.';
+  }
+
+  return 'Mình đã nhận câu hỏi của bạn. Bạn có thể chọn ngay 1 danh mục FAQ bên dưới để xem câu trả lời chính xác hơn.';
+};
 
 // ===========================
 // CATEGORIES
@@ -209,9 +253,11 @@ interface SupportCardProps {
   card: SupportCardData;
   index: number;
   isVisible: boolean;
+  isActive: boolean;
+  onSelect: (supportId: SupportCategoryId) => void;
 }
 
-const SupportCard: React.FC<SupportCardProps> = ({ card, index, isVisible }) => {
+const SupportCard: React.FC<SupportCardProps> = ({ card, index, isVisible, isActive, onSelect }) => {
   const Icon = card.icon;
   
   return (
@@ -220,9 +266,11 @@ const SupportCard: React.FC<SupportCardProps> = ({ card, index, isVisible }) => 
         bg-white border-2 border-gray-200 rounded-2xl p-8
         hover:border-primary hover:shadow-xl hover:-translate-y-2
         transition-all duration-300 cursor-pointer
+        ${isActive ? 'border-primary shadow-lg -translate-y-1' : ''}
         ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}
       `}
       style={{ transitionDelay: `${index * 100}ms` }}
+      onClick={() => onSelect(card.supportId)}
     >
       {/* Icon Container */}
       <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
@@ -235,7 +283,7 @@ const SupportCard: React.FC<SupportCardProps> = ({ card, index, isVisible }) => 
 
       {/* CTA Button */}
       <button
-        onClick={card.ctaAction}
+        onClick={() => onSelect(card.supportId)}
         className="
           w-full bg-primary hover:bg-red-700 text-white 
           py-3 px-6 rounded-lg 
@@ -389,14 +437,49 @@ const FAQList: React.FC<FAQListProps> = ({ faqs, openFaqId, onToggle }) => {
 // MAIN COMPONENT: FAQ
 // ===========================
 export const FAQ: React.FC = () => {
+  const navigate = useNavigate();
+
   // State management
   const [activeCategory, setActiveCategory] = useState('all');
   const [openFaqId, setOpenFaqId] = useState<number | null>(null);
+  const [activeSupportCategory, setActiveSupportCategory] = useState<SupportCategoryId>('live-chat');
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{ id: number; role: 'user' | 'bot'; text: string }>>([
+    {
+      id: 1,
+      role: 'bot',
+      text: 'Xin chào! Mình là trợ lý hỗ trợ đơn hàng. Bạn cần tư vấn về sản phẩm, thanh toán hay theo dõi vận chuyển?',
+    },
+  ]);
+  const [trackingForm, setTrackingForm] = useState({ orderCode: '', email: '', phone: '' });
+  const [isTrackingLookupLoading, setIsTrackingLookupLoading] = useState(false);
 
   // Scroll animations
   const header = useScrollAnimation(0.1);
   const cards = useScrollAnimation(0.1);
   const faqSection = useScrollAnimation(0.1);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    const guestEmail = localStorage.getItem('guestOrderEmail') || '';
+    const guestPhone = localStorage.getItem('guestOrderPhone') || '';
+
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setTrackingForm((prev) => ({
+          ...prev,
+          email: user?.email || guestEmail,
+          phone: user?.phone || guestPhone,
+        }));
+        return;
+      } catch {
+        // Keep guest defaults if local user state is broken.
+      }
+    }
+
+    setTrackingForm((prev) => ({ ...prev, email: guestEmail, phone: guestPhone }));
+  }, []);
 
   // Filter FAQs based on category only
   const filteredFaqs = useMemo(() => {
@@ -419,6 +502,89 @@ export const FAQ: React.FC = () => {
   const handleCategoryChange = (categoryId: string) => {
     setActiveCategory(categoryId);
     setOpenFaqId(null); // Close all accordions when switching tabs
+  };
+
+  const openFaqByCategory = useCallback((categoryId: FAQItem['category']) => {
+    setActiveCategory(categoryId);
+    const firstMatched = faqData.find((faq) => faq.category === categoryId);
+    setOpenFaqId(firstMatched ? firstMatched.id : null);
+    faqSection.ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [faqSection.ref]);
+
+  const handleSupportSelect = (supportId: SupportCategoryId) => {
+    setActiveSupportCategory(supportId);
+  };
+
+  const handleQuickQuestion = (question: string) => {
+    const userMessage = { id: Date.now(), role: 'user' as const, text: question };
+    const botMessage = { id: Date.now() + 1, role: 'bot' as const, text: getChatReply(question) };
+    setChatMessages((prev) => [...prev, userMessage, botMessage]);
+  };
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!chatInput.trim()) {
+      toast.error('Vui lòng nhập nội dung cần hỗ trợ');
+      return;
+    }
+
+    const message = chatInput.trim();
+    const userMessage = { id: Date.now(), role: 'user' as const, text: message };
+    const botMessage = { id: Date.now() + 1, role: 'bot' as const, text: getChatReply(message) };
+
+    setChatMessages((prev) => [...prev, userMessage, botMessage]);
+    setChatInput('');
+  };
+
+  const handleTrackingLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const normalizedOrderCode = trackingForm.orderCode.trim().toUpperCase();
+    const normalizedEmail = trackingForm.email.trim();
+    const normalizedPhone = trackingForm.phone.trim();
+
+    if (!normalizedOrderCode || !normalizedEmail) {
+      toast.error('Vui lòng nhập mã đơn hàng và email đặt hàng');
+      return;
+    }
+
+    setIsTrackingLookupLoading(true);
+
+    try {
+      const params = new URLSearchParams();
+      params.set('email', normalizedEmail);
+      if (normalizedPhone) {
+        params.set('phone', normalizedPhone);
+      }
+
+      const response = await fetch(`${buildApiUrl('/orders')}?${params.toString()}`);
+      const payload = await response.json().catch(() => []);
+
+      if (!response.ok) {
+        throw new Error((payload as { message?: string })?.message || 'Không thể tra cứu đơn hàng');
+      }
+
+      const orders = Array.isArray(payload) ? payload : [];
+      const matched = orders.find((order: { orderNumber?: string }) => (order.orderNumber || '').toUpperCase() === normalizedOrderCode);
+
+      if (!matched) {
+        toast.error('Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã đơn/email.');
+        return;
+      }
+
+      localStorage.setItem('guestOrderEmail', normalizedEmail);
+      localStorage.setItem('guestOrderPhone', normalizedPhone);
+      localStorage.setItem('guestOrderName', matched.customerName || 'Khách hàng');
+
+      toast.success('Đã tìm thấy đơn hàng, đang chuyển sang trang theo dõi...');
+      navigate(`/orders/${matched.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể tra cứu đơn hàng';
+      toast.error(message);
+    } finally {
+      setIsTrackingLookupLoading(false);
+    }
   };
 
   return (
@@ -462,8 +628,114 @@ export const FAQ: React.FC = () => {
               card={card}
               index={index}
               isVisible={cards.isVisible}
+              isActive={activeSupportCategory === card.supportId}
+              onSelect={handleSupportSelect}
             />
           ))}
+        </div>
+
+        <div className="mt-8 bg-white border-2 border-gray-200 rounded-2xl p-6 md:p-8">
+          {activeSupportCategory === 'live-chat' && (
+            <div>
+              <h3 className="text-2xl text-black mb-2">Live chat hỗ trợ nhanh</h3>
+              <p className="text-gray-600 mb-5">Mô phỏng trung tâm chat hỗ trợ kiểu Shopee: hỏi nhanh, trả lời nhanh, có gợi ý sẵn.</p>
+
+              <div className="flex flex-wrap gap-2 mb-5">
+                <button onClick={() => handleQuickQuestion('Làm sao để theo dõi đơn hàng?')} className="px-3 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                  Theo dõi đơn hàng
+                </button>
+                <button onClick={() => handleQuickQuestion('Shop hỗ trợ thanh toán gì?')} className="px-3 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                  Hình thức thanh toán
+                </button>
+                <button onClick={() => handleQuickQuestion('Chính sách đổi trả ra sao?')} className="px-3 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                  Chính sách đổi trả
+                </button>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3 max-h-64 overflow-y-auto">
+                {chatMessages.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[90%] px-4 py-2 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <form onSubmit={handleSendChat} className="mt-4 flex gap-3">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Nhập câu hỏi của bạn..."
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <button type="submit" className="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                  Gửi
+                </button>
+              </form>
+            </div>
+          )}
+
+          {activeSupportCategory === 'guide' && (
+            <div>
+              <h3 className="text-2xl text-black mb-2">Trung tâm hướng dẫn chi tiết</h3>
+              <p className="text-gray-600 mb-5">Chọn mục hướng dẫn để mở thẳng nhóm FAQ tương ứng, giống cách Shopee điều hướng theo chủ đề hỗ trợ.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {guideShortcuts.map((guide) => (
+                  <div key={guide.id} className="rounded-xl border border-gray-200 p-4 hover:border-primary hover:shadow-md transition-all">
+                    <h4 className="text-lg text-black mb-2">{guide.title}</h4>
+                    <p className="text-sm text-gray-600 mb-4 min-h-[60px]">{guide.description}</p>
+                    <button
+                      onClick={() => openFaqByCategory(guide.category)}
+                      className="w-full py-2.5 rounded-lg bg-black text-white hover:bg-gray-900 transition-colors"
+                    >
+                      Xem ngay
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeSupportCategory === 'tracking' && (
+            <div>
+              <h3 className="text-2xl text-black mb-2">Theo dõi đơn hàng realtime</h3>
+              <p className="text-gray-600 mb-5">Nhập mã đơn và email đặt hàng để xem tiến trình giao hàng như Shopee: xử lý, vận chuyển, giao thành công.</p>
+
+              <form onSubmit={handleTrackingLookup} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  value={trackingForm.orderCode}
+                  onChange={(e) => setTrackingForm((prev) => ({ ...prev, orderCode: e.target.value.toUpperCase() }))}
+                  placeholder="Mã đơn (ví dụ: ORD-123456)"
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <input
+                  type="email"
+                  value={trackingForm.email}
+                  onChange={(e) => setTrackingForm((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email đặt hàng"
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <input
+                  type="tel"
+                  value={trackingForm.phone}
+                  onChange={(e) => setTrackingForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Số điện thoại (không bắt buộc)"
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <button
+                  type="submit"
+                  disabled={isTrackingLookupLoading}
+                  className="md:col-span-3 py-3 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60"
+                >
+                  {isTrackingLookupLoading ? 'Đang tra cứu...' : 'Theo dõi đơn hàng ngay'}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       </div>
 
@@ -515,7 +787,7 @@ export const FAQ: React.FC = () => {
                 Đội ngũ của chúng tôi luôn sẵn sàng giúp đỡ bạn 24/7
               </p>
               <button
-                onClick={() => alert('📞 Chuyển đến trang liên hệ (Demo)')}
+                onClick={() => navigate('/contact')}
                 className="
                   bg-black hover:bg-gray-900 text-white 
                   py-3 px-8 rounded-lg 

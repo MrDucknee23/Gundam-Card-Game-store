@@ -49,8 +49,6 @@ const AddProduct = lazyPage(() => import('./pages/AddProduct'), 'AddProduct');
 const ManageProductsEnhanced = lazyPage(() => import('./pages/ManageProductsEnhanced'), 'ManageProductsEnhanced');
 const ProductDetails = lazyPage(() => import('./pages/ProductDetails'), 'ProductDetails');
 const AdminUsers = lazyPage(() => import('./pages/AdminUsers'), 'AdminUsers');
-const AdminCategories = lazyPage(() => import('./pages/AdminCategories'), 'AdminCategories');
-const AdminCategoryAttributes = lazyPage(() => import('./pages/AdminCategoryAttributes'), 'AdminCategoryAttributes');
 const ManageOrders = lazyPage(() => import('./pages/ManageOrders'), 'ManageOrders');
 const OrderDetail = lazyPage(() => import('./pages/OrderDetail'), 'OrderDetail');
 const InventoryInbound = lazyPage(() => import('./pages/InventoryInbound'), 'InventoryInbound');
@@ -92,8 +90,6 @@ export const router = createBrowserRouter([
       { path: 'orders', Component: ManageOrders },
       { path: 'orders/:id', Component: OrderDetail },
       { path: 'users', Component: AdminUsers },
-      { path: 'categories', Component: AdminCategories },
-      { path: 'category-attributes', Component: AdminCategoryAttributes },
       { path: 'inventory/inbound', Component: InventoryInbound },
       { path: 'inventory/inbound/:id', Component: InboundDetail }
     ]
