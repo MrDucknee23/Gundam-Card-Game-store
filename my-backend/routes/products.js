@@ -3,11 +3,6 @@ const router = express.Router();
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
-const getValidCategories = async () => {
-  const cats = await Category.find({}, 'slug');
-  return new Set(cats.map(c => c.slug));
-};
-
 const sanitizeProductPayload = (body) => ({
   name: typeof body.name === 'string' ? body.name.trim() : '',
   description: typeof body.description === 'string' ? body.description.trim() : '',
@@ -20,6 +15,8 @@ const sanitizeProductPayload = (body) => ({
   material: typeof body.material === 'string' ? body.material.trim() : undefined,
   rarity: typeof body.rarity === 'string' ? body.rarity.trim() : undefined,
   cardType: typeof body.cardType === 'string' ? body.cardType.trim() : undefined,
+  subCategoryKey: typeof body.subCategoryKey === 'string' ? body.subCategoryKey.trim() : undefined,
+  subCategoryValue: typeof body.subCategoryValue === 'string' ? body.subCategoryValue.trim() : undefined,
   featured: Boolean(body.featured),
 });
 
@@ -30,8 +27,8 @@ const validateProductPayload = async (payload) => {
     errors.push('Ten san pham la bat buoc');
   }
 
-  const validCategories = await getValidCategories();
-  if (!validCategories.has(payload.category)) {
+  const categoryDoc = await Category.findOne({ slug: payload.category });
+  if (!categoryDoc) {
     errors.push('Danh muc san pham khong hop le');
   }
 
@@ -51,6 +48,34 @@ const validateProductPayload = async (payload) => {
     errors.push('San pham chi duoc toi da 10 hinh anh');
   }
 
+  const group = categoryDoc?.attributeGroup;
+  const activeOptions = group?.options?.filter((option) => option.isActive !== false) ?? [];
+  const selectedValue = payload.subCategoryValue || payload.grade || payload.rarity;
+
+  if (group?.isActive && activeOptions.length > 0) {
+    if (!selectedValue) {
+      errors.push(`${group.label || 'Thuoc tinh'} la bat buoc`);
+    } else {
+      const isValidOption = activeOptions.some((option) => option.value === selectedValue || option.label === selectedValue);
+      if (!isValidOption) {
+        errors.push(`${group.label || 'Thuoc tinh'} khong hop le`);
+      }
+    }
+  }
+
+  if (selectedValue) {
+    payload.subCategoryKey = group?.key || payload.subCategoryKey || undefined;
+    payload.subCategoryValue = selectedValue;
+
+    if (payload.subCategoryKey === 'grade') {
+      payload.grade = selectedValue;
+      payload.rarity = undefined;
+    } else if (payload.subCategoryKey === 'rarity') {
+      payload.rarity = selectedValue;
+      payload.grade = undefined;
+    }
+  }
+
   return errors;
 };
 
@@ -58,7 +83,6 @@ const validateProductPayload = async (payload) => {
 router.get('/', async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
-    // Đổi _id thành id để Frontend React dễ đọc
     const formatted = products.map(p => ({
       ...p.toObject(),
       id: p._id.toString()

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router';
 import { useCategories } from '../hooks/useCategories';
 import { createCategory, updateCategory, deleteCategory, type Category, type CategoryPayload } from '../utils/categoryApi';
 import { toast } from 'sonner';
@@ -82,17 +83,25 @@ export const AdminCategories: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-black">Danh mục sản phẩm</h1>
           <p className="text-gray-500 mt-1">Quản lý các loại danh mục trong cửa hàng</p>
         </div>
-        <button
-          onClick={openAdd}
-          className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 hover:scale-105"
-        >
-          + Thêm danh mục
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin/category-attributes"
+            className="px-4 py-2.5 rounded-lg font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Quản lý cấp độ / độ hiếm
+          </Link>
+          <button
+            onClick={openAdd}
+            className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 hover:scale-105"
+          >
+            + Thêm danh mục
+          </button>
+        </div>
       </div>
 
       {loading ? (

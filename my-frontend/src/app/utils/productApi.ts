@@ -19,6 +19,8 @@ export interface ProductPayload {
   images: string[];
   grade?: string;
   rarity?: string;
+  subCategoryKey?: string;
+  subCategoryValue?: string;
   scale?: string;
   material?: string;
   cardType?: string;
@@ -78,6 +80,8 @@ export const mapApiProduct = (product: ApiProduct): Product => ({
   images: normalizeImages(product.images),
   grade: product.grade || undefined,
   rarity: product.rarity || undefined,
+  subCategoryKey: product.subCategoryKey || undefined,
+  subCategoryValue: product.subCategoryValue || undefined,
   scale: product.scale || undefined,
   material: product.material || undefined,
   cardType: product.cardType || undefined,
