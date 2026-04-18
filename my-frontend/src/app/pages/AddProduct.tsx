@@ -17,6 +17,7 @@ const emptyFormData = {
   stock: '',
   grade: '' as GundamGrade | '',
   rarity: '' as CardRarity | '',
+  subCategoryValue: '',
   scale: '',
   material: '',
   cardType: '',
@@ -69,6 +70,7 @@ export const AddProduct: React.FC = () => {
           category: value as ProductCategory | '',
           grade: '',
           rarity: '',
+          subCategoryValue: '',
           scale: '',
           material: '',
           cardType: '',
@@ -121,6 +123,7 @@ export const AddProduct: React.FC = () => {
           stock: String(product.stock),
           grade: (product.grade as GundamGrade | undefined) || '',
           rarity: (product.rarity as CardRarity | undefined) || '',
+          subCategoryValue: product.subCategoryValue || product.grade || product.rarity || '',
           scale: product.scale || '',
           material: product.material || '',
           cardType: product.cardType || '',
@@ -181,9 +184,43 @@ export const AddProduct: React.FC = () => {
     setSubImages(prev => prev.map((img, i) => i === imageIndex ? currentMain : img));
   };
 
+  const isCardCategory = formData.category === 'pokemon' || formData.category === 'onepiece';
+  const selectedCategoryData = categories.find((category) => category.slug === formData.category);
+  const fallbackAttributeGroup = formData.category === 'gundam'
+    ? {
+        key: 'grade',
+        label: 'Cấp độ',
+        options: ['HG', 'RG', 'MG', 'PG'].map((option, index) => ({ value: option, label: option, sortOrder: index, isActive: true })),
+      }
+    : isCardCategory
+      ? {
+          key: 'rarity',
+          label: 'Độ hiếm',
+          options: ['Common', 'Rare', 'Super Rare', 'Ultra Rare'].map((option, index) => ({ value: option, label: option, sortOrder: index, isActive: true })),
+        }
+      : undefined;
+
+  const currentAttributeGroup = (selectedCategoryData?.attributeGroup?.isActive === false
+    ? undefined
+    : selectedCategoryData?.attributeGroup) || fallbackAttributeGroup;
+
+  const activeAttributeOptions = currentAttributeGroup?.options?.filter((option) => option.isActive !== false) ?? [];
+  const selectedAttributeValue = formData.subCategoryValue
+    || (currentAttributeGroup?.key === 'grade' ? formData.grade : '')
+    || (currentAttributeGroup?.key === 'rarity' ? formData.rarity : '');
+
+  const handleAttributeValueChange = (value: string) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      subCategoryValue: value,
+      grade: currentAttributeGroup?.key === 'grade' ? (value as GundamGrade | '') : '',
+      rarity: currentAttributeGroup?.key === 'rarity' ? (value as CardRarity | '') : '',
+    }));
+  };
+
   const buildPayload = (): ProductPayload => {
     const images = [mainImage, ...subImages].filter((image) => image.trim() !== '');
-    const isCardCategory = formData.category === 'pokemon' || formData.category === 'onepiece';
+    const attributeValue = selectedAttributeValue || undefined;
 
     return {
       name: formData.name.trim(),
@@ -192,10 +229,12 @@ export const AddProduct: React.FC = () => {
       description: formData.description.trim(),
       stock: Number(formData.stock),
       images,
-      grade: formData.category === 'gundam' ? formData.grade || undefined : undefined,
+      grade: currentAttributeGroup?.key === 'grade' ? attributeValue : undefined,
+      subCategoryKey: currentAttributeGroup?.key || undefined,
+      subCategoryValue: attributeValue,
       scale: formData.category === 'gundam' ? formData.scale.trim() || undefined : undefined,
       material: formData.category === 'gundam' ? formData.material.trim() || undefined : undefined,
-      rarity: isCardCategory ? formData.rarity || undefined : undefined,
+      rarity: currentAttributeGroup?.key === 'rarity' ? attributeValue : undefined,
       cardType: isCardCategory ? formData.cardType.trim() || undefined : undefined,
       featured: formData.featured,
     };
@@ -253,8 +292,6 @@ export const AddProduct: React.FC = () => {
     setMainImage('');
     setSubImages([]);
   };
-
-  const isCardCategory = formData.category === 'pokemon' || formData.category === 'onepiece';
 
   if (isLoadingProduct) {
     return (
@@ -386,19 +423,17 @@ export const AddProduct: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <Label htmlFor="grade" className="text-black">Grade</Label>
+                  <Label htmlFor="grade" className="text-black">{currentAttributeGroup?.label || 'Grade'}</Label>
                   <select
                     id="grade"
-                    name="grade"
-                    value={formData.grade}
-                    onChange={handleInputChange}
+                    value={selectedAttributeValue}
+                    onChange={(e) => handleAttributeValueChange(e.target.value)}
                     className="mt-2 w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-black focus:outline-none focus:border-primary transition-colors"
                   >
-                    <option value="">Select grade</option>
-                    <option value="HG">HG - High Grade</option>
-                    <option value="MG">MG - Master Grade</option>
-                    <option value="RG">RG - Real Grade</option>
-                    <option value="PG">PG - Perfect Grade</option>
+                    <option value="">Chọn {currentAttributeGroup?.label?.toLowerCase() || 'grade'}</option>
+                    {activeAttributeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -448,27 +483,48 @@ export const AddProduct: React.FC = () => {
                 </div>
 
                 <div>
-                  <Label className="text-black block mb-3">Rarity Level</Label>
+                  <Label className="text-black block mb-3">{currentAttributeGroup?.label || 'Rarity Level'}</Label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {(['Common', 'Rare', 'Super Rare', 'Ultra Rare'] as CardRarity[]).map(rarity => (
+                    {activeAttributeOptions.map((option) => (
                       <button
-                        key={rarity}
+                        key={option.value}
                         type="button"
-                        onClick={() => setFormData({ ...formData, rarity })}
+                        onClick={() => handleAttributeValueChange(option.value)}
                         className={`
                           px-6 py-4 rounded-lg border-2 transition-all duration-200 font-semibold
-                          ${formData.rarity === rarity 
-                            ? 'border-primary bg-primary text-white scale-105' 
+                          ${selectedAttributeValue === option.value
+                            ? 'border-primary bg-primary text-white scale-105'
                             : 'border-gray-200 bg-white text-gray-700 hover:border-primary/50 hover:bg-gray-50'
                           }
                         `}
                       >
-                        {rarity}
+                        {option.label}
                       </button>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-500 mt-3">Select the rarity level for this card</p>
+                  <p className="text-sm text-gray-500 mt-3">Chọn giá trị phù hợp cho sản phẩm thẻ bài này</p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {formData.category && currentAttributeGroup && formData.category !== 'gundam' && !isCardCategory && (
+            <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+              <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Thuộc tính danh mục</h2>
+
+              <div>
+                <Label htmlFor="subCategoryValue" className="text-black">{currentAttributeGroup.label}</Label>
+                <select
+                  id="subCategoryValue"
+                  value={selectedAttributeValue}
+                  onChange={(e) => handleAttributeValueChange(e.target.value)}
+                  className="mt-2 w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-black focus:outline-none focus:border-primary transition-colors"
+                >
+                  <option value="">Chọn {currentAttributeGroup.label.toLowerCase()}</option>
+                  {activeAttributeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
           )}

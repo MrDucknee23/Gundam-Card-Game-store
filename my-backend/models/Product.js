@@ -11,6 +11,8 @@ const productSchema = new mongoose.Schema({
   brand: { type: String },
   scale: { type: String },
   grade: { type: String },
+  subCategoryKey: { type: String },
+  subCategoryValue: { type: String },
   cardType: { type: String },
   series: { type: String },
   rarity: { type: String },

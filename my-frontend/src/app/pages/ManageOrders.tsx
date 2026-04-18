@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
-import { Eye } from 'lucide-react';
+import { Eye, Search } from 'lucide-react';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
-import type { Order } from '../data/orders'; // Import interface Order của bạn
+import type { Order, PaymentStatus, OrderStatus } from '../data/orders';
 import { formatCurrency } from '../utils/format';
 
 export const ManageOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentStatus>('all');
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | OrderStatus>('all');
 
   useEffect(() => {
-    // Gọi API lấy danh sách toàn bộ hóa đơn từ Database
     fetch('http://localhost:5000/api/orders')
       .then(res => res.json())
       .then(data => {
@@ -28,6 +30,42 @@ export const ManageOrders: React.FC = () => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
+  const getPaymentMethodLabel = (paymentMethod?: string) => {
+    switch (paymentMethod) {
+      case 'bank':
+      case 'bank_transfer':
+        return 'Chuyển khoản ngân hàng';
+      case 'momo':
+        return 'Ví MoMo';
+      case 'zalopay':
+        return 'ZaloPay';
+      case 'credit_card':
+        return 'Thẻ tín dụng';
+      default:
+        return 'Thanh toán khi nhận hàng (COD)';
+    }
+  };
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const searchableContent = [
+        order.orderNumber,
+        order.customerName,
+        order.customerEmail,
+        order.customerPhone,
+        ...order.items.map((item) => item.productName),
+      ].join(' ').toLowerCase();
+
+      const matchesSearch = normalizedSearchQuery === '' || searchableContent.includes(normalizedSearchQuery);
+      const matchesPayment = paymentFilter === 'all' || order.paymentStatus === paymentFilter;
+      const matchesOrderStatus = orderStatusFilter === 'all' || order.orderStatus === orderStatusFilter;
+
+      return matchesSearch && matchesPayment && matchesOrderStatus;
+    });
+  }, [orders, normalizedSearchQuery, paymentFilter, orderStatusFilter]);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -38,6 +76,48 @@ export const ManageOrders: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý hóa đơn</h1>
             <p className="text-gray-600">Theo dõi và cập nhật trạng thái các đơn đặt hàng.</p>
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative md:col-span-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm theo mã đơn, khách hàng, SĐT..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+            </div>
+
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value as 'all' | PaymentStatus)}
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="all">Tất cả thanh toán</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="pending">Chờ thanh toán</option>
+              <option value="failed">Thất bại</option>
+            </select>
+
+            <select
+              value={orderStatusFilter}
+              onChange={(e) => setOrderStatusFilter(e.target.value as 'all' | OrderStatus)}
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="all">Tất cả trạng thái đơn</option>
+              <option value="processing">Đang xử lý</option>
+              <option value="shipped">Đang giao</option>
+              <option value="delivered">Hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </div>
+
+          <p className="text-sm text-gray-500 mt-3">
+            Hiển thị {filteredOrders.length} / {orders.length} đơn hàng
+          </p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -59,12 +139,12 @@ export const ManageOrders: React.FC = () => {
                   <tr>
                     <td colSpan={7} className="text-center py-8 text-gray-500">Đang tải dữ liệu...</td>
                   </tr>
-                ) : orders.length === 0 ? (
+                ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-gray-500">Chưa có đơn hàng nào.</td>
+                    <td colSpan={7} className="text-center py-8 text-gray-500">Không tìm thấy đơn hàng phù hợp.</td>
                   </tr>
                 ) : (
-                  orders.map(order => (
+                  filteredOrders.map(order => (
                     <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-gray-900">{order.orderNumber}</td>
                       <td className="px-6 py-4">
@@ -76,7 +156,7 @@ export const ManageOrders: React.FC = () => {
                       <td className="px-6 py-4">
                         <StatusBadge status={order.paymentStatus} type="payment" />
                         <p className="text-xs text-gray-500 mt-2 font-medium">
-                          {(order as any).paymentMethod === 'bank' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}
+                          {getPaymentMethodLabel(order.paymentMethod)}
                         </p>
                       </td>
                       <td className="px-6 py-4">

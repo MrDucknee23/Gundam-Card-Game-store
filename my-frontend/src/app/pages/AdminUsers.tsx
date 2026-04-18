@@ -25,11 +25,18 @@ export const AdminUsers: React.FC = () => {
     active: users.filter(u => u.status === 'active').length,
   };
 
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const normalizedPhoneQuery = normalizedSearchQuery.replace(/\D/g, '');
+
   const filteredUsers = users.filter(user => {
-    const matchesSearch = searchQuery === '' || 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.phone.includes(searchQuery);
+    const userName = (user.name ?? '').toLowerCase();
+    const userEmail = (user.email ?? '').toLowerCase();
+    const userPhone = (user.phone ?? '').replace(/\D/g, '');
+
+    const matchesSearch = normalizedSearchQuery === '' || 
+      userName.includes(normalizedSearchQuery) ||
+      userEmail.includes(normalizedSearchQuery) ||
+      userPhone.includes(normalizedPhoneQuery);
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { ProductCategory, GundamGrade, CardRarity } from '../types/product';
+import { ProductCategory } from '../types/product';
 import { useProducts } from '../hooks/useProducts';
 import { useCategories } from '../hooks/useCategories';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
@@ -10,15 +10,34 @@ import { Slider } from '../components/ui/slider';
 import { Input } from '../components/ui/input';
 import { formatPriceNumber } from '../utils/format';
 
+const getFallbackAttributeGroup = (category: ProductCategory | '') => {
+  if (category === 'gundam') {
+    return {
+      key: 'grade',
+      label: 'Cấp độ',
+      options: ['HG', 'RG', 'MG', 'PG'].map((option, index) => ({ value: option, label: option, sortOrder: index, isActive: true })),
+    };
+  }
+
+  if (category === 'pokemon' || category === 'onepiece') {
+    return {
+      key: 'rarity',
+      label: 'Độ hiếm',
+      options: ['Common', 'Rare', 'Super Rare', 'Ultra Rare'].map((option, index) => ({ value: option, label: option, sortOrder: index, isActive: true })),
+    };
+  }
+
+  return undefined;
+};
+
 export const Shop: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { products, loading, error } = useProducts();
   const { categories } = useCategories();
   const maxAvailablePrice = Math.max(10000000, ...products.map((product) => product.price));
 
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | ''>('');
-  const [selectedGrade, setSelectedGrade] = useState<GundamGrade | ''>('');
-  const [selectedRarity, setSelectedRarity] = useState<CardRarity | ''>('');
+  const [selectedAttributeValue, setSelectedAttributeValue] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [minPriceInput, setMinPriceInput] = useState('0');
   const [maxPriceInput, setMaxPriceInput] = useState(formatPriceNumber(10000000));
@@ -40,10 +59,56 @@ export const Shop: React.FC = () => {
     setMaxPriceInput(formatPriceNumber(maxAvailablePrice));
   }, [products, maxAvailablePrice]);
 
+  const selectedCategoryData = useMemo(
+    () => categories.find((category) => category.slug === selectedCategory),
+    [categories, selectedCategory]
+  );
+
+  const currentAttributeGroup = useMemo(() => {
+    const configuredGroup = selectedCategoryData?.attributeGroup?.isActive === false
+      ? undefined
+      : selectedCategoryData?.attributeGroup;
+
+    return configuredGroup || getFallbackAttributeGroup(selectedCategory);
+  }, [selectedCategory, selectedCategoryData]);
+
+  const activeAttributeOptions = currentAttributeGroup?.options?.filter((option) => option.isActive !== false) ?? [];
+
+  const filteredProducts = useMemo(() => products.filter(product => {
+    if (selectedCategory && product.category !== selectedCategory) return false;
+
+    if (selectedAttributeValue) {
+      const productAttributeValue = product.subCategoryValue || product.grade || product.rarity || '';
+      if (productAttributeValue !== selectedAttributeValue) return false;
+    }
+
+    if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
+
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return product.name.toLowerCase().includes(query) ||
+             product.description.toLowerCase().includes(query);
+    }
+
+    return true;
+  }), [products, selectedCategory, selectedAttributeValue, priceRange, searchParams]);
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-gray-500 text-lg">Đang tải sản phẩm...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-red-500 text-lg">{error}</p>
+    </div>
+  );
+
   const handleCategoryChange = (category: ProductCategory | '') => {
     setSelectedCategory(category);
-    setSelectedGrade('');
-    setSelectedRarity('');
+    setSelectedAttributeValue('');
   };
 
   const handlePriceRangeChange = (value: number[]) => {
@@ -73,41 +138,12 @@ export const Shop: React.FC = () => {
     }
   };
 
-  const filteredProducts = useMemo(() => products.filter(product => {
-    if (selectedCategory && product.category !== selectedCategory) return false;
-    if (selectedGrade && product.grade !== selectedGrade) return false;
-    if (selectedRarity && product.rarity !== selectedRarity) return false;
-    if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
-    const searchQuery = searchParams.get('search');
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return product.name.toLowerCase().includes(query) ||
-             product.description.toLowerCase().includes(query);
-    }
-    return true;
-  }), [products, selectedCategory, selectedGrade, selectedRarity, priceRange, searchParams]);
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500 text-lg">Đang tải sản phẩm...</p>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-red-500 text-lg">{error}</p>
-    </div>
-  );
-
-
-
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-black mb-8">Cửa hàng</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
           <aside className="lg:col-span-1">
             <div className="bg-white rounded-xl p-6 sticky top-24 border border-gray-200 shadow-sm">
               <h2 className="text-xl font-bold mb-6 text-black border-b border-gray-200 pb-3">Bộ lọc</h2>
@@ -133,51 +169,40 @@ export const Shop: React.FC = () => {
                 </CollapsibleContent>
               </Collapsible>
 
-              <Collapsible defaultOpen className="mb-6">
-                <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
-                  Cấp độ
-                  <ChevronDown className="w-5 h-5 text-primary transition-transform duration-300 group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {selectedCategory === 'gundam' && (
+              {selectedCategory && currentAttributeGroup && activeAttributeOptions.length > 0 && (
+                <Collapsible defaultOpen className="mb-6">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
+                    {currentAttributeGroup.label}
+                    <ChevronDown className="w-5 h-5 text-primary transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                        <input type="radio" name="grade" checked={selectedGrade === ''} onChange={() => setSelectedGrade('')} className="w-4 h-4 text-primary accent-primary" />
-                        <span>Tất cả cấp độ</span>
+                        <input
+                          type="radio"
+                          name="sub-category"
+                          checked={selectedAttributeValue === ''}
+                          onChange={() => setSelectedAttributeValue('')}
+                          className="w-4 h-4 text-primary accent-primary"
+                        />
+                        <span>Tất cả {currentAttributeGroup.label.toLowerCase()}</span>
                       </label>
-                      {(['HG', 'MG', 'RG', 'PG'] as GundamGrade[]).map(grade => (
-                        <label key={grade} className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                          <input type="radio" name="grade" checked={selectedGrade === grade} onChange={() => setSelectedGrade(grade)} className="w-4 h-4 text-primary accent-primary" />
-                          <span>{grade}</span>
+                      {activeAttributeOptions.map((option) => (
+                        <label key={option.value} className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
+                          <input
+                            type="radio"
+                            name="sub-category"
+                            checked={selectedAttributeValue === option.value}
+                            onChange={() => setSelectedAttributeValue(option.value)}
+                            className="w-4 h-4 text-primary accent-primary"
+                          />
+                          <span>{option.label}</span>
                         </label>
                       ))}
                     </div>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
-
-              <Collapsible defaultOpen className="mb-6">
-                <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
-                  Độ hiếm
-                  <ChevronDown className="w-5 h-5 text-primary transition-transform duration-300 group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {(selectedCategory === 'pokemon' || selectedCategory === 'onepiece') && (
-                    <div className="space-y-2">
-                      <label className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                        <input type="radio" name="rarity" checked={selectedRarity === ''} onChange={() => setSelectedRarity('')} className="w-4 h-4 text-primary accent-primary" />
-                        <span>Tất cả độ hiếm</span>
-                      </label>
-                      {(['Common', 'Rare', 'Super Rare', 'Ultra Rare'] as CardRarity[]).map(rarity => (
-                        <label key={rarity} className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-black transition-colors">
-                          <input type="radio" name="rarity" checked={selectedRarity === rarity} onChange={() => setSelectedRarity(rarity)} className="w-4 h-4 text-primary accent-primary" />
-                          <span>{rarity}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
 
               <Collapsible defaultOpen className="mb-6">
                 <CollapsibleTrigger className="flex items-center justify-between w-full font-semibold mb-3 text-black group hover:text-primary transition-colors">
@@ -206,7 +231,6 @@ export const Shop: React.FC = () => {
             </div>
           </aside>
 
-          {/* Products Grid */}
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
               <p className="text-gray-600">
