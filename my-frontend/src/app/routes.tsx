@@ -38,6 +38,11 @@ const Profile = lazyPage(() => import('./pages/Profile'), 'Profile');
 const About = lazyPage(() => import('./pages/About'), 'About');
 const Contact = lazyPage(() => import('./pages/Contact'), 'Contact');
 const FAQ = lazyPage(() => import('./pages/FAQ'), 'FAQ');
+const ReturnPolicy = lazyPage(() => import('./pages/ReturnPolicy'), 'ReturnPolicy');
+const ShippingPolicy = lazyPage(() => import('./pages/ShippingPolicy'), 'ShippingPolicy');
+const PurchaseGuide = lazyPage(() => import('./pages/PurchaseGuide'), 'PurchaseGuide');
+const TermsOfUse = lazyPage(() => import('./pages/TermsOfUse'), 'TermsOfUse');
+const PrivacyPolicy = lazyPage(() => import('./pages/PrivacyPolicy'), 'PrivacyPolicy');
 const MyOrders = lazyPage(() => import('./pages/MyOrders'), 'MyOrders');
 const OrderTracking = lazyPage(() => import('./pages/OrderTracking'), 'OrderTracking');
 const AdminLoginWrapper = lazyPage(() => import('./pages/AdminLoginWrapper'), 'AdminLoginWrapper');
@@ -49,10 +54,12 @@ const AddProduct = lazyPage(() => import('./pages/AddProduct'), 'AddProduct');
 const ManageProductsEnhanced = lazyPage(() => import('./pages/ManageProductsEnhanced'), 'ManageProductsEnhanced');
 const ProductDetails = lazyPage(() => import('./pages/ProductDetails'), 'ProductDetails');
 const AdminUsers = lazyPage(() => import('./pages/AdminUsers'), 'AdminUsers');
+const AdminCategories = lazyPage(() => import('./pages/AdminCategories'), 'AdminCategories');
 const ManageOrders = lazyPage(() => import('./pages/ManageOrders'), 'ManageOrders');
 const OrderDetail = lazyPage(() => import('./pages/OrderDetail'), 'OrderDetail');
 const InventoryInbound = lazyPage(() => import('./pages/InventoryInbound'), 'InventoryInbound');
 const InboundDetail = lazyPage(() => import('./pages/InboundDetail'), 'InboundDetail');
+const AdminChatTemplates = lazyPage(() => import('./pages/AdminChatTemplates'), 'AdminChatTemplates');
 
 export const router = createBrowserRouter([
   {
@@ -69,6 +76,11 @@ export const router = createBrowserRouter([
       { path: 'about', Component: About },
       { path: 'contact', Component: Contact },
       { path: 'faq', Component: FAQ },
+      { path: 'return-policy', Component: ReturnPolicy },
+      { path: 'shipping-policy', Component: ShippingPolicy },
+      { path: 'purchase-guide', Component: PurchaseGuide },
+      { path: 'terms-of-use', Component: TermsOfUse },
+      { path: 'privacy-policy', Component: PrivacyPolicy },
       { path: 'orders', Component: MyOrders },
       { path: 'orders/:id', Component: OrderTracking },
       { path: '*', Component: NotFound }
@@ -90,8 +102,11 @@ export const router = createBrowserRouter([
       { path: 'orders', Component: ManageOrders },
       { path: 'orders/:id', Component: OrderDetail },
       { path: 'users', Component: AdminUsers },
+      { path: 'categories', Component: AdminCategories },
+      { path: 'category-attributes', Component: AdminCategories },
       { path: 'inventory/inbound', Component: InventoryInbound },
-      { path: 'inventory/inbound/:id', Component: InboundDetail }
+      { path: 'inventory/inbound/:id', Component: InboundDetail },
+      { path: 'chat-templates', Component: AdminChatTemplates }
     ]
   }
 ]);

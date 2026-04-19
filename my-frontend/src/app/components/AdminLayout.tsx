@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import {
+  LayoutDashboard,
+  Boxes,
+  PackageSearch,
+  ReceiptText,
+  Users,
+  Truck,
+  MessageCircleMore,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
@@ -16,13 +25,21 @@ export const AdminLayout: React.FC = () => {
   };
 
   const menuItems = [
-    { path: '/admin', label: 'Dashboard' },
-    { path: '/admin/products', label: 'Quản lý sản phẩm' },
-    { path: '/admin/orders', label: 'Quản lý đơn hàng' },
-    { path: '/admin/users', label: 'Người dùng' },
-    { path: '/admin/inventory/inbound', label: 'Nhập hàng' }
-    
+    { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/admin/categories', label: 'Danh mục sản phẩm', icon: Boxes },
+    { path: '/admin/products', label: 'Quản lý sản phẩm', icon: PackageSearch },
+    { path: '/admin/orders', label: 'Quản lý đơn hàng', icon: ReceiptText },
+    { path: '/admin/users', label: 'Người dùng', icon: Users },
+    { path: '/admin/inventory/inbound', label: 'Nhập hàng', icon: Truck },
+    { path: '/admin/chat-templates', label: 'Mẫu chat', icon: MessageCircleMore },
   ];
+
+  const isActiveMenuItem = (path: string) => {
+    if (path === '/admin') {
+      return location.pathname === '/admin';
+    }
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,18 +61,19 @@ export const AdminLayout: React.FC = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden xl:grid flex-1 grid-cols-7 gap-3 px-6">
               {menuItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                    location.pathname === item.path
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-black'
+                  className={`group flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-center transition-all duration-200 ${
+                    isActiveMenuItem(item.path)
+                      ? 'border-primary bg-primary text-white shadow-[0_14px_35px_rgba(227,24,55,0.22)]'
+                      : 'border-transparent bg-gray-50 text-gray-700 hover:-translate-y-0.5 hover:border-gray-200 hover:bg-white hover:text-black hover:shadow-sm'
                   }`}
                 >
-                  {item.label}
+                  <item.icon className={`h-5 w-5 ${isActiveMenuItem(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-primary'}`} />
+                  <span className="text-sm font-semibold leading-tight">{item.label}</span>
                 </Link>
               ))}
             </nav>
@@ -87,7 +105,7 @@ export const AdminLayout: React.FC = () => {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"
+                className="xl:hidden p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {isMobileMenuOpen ? (
@@ -102,23 +120,24 @@ export const AdminLayout: React.FC = () => {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="lg:hidden mt-4 pt-4 border-t border-gray-200">
-              <nav className="space-y-2">
+            <div className="xl:hidden mt-4 pt-4 border-t border-gray-200">
+              <nav className="grid gap-2 sm:grid-cols-2">
                 {menuItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                      location.pathname === item.path
-                        ? 'bg-primary text-white'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-black'
+                    className={`flex min-h-[60px] items-center gap-3 rounded-xl border px-4 py-3 font-medium transition-all duration-200 ${
+                      isActiveMenuItem(item.path)
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-transparent text-gray-700 hover:bg-gray-100 hover:text-black'
                     }`}
                   >
-                    {item.label}
+                    <item.icon className="h-4 w-4" />
+                    <span className="text-sm">{item.label}</span>
                   </Link>
                 ))}
-                <div className="pt-2 border-t border-gray-200 mt-2">
+                <div className="pt-2 border-t border-gray-200 mt-2 sm:col-span-2">
                   <Link
                     to="/"
                     onClick={() => setIsMobileMenuOpen(false)}

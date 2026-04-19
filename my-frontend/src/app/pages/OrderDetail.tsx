@@ -32,6 +32,9 @@ export const OrderDetail: React.FC = () => {
   const [adminNotes, setAdminNotes] = useState('');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed'>('pending');
+  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+  const [customerTotalSpent, setCustomerTotalSpent] = useState<number | null>(null);
 
   useEffect(() => {
     // Gọi API lấy chi tiết đơn hàng
@@ -43,8 +46,16 @@ export const OrderDetail: React.FC = () => {
       .then((data) => {
         setOrder(data);
         setOrderStatus(data.orderStatus);
+        setPaymentStatus(data.paymentStatus || 'pending');
         setAdminNotes(data.notes || '');
         setIsLoading(false);
+        // Fetch customer total spending
+        if (data.customerEmail && data.customerEmail !== 'N/A') {
+          fetch(`http://localhost:5000/api/orders/stats/customer?email=${encodeURIComponent(data.customerEmail)}`)
+            .then(r => r.json())
+            .then(stats => setCustomerTotalSpent(stats.totalSpent || 0))
+            .catch(() => {});
+        }
       })
       .catch((error) => {
         console.error('Lỗi khi fetch chi tiết đơn hàng:', error);
@@ -101,6 +112,41 @@ export const OrderDetail: React.FC = () => {
       }
     } catch (error) {
       toast.error('Lỗi kết nối đến máy chủ');
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (paymentStatus === 'paid') return;
+    setIsConfirmingPayment(true);
+    try {
+      let res = await fetch(`http://localhost:5000/api/orders/${id}/confirm-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      // Fallback for servers not yet exposing /confirm-payment route.
+      if (res.status === 404) {
+        res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentStatus: 'Đã thanh toán' }),
+        });
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        setPaymentStatus('paid');
+        setCustomerTotalSpent(data.customerTotalSpent ?? customerTotalSpent);
+        setOrder((current: any) => current ? { ...current, paymentStatus: 'paid' } : current);
+        toast.success('Đã ghi nhận thanh toán thành công!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.message || 'Xác nhận thanh toán thất bại');
+      }
+    } catch {
+      toast.error('Lỗi kết nối đến máy chủ');
+    } finally {
+      setIsConfirmingPayment(false);
     }
   };
 
@@ -191,7 +237,7 @@ export const OrderDetail: React.FC = () => {
               <div className="flex items-center gap-3">
                 <p className="text-xl text-gray-600">{order.orderNumber}</p>
                 <StatusBadge status={order.orderStatus} type="order" />
-                <StatusBadge status={order.paymentStatus} type="payment" />
+                <StatusBadge status={paymentStatus} type="payment" />
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -479,10 +525,69 @@ export const OrderDetail: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Trạng thái thanh toán</p>
-                    <StatusBadge status={order.paymentStatus} type="payment" />
+                    <StatusBadge status={paymentStatus} type="payment" />
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Payment Confirmation */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Ghi nhận thanh toán</h2>
+              {/* Payment method instructions */}
+              {paymentStatus !== 'paid' && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                  {order.paymentMethod === 'bank' || order.paymentMethod === 'banking' ? (
+                    <>
+                      <p className="font-semibold mb-1">Chuyển khoản ngân hàng</p>
+                      <p>Kiểm tra tài khoản ngân hàng để xác nhận khách đã chuyển tiền, sau đó nhấn xác nhận bên dưới.</p>
+                    </>
+                  ) : order.paymentMethod === 'momo' ? (
+                    <>
+                      <p className="font-semibold mb-1">Ví MoMo</p>
+                      <p>Kiểm tra ví MoMo để xác nhận khách đã thanh toán, sau đó nhấn xác nhận.</p>
+                    </>
+                  ) : order.paymentMethod === 'zalopay' ? (
+                    <>
+                      <p className="font-semibold mb-1">ZaloPay</p>
+                      <p>Kiểm tra tài khoản ZaloPay để xác nhận giao dịch, sau đó nhấn xác nhận.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold mb-1">Thanh toán khi nhận hàng (COD)</p>
+                      <p>Xác nhận sau khi đơn hàng đã được giao và thu tiền mặt thành công.</p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {paymentStatus === 'paid' ? (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-green-800">Đã xác nhận thanh toán</p>
+                    <p className="text-xs text-green-700">Số tiền: {formatCurrency(order.total)}</p>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleConfirmPayment}
+                  disabled={isConfirmingPayment}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition-colors"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  {isConfirmingPayment ? 'Đang xử lý...' : 'Xác nhận đã thanh toán'}
+                </button>
+              )}
+
+              {/* Customer total spending */}
+              {customerTotalSpent !== null && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 mb-1">Tổng chi tiêu của khách hàng</p>
+                  <p className="text-lg font-bold text-primary">{formatCurrency(customerTotalSpent)}</p>
+                  <p className="text-xs text-gray-400">(Tính từ tất cả đơn đã thanh toán)</p>
+                </div>
+              )}
             </div>
 
             {/* Update Status */}

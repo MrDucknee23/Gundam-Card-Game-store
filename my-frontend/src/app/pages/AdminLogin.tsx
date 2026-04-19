@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { toast } from 'sonner';
-import { Eye, EyeOff } from 'lucide-react';
+import { limitedToast } from '../utils/limitedToast';
+import { PokemonPasswordIcon } from '../components/ui/PokemonPasswordIcon';
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export const AdminLogin: React.FC = () => {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-      toast.error('Vui lòng điền đầy đủ thông tin');
+      limitedToast.error('Vui lòng điền đầy đủ thông tin');
       return;
     }
 
@@ -37,13 +37,13 @@ export const AdminLogin: React.FC = () => {
       const success = await login(formData.email, formData.password, true);
       
       if (success) {
-        toast.success('Đăng nhập admin thành công!');
+        limitedToast.success('Đăng nhập admin thành công!');
         navigate('/admin');
       } else {
-        toast.error('Thông tin đăng nhập không đúng');
+        limitedToast.error('Thông tin đăng nhập không đúng');
       }
     } catch (error) {
-      toast.error('Đăng nhập thất bại. Vui lòng thử lại.');
+      limitedToast.error('Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -107,17 +107,17 @@ export const AdminLogin: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   required
-                  className="bg-white border-gray-300 text-black placeholder:text-gray-400 focus:border-primary pr-12"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400 focus:border-primary pr-16"
                   disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  className="absolute inset-y-0 right-2 flex items-center rounded-full bg-transparent p-1 transition-transform hover:scale-110 hover:bg-transparent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={isLoading}
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  <PokemonPasswordIcon isOpen={showPassword} />
                 </button>
               </div>
             </div>

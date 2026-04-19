@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { Heart } from 'lucide-react';
 import { Product } from '../types/product';
 import { Badge } from './ui/badge';
 import { formatPrice } from '../utils/format';
+import { limitedToast } from '../utils/limitedToast';
+import { isWishlisted, toggleWishlist } from '../utils/wishlist';
 
 interface ProductCardProps {
   product: Product;
@@ -40,15 +43,32 @@ const getGradeColor = (grade?: string) => {
 
 export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) => {
   const navigate = useNavigate();
-  const [isHovered, setIsHovered] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const isCardProduct = product.category === 'pokemon' || product.category === 'onepiece';
   const isGundamProduct = product.category === 'gundam';
+
+  useEffect(() => {
+    setIsFavorite(isWishlisted(product.id));
+  }, [product.id]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     navigate(`/product/${product.id}`);
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const nextState = toggleWishlist(product.id);
+      setIsFavorite(nextState);
+      limitedToast.success(nextState ? 'Đã thêm vào yêu thích' : 'Đã bỏ yêu thích');
+    } catch {
+      limitedToast.error('Không thể cập nhật yêu thích của sản phẩm này');
+    }
   };
 
   const getCategoryName = () => {
@@ -61,8 +81,6 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
   return (
     <Link 
       to={`/product/${product.id}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className="block h-full"
     >
       <div 
@@ -85,6 +103,18 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
       >
         {/* IMAGE AREA */}
         <div className="relative aspect-square overflow-hidden bg-gray-50 p-3">
+          <button
+            onClick={handleToggleFavorite}
+            aria-label={isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+            className={`absolute left-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 ${
+              isFavorite
+                ? 'border-primary bg-primary text-white shadow-[0_8px_18px_rgba(227,24,55,0.24)]'
+                : 'border-white/80 bg-white/92 text-gray-500 shadow-sm backdrop-blur hover:border-primary hover:text-primary'
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+          </button>
+
           <div className="w-full h-full rounded-xl overflow-hidden">
             <img
               src={product.images?.[0] || ''}
@@ -201,7 +231,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
                 text-sm
                 transition-all 
                 duration-300
-                hover:scale-105
+                hover:scale-[1.02]
                 ${isGundamProduct 
                   ? 'hover:bg-primary hover:text-white hover:shadow-[0_0_20px_rgba(227,24,55,0.4)]' 
                   : 'hover:bg-secondary hover:text-white hover:shadow-[0_0_20px_rgba(0,102,204,0.4)]'

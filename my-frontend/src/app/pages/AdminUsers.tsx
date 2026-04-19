@@ -85,8 +85,8 @@ export const AdminUsers: React.FC = () => {
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 lg:mb-8 gap-4">
             <div>
-              <h1 className="text-black mb-2">Quản lý người dùng</h1>
-              <p className="text-gray-600">Quản lý người dùng và quyền hạn</p>
+              <h1 className="text-3xl font-bold text-black mb-2 leading-tight">Quản lý người dùng</h1>
+              <p className="text-base text-gray-600">Quản lý người dùng và quyền hạn</p>
             </div>
             <button onClick={() => setIsAddModalOpen(true)} className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-[1.02]">
               + Thêm người dùng
@@ -113,46 +113,56 @@ export const AdminUsers: React.FC = () => {
 
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1220px] table-fixed">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Tên</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Email</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Số điện thoại</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Vai trò</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Ngày tham gia</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Đơn hàng</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Chi tiêu</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Trạng thái</th>
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold text-sm">Thao tác</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[20%]">Tên</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[24%]">Email</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[11%]">Số điện thoại</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[11%]">Vai trò</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[11%]">Ngày tham gia</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[8%]">Đơn hàng</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[10%]">Chi tiêu</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[10%]">Trạng thái</th>
+                    <th className="text-left py-4 px-6 text-gray-700 font-semibold text-sm leading-tight w-[9%]">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors align-middle">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">{user.name.charAt(0)}</div>
-                          <span className="font-semibold text-black">{user.name}</span>
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                            {user.avatar ? (
+                              <img
+                                src={user.avatar}
+                                alt={user.name}
+                                className="w-full h-full object-cover object-center"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-base">{user.name.charAt(0)}</div>
+                            )}
+                          </div>
+                          <span className="font-semibold text-black text-base leading-tight truncate">{user.name}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-gray-700">{user.email}</td>
-                      <td className="py-4 px-6 text-gray-700">{user.phone}</td>
+                      <td className="py-4 px-6 text-gray-700 text-sm leading-tight break-all">{user.email}</td>
+                      <td className="py-4 px-6 text-gray-700 text-sm leading-tight whitespace-nowrap">{user.phone}</td>
                       <td className="py-4 px-6">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getRoleBadgeColor(user.role)}`}>
+                        <span className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold leading-none ${getRoleBadgeColor(user.role)}`}>
                           {user.role === 'customer' ? 'Khách hàng' : 'Quản trị viên'}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-gray-700 text-sm">{new Date(user.joinDate).toLocaleDateString('vi-VN')}</td>
-                      <td className="py-4 px-6 text-gray-700 text-center">{user.ordersCount}</td>
-                      <td className="py-4 px-6 font-semibold text-black">{formatCurrency(user.totalSpending)}</td>
+                      <td className="py-4 px-6 text-gray-700 text-sm leading-tight whitespace-nowrap">{new Date(user.joinDate).toLocaleDateString('vi-VN')}</td>
+                      <td className="py-4 px-6 text-gray-700 text-center text-sm font-medium whitespace-nowrap">{user.ordersCount}</td>
+                      <td className="py-4 px-6 font-semibold text-black text-sm leading-tight whitespace-nowrap">{formatCurrency(user.totalSpending)}</td>
                       <td className="py-4 px-6">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getStatusBadgeColor(user.status)}`}>
+                        <span className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold leading-none ${getStatusBadgeColor(user.status)}`}>
                           {user.status === 'active' ? 'Hoạt động' : 'Bị khóa'}
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
                           <button onClick={() => openEditModal(user)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"><Pencil className="w-4 h-4 text-gray-700 group-hover:text-black" /></button>
                           <button onClick={() => toggleUserStatus(user.id)} className={`p-2 rounded-lg transition-colors group ${user.status === 'active' ? 'hover:bg-red-50' : 'hover:bg-green-50'}`}>
                             {user.status === 'active' ? <Lock className="w-4 h-4 text-red-600" /> : <Unlock className="w-4 h-4 text-green-600" />}

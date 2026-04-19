@@ -3,38 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { toast } from 'sonner';
-
-const EyeClosedIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 10 Q7 17 12 17 Q17 17 22 10" />
-    <line x1="6"  y1="16"    x2="4.5"  y2="19.5" />
-    <line x1="12" y1="17.5"  x2="12"   y2="21"   />
-    <line x1="18" y1="16"    x2="19.5" y2="19.5"  />
-  </svg>
-);
-
-const SharinganEye: React.FC<{ size?: number }> = ({ size = 22 }) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="48" fill="#CC0000" />
-    <circle cx="50" cy="50" r="48" fill="none" stroke="#1a0000" strokeWidth="4" />
-    <circle cx="50" cy="50" r="32" fill="none" stroke="#1a0000" strokeWidth="3" />
-    <circle cx="50" cy="50" r="13" fill="#1a0000" />
-    <g transform="rotate(0, 50, 50)">
-      <circle cx="50" cy="22" r="7" fill="#1a0000" />
-      <ellipse cx="50" cy="30" rx="4" ry="7" fill="#1a0000" transform="rotate(0,50,30)" />
-    </g>
-    <g transform="rotate(120, 50, 50)">
-      <circle cx="50" cy="22" r="7" fill="#1a0000" />
-      <ellipse cx="50" cy="30" rx="4" ry="7" fill="#1a0000" />
-    </g>
-    <g transform="rotate(240, 50, 50)">
-      <circle cx="50" cy="22" r="7" fill="#1a0000" />
-      <ellipse cx="50" cy="30" rx="4" ry="7" fill="#1a0000" />
-    </g>
-    <circle cx="41" cy="41" r="5" fill="rgba(255,255,255,0.18)" />
-  </svg>
-);
+import { limitedToast } from '../utils/limitedToast';
+import { PokemonPasswordIcon } from '../components/ui/PokemonPasswordIcon';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -90,29 +60,29 @@ export const Login: React.FC = () => {
       if (formData.email && formData.password) {
         const success = await login(formData.email, formData.password, false);
         if (success) {
-          toast.success('Đăng nhập thành công!');
+          limitedToast.success('Đăng nhập thành công!');
           navigate('/profile');
         } else {
-          toast.error('Email hoặc mật khẩu không đúng');
+          limitedToast.error('Email hoặc mật khẩu không đúng');
         }
       } else {
-        toast.error('Vui lòng điền đầy đủ thông tin');
+        limitedToast.error('Vui lòng điền đầy đủ thông tin');
       }
     } else {
       if (!validateName(formData.firstName) || !validateName(formData.lastName)) {
-        toast.error('Họ tên không hợp lệ');
+        limitedToast.error('Họ tên không hợp lệ');
         return;
       }
       if (formData.address && !validateAddress(formData.address)) {
-        toast.error('Địa chỉ không hợp lệ');
+        limitedToast.error('Địa chỉ không hợp lệ');
         return;
       }
       if (formData.password.length < 8) {
-        toast.error('Mật khẩu phải có ít nhất 8 ký tự');
+        limitedToast.error('Mật khẩu phải có ít nhất 8 ký tự');
         return;
       }
       if (formData.password !== formData.confirmPassword) {
-        toast.error('Mật khẩu không khớp');
+        limitedToast.error('Mật khẩu không khớp');
         return;
       }
       if (formData.email && formData.password && formData.firstName && formData.lastName) {
@@ -125,13 +95,13 @@ export const Login: React.FC = () => {
           formData.address.trim(),
         );
         if (success) {
-          toast.success('Đăng ký thành công!');
+          limitedToast.success('Đăng ký thành công!');
           navigate('/profile');
         } else {
-          toast.error('Email đã tồn tại hoặc có lỗi xảy ra');
+          limitedToast.error('Email đã tồn tại hoặc có lỗi xảy ra');
         }
       } else {
-        toast.error('Vui lòng điền đầy đủ thông tin');
+        limitedToast.error('Vui lòng điền đầy đủ thông tin');
       }
     }
   };
@@ -207,15 +177,15 @@ export const Login: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder={isLogin ? '••••••••' : 'Ít nhất 8 ký tự'}
                   required
-                  className="pr-12"
+                  className="pr-16 bg-white"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((c) => !c)}
-                  className="absolute inset-y-0 right-3 flex items-center hover:scale-110 transition-transform"
+                  className="absolute inset-y-0 right-2 flex items-center rounded-full bg-transparent p-1 transition-transform hover:scale-110 hover:bg-transparent focus:outline-none"
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
-                  {showPassword ? <SharinganEye size={22} /> : <EyeClosedIcon />}
+                  <PokemonPasswordIcon isOpen={showPassword} />
                 </button>
               </div>
 
@@ -239,15 +209,15 @@ export const Login: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="Nhập lại mật khẩu"
                     required
-                    className="pr-12"
+                    className="pr-16 bg-white"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword((c) => !c)}
-                    className="absolute inset-y-0 right-3 flex items-center hover:scale-110 transition-transform"
+                    className="absolute inset-y-0 right-2 flex items-center rounded-full bg-transparent p-1 transition-transform hover:scale-110 hover:bg-transparent focus:outline-none"
                     aria-label={showConfirmPassword ? 'Ẩn xác nhận mật khẩu' : 'Hiện xác nhận mật khẩu'}
                   >
-                    {showConfirmPassword ? <SharinganEye size={22} /> : <EyeClosedIcon />}
+                    <PokemonPasswordIcon isOpen={showConfirmPassword} />
                   </button>
                 </div>
 

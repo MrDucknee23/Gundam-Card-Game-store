@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
-import { inbounds, getInboundStatusLabel, getPaymentStatusLabel } from '../data/inbounds';
+import { getInboundStatusLabel, getPaymentStatusLabel } from '../data/inbounds';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { formatCurrency } from '../utils/format';
+import { getInboundById } from '../utils/inboundStorage';
 import {
   ArrowLeft,
   Printer,
@@ -26,7 +27,7 @@ import { toast } from 'sonner';
 export const InboundDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const inbound = inbounds.find((i) => i.id === id);
+  const inbound = getInboundById(id);
   const [barcodeInput, setBarcodeInput] = useState('');
 
   if (!inbound) {

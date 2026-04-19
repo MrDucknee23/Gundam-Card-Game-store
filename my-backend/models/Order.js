@@ -25,7 +25,8 @@ const orderSchema = new mongoose.Schema({
   history: [{
     note: { type: String },
     date: { type: Date, default: Date.now }
-  }]
+  }],
+  paidAt: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

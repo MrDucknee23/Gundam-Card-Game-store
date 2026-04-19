@@ -21,6 +21,8 @@ import { ProductDetails } from './pages/ProductDetails';
 import { AdminStatistics } from './pages/AdminStatistics';
 import { AdminUsers } from './pages/AdminUsers';
 import { AdminAnalytics } from './pages/AdminAnalytics';
+import { AdminCategories } from './pages/AdminCategories';
+import { AdminChatTemplates } from './pages/AdminChatTemplates';
 import { ManageOrders } from './pages/ManageOrders';
 import { OrderDetail } from './pages/OrderDetail';
 import { InventoryInbound } from './pages/InventoryInbound';
@@ -63,6 +65,9 @@ export const router = createBrowserRouter([
       { path: 'orders', Component: ManageOrders },
       { path: 'orders/:id', Component: OrderDetail },
       { path: 'users', Component: AdminUsers },
+      { path: 'categories', Component: AdminCategories },
+      { path: 'category-attributes', Component: AdminCategories },
+      { path: 'chat-templates', Component: AdminChatTemplates },
       { path: 'statistics', Component: AdminStatistics },
       { path: 'analytics', Component: AdminAnalytics },
       { path: 'inventory/inbound', Component: InventoryInbound },
