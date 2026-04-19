@@ -7,6 +7,7 @@ import { Breadcrumb } from '../components/Breadcrumb';
 import { toast } from 'sonner';
 import { useProducts } from '../hooks/useProducts';
 import { createProduct, deleteProduct, ProductPayload } from '../utils/productApi';
+import { RefreshButton } from '../components/RefreshButton';
 import { useCategories } from '../hooks/useCategories';
 import { formatPrice } from '../utils/format';
 
@@ -16,7 +17,7 @@ type SortOrder = 'asc' | 'desc';
 
 export const ManageProductsEnhanced: React.FC = () => {
   const navigate = useNavigate();
-  const { products: fetchedProducts, loading, error } = useProducts();
+  const { products: fetchedProducts, loading, error, refetch } = useProducts();
   const { categories } = useCategories();
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -205,13 +206,16 @@ export const ManageProductsEnhanced: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý sản phẩm</h1>
             <p className="text-gray-600">Quản lý toàn bộ sản phẩm trong cửa hàng</p>
           </div>
-          <Link
-            to="/admin/add-product"
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-sm"
-          >
-            <Plus className="w-5 h-5" />
-            Thêm sản phẩm mới
-          </Link>
+          <div className="flex items-center gap-3">
+            <RefreshButton onRefresh={refetch} />
+            <Link
+              to="/admin/add-product"
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              Thêm sản phẩm mới
+            </Link>
+          </div>
         </div>
 
         {/* Filters */}

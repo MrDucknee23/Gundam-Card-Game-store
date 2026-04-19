@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useCategories } from '../hooks/useCategories';
+import { RefreshButton } from '../components/RefreshButton';
 import {
   clearCategoryAttributeGroup,
   createCategory,
@@ -280,12 +281,15 @@ export const AdminCategories: React.FC = () => {
           <h1 className="text-2xl font-bold text-black">Danh mục sản phẩm</h1>
           <p className="text-gray-500 mt-1">Quản lý danh mục sản phẩm và nhóm con cấp độ hoặc độ hiếm trong cùng một màn hình.</p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-200"
-        >
-          + Thêm danh mục
-        </button>
+        <div className="flex items-center gap-3">
+          <RefreshButton onRefresh={reload} />
+          <button
+            onClick={openCreateModal}
+            className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-200"
+          >
+            + Thêm danh mục
+          </button>
+        </div>
       </div>
 
       {loading ? (

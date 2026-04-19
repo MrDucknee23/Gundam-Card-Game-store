@@ -9,6 +9,7 @@ interface User {
   role: 'customer' | 'admin' | 'super_admin';
   phone?: string;
   address?: string;
+  avatar?: string;
   joinDate?: string;
 }
 
@@ -19,6 +20,7 @@ interface AuthContextType {
   login: (email: string, password: string, isAdminLogin?: boolean) => Promise<boolean>;
   register: (email: string, password: string, firstName: string, lastName: string, phone?: string, address?: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
   loading: boolean;
 }
 
@@ -58,7 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (isAdminLogin) {
         if (email === 'admin@gundamstore.com' && password === 'admin123') {
-          const adminUser: User = { id: '1', email, fullName: 'System Administrator', role: 'super_admin' };
+          const savedAvatar = localStorage.getItem('user_avatar_' + email) || '';
+          const adminUser: User = { id: '1', email, fullName: 'System Administrator', role: 'super_admin', avatar: savedAvatar };
           setUser(adminUser);
           localStorage.setItem('user', JSON.stringify(adminUser));
           localStorage.removeItem('guestOrderEmail');
@@ -66,7 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.removeItem('guestOrderName');
           return true;
         } else if (email.includes('@admin') && password) {
-          const adminUser: User = { id: '2', email, fullName: 'Admin User', role: 'admin' };
+          const savedAvatar = localStorage.getItem('user_avatar_' + email) || '';
+          const adminUser: User = { id: '2', email, fullName: 'Admin User', role: 'admin', avatar: savedAvatar };
           setUser(adminUser);
           localStorage.setItem('user', JSON.stringify(adminUser));
           localStorage.removeItem('guestOrderEmail');
@@ -83,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         if (!res.ok) return false;
         const data = await res.json();
+        const savedAvatar = localStorage.getItem('user_avatar_' + data.email) || '';
         const loggedUser: User = {
           id: data.id,
           email: data.email,
@@ -90,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: data.role,
           phone: data.phone || '',
           address: data.address || '',
+          avatar: data.avatar || savedAvatar,
           joinDate: data.joinDate || '',
         };
         setUser(loggedUser);
@@ -128,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: data.role,
         phone: data.phone || '',
         address: data.address || '',
+        avatar: data.avatar || '',
         joinDate: data.joinDate || '',
       };
       setUser(newUser);
@@ -145,13 +152,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('user');
+    // avatar is preserved in separate 'user_avatar_<email>' keys
+  }, []);
+
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem('user', JSON.stringify(updated));
+      if (updates.avatar !== undefined) {
+        localStorage.setItem('user_avatar_' + prev.email, updates.avatar || '');
+      }
+      return updated;
+    });
   }, []);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   const value = useMemo(
-    () => ({ user, isAuthenticated: !!user, isAdmin, login, register, logout, loading }),
-    [user, isAdmin, loading, login, register, logout]
+    () => ({ user, isAuthenticated: !!user, isAdmin, login, register, logout, updateUser, loading }),
+    [user, isAdmin, loading, login, register, logout, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -55,5 +55,5 @@ export const useUsers = () => {
     await fetchUsers();
   };
 
-  return { users, loading, error, addUser, updateUser, deleteUser, toggleStatus };
+  return { users, loading, error, addUser, updateUser, deleteUser, toggleStatus, refetch: fetchUsers };
 };

@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router';
 import { Pencil, Lock, Unlock, Trash2 } from 'lucide-react';
 import { User, UserRole, UserStatus, getRoleBadgeColor, getStatusBadgeColor, formatCurrency } from '../data/users';
 import { useUsers } from '../hooks/useUsers';
+import { RefreshButton } from '../components/RefreshButton';
 
 export const AdminUsers: React.FC = () => {
   const navigate = useNavigate();
-  const { users, loading, error, addUser, updateUser, deleteUser, toggleStatus } = useUsers();
+  const { users, loading, error, addUser, updateUser, deleteUser, toggleStatus, refetch } = useUsers();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState<'all' | UserRole>('all');
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
@@ -88,9 +89,12 @@ export const AdminUsers: React.FC = () => {
               <h1 className="text-3xl font-bold text-black mb-2 leading-tight">Quản lý người dùng</h1>
               <p className="text-base text-gray-600">Quản lý người dùng và quyền hạn</p>
             </div>
-            <button onClick={() => setIsAddModalOpen(true)} className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-[1.02]">
-              + Thêm người dùng
-            </button>
+            <div className="flex items-center gap-3">
+              <RefreshButton onRefresh={refetch} />
+              <button onClick={() => setIsAddModalOpen(true)} className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-[1.02]">
+                + Thêm người dùng
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">

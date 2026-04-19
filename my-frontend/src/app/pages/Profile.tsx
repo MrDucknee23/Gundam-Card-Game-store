@@ -48,8 +48,8 @@ const AvatarPickerGrid: React.FC<{
     }
   }, []);
 
-  if (loading) return <p className="font-[Poppins] text-sm text-gray-400 text-center py-4">Đang tải ảnh...</p>;
-  if (found.length === 0) return <p className="font-[Poppins] text-sm text-gray-400 text-center py-4">Chưa có ảnh nào. Thêm file đặt tên "profile image1.png", "profile image2.jpg",... vào thư mục public/images/</p>;
+  if (loading) return <p className="text-sm text-gray-400 text-center py-4">Đang tải ảnh...</p>;
+  if (found.length === 0) return <p className="text-sm text-gray-400 text-center py-4">Chưa có ảnh nào. Thêm file đặt tên "profile image1.png", "profile image2.jpg",... vào thư mục public/images/</p>;
 
   return (
     <div className="grid grid-cols-3 gap-3">
@@ -63,7 +63,7 @@ const AvatarPickerGrid: React.FC<{
         <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
         </svg>
-        <span className="font-[Poppins] text-[10px] font-semibold text-gray-500">Mặc định</span>
+        <span className="text-[10px] font-semibold text-gray-500">Mặc định</span>
         {!currentAvatar && (
           <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center text-white text-[9px] font-bold">✓</div>
         )}
@@ -217,6 +217,10 @@ export const Profile: React.FC = () => {
     // avatarPath = '' means reset to default
     const updatedUser = { ...currentUser, avatar: avatarPath || undefined };
     localStorage.setItem('user', JSON.stringify(updatedUser));
+    // Save avatar separately so it persists across logout/login
+    if (currentUser?.email) {
+      localStorage.setItem('user_avatar_' + currentUser.email, avatarPath || '');
+    }
     setCurrentUser(updatedUser);
     // Sync to backend (best-effort)
     const userId = user?.id || currentUser?.id;
@@ -588,7 +592,7 @@ export const Profile: React.FC = () => {
     {/* Avatar Picker Modal */}
     {showAvatarPicker && (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowAvatarPicker(false)}>
-        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full font-[Poppins]" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
           <h3 className="text-lg font-bold mb-1">Chọn ảnh đại diện</h3>
           <p className="text-sm text-gray-500 mb-4">Bấm vào hình để áp dụng làm ảnh đại diện của bạn</p>
           <AvatarPickerGrid currentAvatar={currentUser?.avatar} onSelect={handleSelectAvatar} />

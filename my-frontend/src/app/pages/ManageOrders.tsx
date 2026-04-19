@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
 import { Eye, Search } from 'lucide-react';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { RefreshButton } from '../components/RefreshButton';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import type { Order, PaymentStatus, OrderStatus } from '../data/orders';
 import { formatCurrency } from '../utils/format';
@@ -13,17 +14,21 @@ export const ManageOrders: React.FC = () => {
   const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentStatus>('all');
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | OrderStatus>('all');
 
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/orders');
+      const data = await res.json();
+      setOrders(data);
+    } catch (error) {
+      console.error('Lỗi khi fetch đơn hàng:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch('http://localhost:5000/api/orders')
-      .then(res => res.json())
-      .then(data => {
-        setOrders(data);
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Lỗi khi fetch đơn hàng:', error);
-        setIsLoading(false);
-      });
+    fetchOrders();
   }, []);
 
   const formatDate = (dateString: string) => {
@@ -76,6 +81,7 @@ export const ManageOrders: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý hóa đơn</h1>
             <p className="text-gray-600">Theo dõi và cập nhật trạng thái các đơn đặt hàng.</p>
           </div>
+          <RefreshButton onRefresh={fetchOrders} />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">

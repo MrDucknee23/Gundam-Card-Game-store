@@ -23,6 +23,7 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Card, CardContent } from '../components/ui/card';
 import { useProducts } from '../hooks/useProducts';
 import { useUsers } from '../hooks/useUsers';
+import { RefreshButton } from '../components/RefreshButton';
 import type { Order } from '../data/orders';
 
 ChartJS.register(
@@ -197,8 +198,8 @@ const getOrderStatusLabel = (status: string) => {
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { products, loading: productsLoading } = useProducts();
-  const { users, loading: usersLoading } = useUsers();
+  const { products, loading: productsLoading, refetch: refetchProducts } = useProducts();
+  const { users, loading: usersLoading, refetch: refetchUsers } = useUsers();
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
@@ -209,38 +210,25 @@ export const AdminDashboard: React.FC = () => {
   const [isFilterSticky, setIsFilterSticky] = useState(false);
   const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'gundam' | 'cardgame'>('all');
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadOrders = async () => {
-      try {
-        setOrdersLoading(true);
-        setDashboardError(null);
-        const response = await fetch('http://localhost:5000/api/orders');
-        if (!response.ok) {
-          throw new Error('Không thể tải dữ liệu dashboard');
-        }
-
-        const data = await response.json();
-        if (isMounted) {
-          setOrders(data);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setDashboardError(error instanceof Error ? error.message : 'Không thể tải dữ liệu dashboard');
-        }
-      } finally {
-        if (isMounted) {
-          setOrdersLoading(false);
-        }
+  const loadOrdersManual = async () => {
+    try {
+      setOrdersLoading(true);
+      setDashboardError(null);
+      const response = await fetch('http://localhost:5000/api/orders');
+      if (!response.ok) {
+        throw new Error('Không thể tải dữ liệu dashboard');
       }
-    };
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : 'Không thể tải dữ liệu dashboard');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
 
-    loadOrders();
-
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    loadOrdersManual();
   }, []);
 
   React.useEffect(() => {
@@ -659,7 +647,10 @@ export const AdminDashboard: React.FC = () => {
         {/* KPI CARDS */}
         <div className="mb-8">
           <div className="mb-6">
-            <h1 className="text-xl font-bold text-black mb-1">Tổng quan Nhanh</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-black mb-1">Tổng quan Nhanh</h1>
+              <RefreshButton onRefresh={async () => { await Promise.all([refetchProducts(), refetchUsers(), loadOrdersManual()]); }} />
+            </div>
             <p className="text-sm text-gray-500">Các chỉ số KPI chính</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
