@@ -151,6 +151,11 @@ export const ProductDetail: React.FC = () => {
     navigate('/checkout');
   };
 
+  const descriptionBlocks = product.description
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -246,7 +251,37 @@ export const ProductDetail: React.FC = () => {
 
             <div className="border-t border-b border-gray-200 py-6 mb-6">
               <h2 className="font-semibold text-lg mb-3 text-black">Mô tả</h2>
-              <p className="text-gray-700 leading-relaxed">{product.description}</p>
+              <div className="space-y-5 text-gray-700 leading-8">
+                {descriptionBlocks.map((block, blockIndex) => {
+                  const lines = block
+                    .split('\n')
+                    .map((line) => line.trim())
+                    .filter(Boolean);
+
+                  const bulletLines = lines.filter((line) => /^[.\-•]/.test(line));
+                  const introLines = lines.filter((line) => !/^[.\-•]/.test(line));
+
+                  return (
+                    <div key={`${product.id}-desc-${blockIndex}`} className="space-y-2">
+                      {introLines.length > 0 && (
+                        <p className="whitespace-pre-line text-[17px] leading-8 text-gray-700">
+                          {introLines.join('\n')}
+                        </p>
+                      )}
+
+                      {bulletLines.length > 0 && (
+                        <ul className="space-y-2 pl-5 text-[17px] leading-8 text-gray-700 marker:text-primary list-disc">
+                          {bulletLines.map((line, lineIndex) => (
+                            <li key={`${product.id}-desc-${blockIndex}-${lineIndex}`}>
+                              {line.replace(/^[.\-•]\s*/, '')}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Technical Info */}

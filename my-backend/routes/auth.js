@@ -61,10 +61,13 @@ router.post('/login', async (req, res) => {
 // Cập nhật thông tin cá nhân
 router.put('/profile/:id', async (req, res) => {
   try {
-    const { fullName, phone, address } = req.body;
+    const { fullName, phone, address, avatar } = req.body;
+    const updateFields = { phone, address };
+    if (fullName !== undefined) updateFields.name = fullName;
+    if (avatar !== undefined) updateFields.avatar = avatar;
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name: fullName, phone, address },
+      updateFields,
       { new: true }
     ).select('-password');
     
@@ -75,6 +78,7 @@ router.put('/profile/:id', async (req, res) => {
       role: user.role,
       phone: user.phone || '',
       address: user.address || '',
+      avatar: user.avatar || '',
       joinDate: user.createdAt,
     });
   } catch (err) {

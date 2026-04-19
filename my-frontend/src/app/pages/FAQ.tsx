@@ -1,9 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router';
 import { 
   MessageCircle, 
   BookOpen, 
   Package, 
-  ChevronDown
+  ChevronDown,
+  X,
+  Send
 } from 'lucide-react';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 
@@ -23,7 +26,8 @@ interface SupportCardData {
   title: string;
   description: string;
   ctaText: string;
-  ctaAction: () => void;
+  href?: string;
+  action?: 'chat' | 'scroll-faq';
 }
 
 interface Category {
@@ -170,7 +174,7 @@ const supportCardsData: SupportCardData[] = [
     title: 'Live Chat',
     description: 'Trò chuyện trực tiếp với đội ngũ hỗ trợ 24/7',
     ctaText: 'Bắt đầu chat',
-    ctaAction: () => alert('🎯 Live Chat sẽ được kích hoạt (Demo)')
+    action: 'chat'
   },
   {
     id: 2,
@@ -178,7 +182,7 @@ const supportCardsData: SupportCardData[] = [
     title: 'Hướng dẫn chi tiết',
     description: 'Xem các hướng dẫn về sản phẩm và dịch vụ',
     ctaText: 'Xem hướng dẫn',
-    ctaAction: () => alert('📖 Chuyển đến trang hướng dẫn (Demo)')
+    action: 'scroll-faq'
   },
   {
     id: 3,
@@ -186,7 +190,7 @@ const supportCardsData: SupportCardData[] = [
     title: 'Theo dõi đơn hàng',
     description: 'Kiểm tra tình trạng vận chuyển realtime',
     ctaText: 'Theo dõi ngay',
-    ctaAction: () => alert('📦 Chuyển đến trang theo dõi (Demo)')
+    href: '/orders'
   }
 ];
 
@@ -209,17 +213,31 @@ interface SupportCardProps {
   card: SupportCardData;
   index: number;
   isVisible: boolean;
+  onChatOpen: () => void;
+  onScrollFaq: () => void;
 }
 
-const SupportCard: React.FC<SupportCardProps> = ({ card, index, isVisible }) => {
+const SupportCard: React.FC<SupportCardProps> = ({ card, index, isVisible, onChatOpen, onScrollFaq }) => {
   const Icon = card.icon;
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (card.href) {
+      navigate(card.href);
+    } else if (card.action === 'chat') {
+      onChatOpen();
+    } else if (card.action === 'scroll-faq') {
+      onScrollFaq();
+    }
+  };
   
   return (
     <div
       className={`
         bg-white border-2 border-gray-200 rounded-2xl p-8
+        flex flex-col
         hover:border-primary hover:shadow-xl hover:-translate-y-2
-        transition-all duration-300 cursor-pointer
+        transition-all duration-300
         ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}
       `}
       style={{ transitionDelay: `${index * 100}ms` }}
@@ -231,14 +249,14 @@ const SupportCard: React.FC<SupportCardProps> = ({ card, index, isVisible }) => 
 
       {/* Content */}
       <h3 className="text-2xl text-black mb-3">{card.title}</h3>
-      <p className="text-gray-600 mb-6 leading-relaxed">{card.description}</p>
+      <p className="text-gray-600 mb-6 leading-relaxed flex-1">{card.description}</p>
 
-      {/* CTA Button */}
+      {/* CTA Button - always at bottom */}
       <button
-        onClick={card.ctaAction}
+        onClick={handleClick}
         className="
           w-full bg-primary hover:bg-red-700 text-white 
-          py-3 px-6 rounded-lg 
+          py-3 px-6 rounded-lg font-medium
           transition-all duration-300 
           hover:shadow-lg hover:scale-105
         "
@@ -346,6 +364,170 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ faq, isOpen, onToggle }) 
 };
 
 // ===========================
+// COMPONENT: LiveChatModal
+// ===========================
+interface ChatMessage {
+  id: number;
+  from: 'user' | 'support';
+  text: string;
+  time: string;
+}
+
+const initialMessages: ChatMessage[] = [
+  {
+    id: 1,
+    from: 'support',
+    text: 'Xin chào! Tôi là nhân viên hỗ trợ của Gundam Store. Tôi có thể giúp gì cho bạn hôm nay? 😊',
+    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  }
+];
+
+const LiveChatModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [inputValue, setInputValue] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const autoReplies: Record<string, string> = {
+    default: 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong thời gian sớm nhất. Trong giờ hành chính (8:00 - 22:00), thời gian phản hồi dưới 5 phút.',
+    hàng: 'Tất cả sản phẩm của chúng tôi đều là hàng chính hãng 100% từ Bandai Nhật Bản. Bạn có thể kiểm tra tem xác thực trên sản phẩm.',
+    ship: 'Nội thành TP.HCM giao 1-2 ngày, tỉnh thành khác 3-5 ngày. Miễn phí ship cho đơn từ 1.000.000₫!',
+    vận: 'Nội thành TP.HCM giao 1-2 ngày, tỉnh thành khác 3-5 ngày. Miễn phí ship cho đơn từ 1.000.000₫!',
+    giá: 'Bạn có thể xem giá sản phẩm tại trang Cửa hàng. Chúng tôi có nhiều ưu đãi hấp dẫn cho thành viên!',
+    đổi: 'Chính sách đổi trả trong 7 ngày, sản phẩm còn nguyên seal và phụ kiện đầy đủ. Bạn cần hỗ trợ gì thêm không?',
+    trả: 'Chính sách đổi trả trong 7 ngày, sản phẩm còn nguyên seal và phụ kiện đầy đủ. Bạn cần hỗ trợ gì thêm không?',
+    bảo: 'Bảo hành 30 ngày cho lỗi sản xuất. Vui lòng liên hệ trong 48h kèm video unboxing khi phát hiện lỗi.',
+    thanh: 'Chúng tôi hỗ trợ: Chuyển khoản, Ví điện tử (Momo, ZaloPay, VNPay), Thẻ tín dụng, và COD (thanh toán khi nhận hàng).',
+    cod: 'Có, chúng tôi hỗ trợ COD toàn quốc! Đơn trên 5.000.000₫ cần đặt cọc 30% trước.',
+  };
+
+  const getAutoReply = (msg: string): string => {
+    const lower = msg.toLowerCase();
+    // First check admin-managed templates from localStorage
+    try {
+      const stored = localStorage.getItem('admin_chat_templates');
+      if (stored) {
+        const adminTemplates: { keyword: string; response: string }[] = JSON.parse(stored);
+        for (const tpl of adminTemplates) {
+          const keywords = tpl.keyword.split(',').map(k => k.trim().toLowerCase());
+          if (keywords.some(k => k && lower.includes(k))) {
+            return tpl.response;
+          }
+        }
+      }
+    } catch {}
+    // Fallback to hardcoded replies
+    for (const keyword of Object.keys(autoReplies)) {
+      if (lower.includes(keyword)) return autoReplies[keyword];
+    }
+    return autoReplies['default'];
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = () => {
+    const text = inputValue.trim();
+    if (!text) return;
+    const now = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const userMsg: ChatMessage = { id: Date.now(), from: 'user', text, time: now };
+    setMessages(prev => [...prev, userMsg]);
+    setInputValue('');
+
+    setTimeout(() => {
+      const reply: ChatMessage = {
+        id: Date.now() + 1,
+        from: 'support',
+        text: getAutoReply(text),
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, reply]);
+    }, 800);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:p-8 pointer-events-none">
+      <div className="pointer-events-auto w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+        style={{ height: '520px' }}
+      >
+        {/* Header */}
+        <div className="bg-primary text-white px-5 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+              <MessageCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Gundam Store Support</p>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full" />
+                <p className="text-xs text-white/80">Đang trực tuyến</p>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+          {messages.map(msg => (
+            <div key={msg.id} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] ${msg.from === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  msg.from === 'user'
+                    ? 'bg-primary text-white rounded-br-sm'
+                    : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
+                }`}>
+                  {msg.text}
+                </div>
+                <span className="text-xs text-gray-400 px-1">{msg.time}</span>
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="flex-shrink-0 p-3 bg-white border-t border-gray-100 flex gap-2">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Nhập tin nhắn..."
+            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!inputValue.trim()}
+            className="w-10 h-10 bg-primary hover:bg-red-700 disabled:bg-gray-300 text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ===========================
 // COMPONENT: FAQList
 // ===========================
 interface FAQListProps {
@@ -392,6 +574,9 @@ export const FAQ: React.FC = () => {
   // State management
   const [activeCategory, setActiveCategory] = useState('all');
   const [openFaqId, setOpenFaqId] = useState<number | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const faqSectionRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Scroll animations
   const header = useScrollAnimation(0.1);
@@ -421,8 +606,14 @@ export const FAQ: React.FC = () => {
     setOpenFaqId(null); // Close all accordions when switching tabs
   };
 
+  const handleScrollToFaq = () => {
+    faqSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      {/* Live Chat Modal */}
+      <LiveChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       {/* ===========================
           HEADER SECTION
       =========================== */}
@@ -462,6 +653,8 @@ export const FAQ: React.FC = () => {
               card={card}
               index={index}
               isVisible={cards.isVisible}
+              onChatOpen={() => setIsChatOpen(true)}
+              onScrollFaq={handleScrollToFaq}
             />
           ))}
         </div>
@@ -478,7 +671,7 @@ export const FAQ: React.FC = () => {
           ${faqSection.isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}
         `}
       >
-        <div className="max-w-5xl mx-auto px-6">
+        <div ref={faqSectionRef} className="max-w-5xl mx-auto px-6">
           {/* Section Title */}
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl text-black mb-4">
@@ -515,7 +708,7 @@ export const FAQ: React.FC = () => {
                 Đội ngũ của chúng tôi luôn sẵn sàng giúp đỡ bạn 24/7
               </p>
               <button
-                onClick={() => alert('📞 Chuyển đến trang liên hệ (Demo)')}
+                onClick={() => navigate('/contact')}
                 className="
                   bg-black hover:bg-gray-900 text-white 
                   py-3 px-8 rounded-lg 

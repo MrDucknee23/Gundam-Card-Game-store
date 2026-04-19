@@ -9,7 +9,7 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
         <RouterProvider router={router} />
-        <Toaster position="top-right" />
+        <Toaster position="top-right" visibleToasts={3} expand={false} duration={2200} />
       </CartProvider>
     </AuthProvider>
   );

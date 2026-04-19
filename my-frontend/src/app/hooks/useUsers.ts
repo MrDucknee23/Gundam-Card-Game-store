@@ -15,6 +15,7 @@ export const useUsers = () => {
         ...u,
         id: u._id,
         joinDate: new Date(u.createdAt),
+        avatar: u.avatar || '',
       }));
       setUsers(mapped);
     } catch {

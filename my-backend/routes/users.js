@@ -1,12 +1,56 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Order = require('../models/Order');
+
+const PAID_PAYMENT_STATUSES = ['Đã thanh toán', 'paid', 'Paid', 'PAID'];
 
 // Lấy tất cả users
 router.get('/', async (req, res) => {
   try {
-    const users = await User.find().select('-password');
-    res.json(users);
+    const users = await User.find().select('-password').lean();
+
+    const orderStats = await Order.aggregate([
+      {
+        $match: {
+          paymentStatus: { $in: PAID_PAYMENT_STATUSES },
+          'customer.email': { $type: 'string', $ne: '' }
+        }
+      },
+      {
+        $project: {
+          emailNorm: { $toLower: '$customer.email' },
+          totalAmount: { $ifNull: ['$totalAmount', 0] }
+        }
+      },
+      {
+        $group: {
+          _id: '$emailNorm',
+          totalSpending: { $sum: '$totalAmount' },
+          ordersCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const statsByEmail = new Map(
+      orderStats.map((entry) => [entry._id, {
+        totalSpending: entry.totalSpending || 0,
+        ordersCount: entry.ordersCount || 0,
+      }])
+    );
+
+    const mergedUsers = users.map((user) => {
+      const emailNorm = typeof user.email === 'string' ? user.email.toLowerCase() : '';
+      const stats = statsByEmail.get(emailNorm);
+
+      return {
+        ...user,
+        totalSpending: stats?.totalSpending || 0,
+        ordersCount: stats?.ordersCount || 0,
+      };
+    });
+
+    res.json(mergedUsers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -69,6 +69,78 @@ router.get('/', async (req, res) => {
 });
 
 // 1.1 Lấy chi tiết một đơn hàng theo ID (Dùng cho trang Order Detail)
+
+// 5. Thống kê chi tiêu của từng khách hàng (phải đặt trước /:id)
+router.get('/stats/customer', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ message: 'Thiếu email' });
+
+    const paidOrders = await Order.find({
+      'customer.email': email,
+      paymentStatus: 'Đã thanh toán'
+    });
+
+    const totalSpent = paidOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    const orderCount = paidOrders.length;
+
+    res.json({ email, totalSpent, orderCount });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// 6. Thống kê doanh thu (theo tháng & năm) (phải đặt trước /:id)
+router.get('/stats/revenue', async (req, res) => {
+  try {
+    const { year } = req.query;
+    const targetYear = parseInt(year) || new Date().getFullYear();
+
+    const startOfYear = new Date(targetYear, 0, 1);
+    const endOfYear = new Date(targetYear + 1, 0, 1);
+
+    const paidOrders = await Order.find({
+      paymentStatus: 'Đã thanh toán',
+      createdAt: { $gte: startOfYear, $lt: endOfYear }
+    });
+
+    const monthlyRevenue = Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1,
+      revenue: 0,
+      orderCount: 0
+    }));
+
+    paidOrders.forEach(order => {
+      const month = new Date(order.createdAt).getMonth();
+      monthlyRevenue[month].revenue += order.totalAmount || 0;
+      monthlyRevenue[month].orderCount += 1;
+    });
+
+    const yearlyRevenue = paidOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    const yearlyOrderCount = paidOrders.length;
+
+    res.json({ year: targetYear, yearlyRevenue, yearlyOrderCount, monthlyRevenue });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// 7. Top khách hàng (phải đặt trước /:id)
+router.get('/stats/top-customers', async (req, res) => {
+  try {
+    const pipeline = [
+      { $match: { paymentStatus: 'Đã thanh toán' } },
+      { $group: { _id: '$customer.email', name: { $first: '$customer.name' }, phone: { $first: '$customer.phone' }, totalSpent: { $sum: '$totalAmount' }, orderCount: { $sum: 1 } } },
+      { $sort: { totalSpent: -1 } },
+      { $limit: 20 }
+    ];
+    const result = await Order.aggregate(pipeline);
+    res.json(result.map(r => ({ email: r._id, name: r.name, phone: r.phone, totalSpent: r.totalSpent, orderCount: r.orderCount })));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -161,6 +233,16 @@ router.put('/:id', async (req, res) => {
       updateData.orderStatus = mapToVi[updateData.orderStatus] || updateData.orderStatus;
     }
 
+    // Đồng bộ trạng thái thanh toán về cùng một chuẩn tiếng Việt trong DB.
+    if (updateData.paymentStatus) {
+      const mapPaymentToVi = {
+        paid: 'Đã thanh toán',
+        pending: 'Chưa thanh toán',
+        failed: 'Thanh toán thất bại',
+      };
+      updateData.paymentStatus = mapPaymentToVi[updateData.paymentStatus] || updateData.paymentStatus;
+    }
+
     // Xử lý cập nhật ghi chú nội bộ của Admin
     if (updateData.notes !== undefined) {
       const order = await Order.findById(req.params.id);
@@ -194,6 +276,32 @@ router.delete('/:id', async (req, res) => {
   try {
     await Order.findByIdAndDelete(req.params.id);
     res.json({ message: 'Xóa đơn hàng thành công' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// 4. Xác nhận đã thanh toán (Admin)
+router.post('/:id/confirm-payment', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+
+    order.paymentStatus = 'Đã thanh toán';
+    order.paidAt = new Date();
+    await order.save();
+
+    // Tính tổng chi tiêu của khách hàng (chỉ đơn đã thanh toán)
+    let customerTotalSpent = 0;
+    if (order.customer?.email) {
+      const paidOrders = await Order.find({
+        'customer.email': order.customer.email,
+        paymentStatus: 'Đã thanh toán'
+      });
+      customerTotalSpent = paidOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    }
+
+    res.json({ message: 'Xác nhận thanh toán thành công', customerTotalSpent });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

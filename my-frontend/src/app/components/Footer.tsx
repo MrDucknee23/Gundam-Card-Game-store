@@ -76,28 +76,28 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
+                <Link
+                  to="/return-policy"
                   className="text-gray-400 hover:text-white transition-colors duration-300 inline-block hover:translate-x-1"
                 >
                   Chính sách đổi trả
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
+                <Link
+                  to="/shipping-policy"
                   className="text-gray-400 hover:text-white transition-colors duration-300 inline-block hover:translate-x-1"
                 >
                   Chính sách vận chuyển
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
+                <Link
+                  to="/purchase-guide"
                   className="text-gray-400 hover:text-white transition-colors duration-300 inline-block hover:translate-x-1"
                 >
                   Hướng dẫn mua hàng
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -142,18 +142,18 @@ export const Footer: React.FC = () => {
               &copy; 2026 GUNDAM STORE. Bảo lưu mọi quyền.
             </p>
             <div className="flex gap-6 text-sm">
-              <a 
-                href="#" 
+              <Link
+                to="/terms-of-use"
                 className="text-gray-400 hover:text-white transition-colors duration-300"
               >
                 Điều khoản sử dụng
-              </a>
-              <a 
-                href="#" 
+              </Link>
+              <Link
+                to="/privacy-policy"
                 className="text-gray-400 hover:text-white transition-colors duration-300"
               >
                 Chính sách bảo mật
-              </a>
+              </Link>
             </div>
           </div>
         </div>
