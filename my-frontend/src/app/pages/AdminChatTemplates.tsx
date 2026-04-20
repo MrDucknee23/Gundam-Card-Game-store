@@ -276,7 +276,7 @@ export const AdminChatTemplates: React.FC = () => {
                 {/* Response */}
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500 mb-1">Nội dung trả lời</p>
-                  <p className="text-sm text-gray-800 leading-relaxed line-clamp-3">{t.response}</p>
+                  <p className="text-sm text-gray-800 leading-relaxed line-clamp-3 break-words whitespace-pre-wrap max-w-full">{t.response}</p>
                 </div>
 
                 <p className="text-xs text-gray-400 mt-3">

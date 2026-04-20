@@ -9,6 +9,7 @@ interface User {
   role: 'customer' | 'admin' | 'super_admin';
   phone?: string;
   address?: string;
+  avatar?: string;
   joinDate?: string;
 }
 
@@ -58,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (isAdminLogin) {
         if (email === 'admin@gundamstore.com' && password === 'admin123') {
-          const adminUser: User = { id: '1', email, fullName: 'System Administrator', role: 'super_admin' };
+          const adminUser: User = { id: '1', email, fullName: 'System Administrator', role: 'super_admin', avatar: '' };
           setUser(adminUser);
           localStorage.setItem('user', JSON.stringify(adminUser));
           localStorage.removeItem('guestOrderEmail');
@@ -66,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.removeItem('guestOrderName');
           return true;
         } else if (email.includes('@admin') && password) {
-          const adminUser: User = { id: '2', email, fullName: 'Admin User', role: 'admin' };
+          const adminUser: User = { id: '2', email, fullName: 'Admin User', role: 'admin', avatar: '' };
           setUser(adminUser);
           localStorage.setItem('user', JSON.stringify(adminUser));
           localStorage.removeItem('guestOrderEmail');
@@ -90,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: data.role,
           phone: data.phone || '',
           address: data.address || '',
+          avatar: data.avatar || '',
           joinDate: data.joinDate || '',
         };
         setUser(loggedUser);
@@ -128,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: data.role,
         phone: data.phone || '',
         address: data.address || '',
+        avatar: data.avatar || '',
         joinDate: data.joinDate || '',
       };
       setUser(newUser);

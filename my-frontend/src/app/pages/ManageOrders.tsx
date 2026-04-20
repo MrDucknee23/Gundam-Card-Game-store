@@ -3,27 +3,68 @@ import { Link } from 'react-router';
 import { Eye, Search } from 'lucide-react';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
+import { orders as fallbackOrders } from '../data/orders';
 import type { Order, PaymentStatus, OrderStatus } from '../data/orders';
 import { formatCurrency } from '../utils/format';
+import { buildApiUrl } from '../utils/api';
+
+const ORDERS_API_URL = buildApiUrl('/orders?summary=1');
+const REQUEST_TIMEOUT_MS = 5000;
 
 export const ManageOrders: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>(fallbackOrders);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentStatus>('all');
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | OrderStatus>('all');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/orders')
-      .then(res => res.json())
-      .then(data => {
-        setOrders(data);
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Lỗi khi fetch đơn hàng:', error);
-        setIsLoading(false);
-      });
+    let isMounted = true;
+
+    const loadOrders = async () => {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+      try {
+        setLoadError(null);
+        const res = await fetch(ORDERS_API_URL, { signal: controller.signal });
+        if (!res.ok) {
+          throw new Error('Không thể tải đơn hàng');
+        }
+
+        const data = await res.json();
+        const isStale = res.headers.get('x-orders-stale') === '1';
+
+        if (isMounted && Array.isArray(data) && data.length > 0 && !isStale) {
+          setOrders(data);
+        }
+      } catch (error) {
+        if (!(error instanceof Error && error.name === 'AbortError')) {
+          console.error('Lỗi khi fetch đơn hàng:', error);
+        }
+
+        if (isMounted) {
+          setOrders(fallbackOrders);
+          setLoadError(
+            error instanceof Error && error.name === 'AbortError'
+              ? 'Máy chủ phản hồi chậm. Đang hiển thị dữ liệu tạm thời.'
+              : 'Không thể tải dữ liệu đơn hàng mới nhất. Đang hiển thị dữ liệu tạm thời.'
+          );
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadOrders();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const formatDate = (dateString: string) => {
@@ -77,6 +118,12 @@ export const ManageOrders: React.FC = () => {
             <p className="text-gray-600">Theo dõi và cập nhật trạng thái các đơn đặt hàng.</p>
           </div>
         </div>
+
+        {loadError && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            {loadError}
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

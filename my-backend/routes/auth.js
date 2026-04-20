@@ -28,6 +28,7 @@ router.post('/register', async (req, res) => {
       role: user.role,
       phone: user.phone || '',
       address: user.address || '',
+      avatar: user.avatar || '',
       joinDate: user.createdAt,
     });
   } catch (err) {
@@ -51,6 +52,7 @@ router.post('/login', async (req, res) => {
       role: user.role,
       phone: user.phone || '',
       address: user.address || '',
+      avatar: user.avatar || '',
       joinDate: user.createdAt,
     });
   } catch (err) {

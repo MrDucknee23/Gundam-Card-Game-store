@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Product, ProductCategory } from '../types/product';
-import { Pencil, Trash2, Eye, Search, Filter, ChevronLeft, ChevronRight, Plus, Copy } from 'lucide-react';
+import { Pencil, Trash2, Eye, Search, Filter, ChevronLeft, ChevronRight, Plus, Copy, Star } from 'lucide-react';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { useProducts } from '../hooks/useProducts';
 import { createProduct, deleteProduct, ProductPayload } from '../utils/productApi';
 import { useCategories } from '../hooks/useCategories';
 import { formatPrice } from '../utils/format';
+import { deleteReview, fetchReviews, Review } from '../utils/reviewApi';
 
 type ProductStatus = 'active' | 'out_of_stock' | 'draft';
 type SortField = 'name' | 'price' | 'stock';
@@ -28,6 +29,10 @@ export const ManageProductsEnhanced: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState<Product | null>(null);
+  const [productReviews, setProductReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
   
   const itemsPerPage = 10;
 
@@ -151,6 +156,32 @@ export const ManageProductsEnhanced: React.FC = () => {
       toast.success('Sản phẩm đã được sao chép!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Không thể sao chép sản phẩm');
+    }
+  };
+
+  const handleOpenReviews = async (product: Product) => {
+    setReviewProduct(product);
+    setIsReviewsModalOpen(true);
+    setLoadingReviews(true);
+
+    try {
+      const reviews = await fetchReviews(product.id);
+      setProductReviews(reviews);
+    } catch {
+      setProductReviews([]);
+      toast.error('Không thể tải danh sách đánh giá');
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      await deleteReview(reviewId);
+      setProductReviews((current) => current.filter((review) => review.id !== reviewId));
+      toast.success('Đã xóa đánh giá');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể xóa đánh giá');
     }
   };
 
@@ -456,6 +487,13 @@ export const ManageProductsEnhanced: React.FC = () => {
                               <Copy className="w-4 h-4" />
                             </button>
                             <button
+                              onClick={() => handleOpenReviews(product)}
+                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              title="Xem đánh giá"
+                            >
+                              <Star className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => handleDelete(product)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Xóa"
@@ -511,6 +549,87 @@ export const ManageProductsEnhanced: React.FC = () => {
           itemName={selectedProduct.name}
           itemType="sản phẩm"
         />
+      )}
+
+      {isReviewsModalOpen && reviewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl max-h-[85vh] overflow-hidden">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Đánh giá sản phẩm</h2>
+                <p className="text-sm text-gray-500 mt-1">{reviewProduct.name}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsReviewsModalOpen(false);
+                  setReviewProduct(null);
+                  setProductReviews([]);
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[70vh]">
+              {loadingReviews ? (
+                <p className="text-gray-600">Đang tải đánh giá...</p>
+              ) : productReviews.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500">
+                  Chưa có đánh giá nào cho sản phẩm này.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {productReviews.map((review) => (
+                    <div key={review.id} className="rounded-xl border border-gray-200 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {review.userAvatar ? (
+                            <img
+                              src={review.userAvatar}
+                              alt={review.userName}
+                              className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                              {review.userName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900">{review.userName}</p>
+                            <div className="flex items-center gap-1 flex-wrap mt-1">
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <Star
+                                  key={index}
+                                  className={`w-4 h-4 ${index < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                />
+                              ))}
+                              <span className="text-xs text-gray-500 ml-2">
+                                {new Date(review.createdAt).toLocaleDateString('vi-VN')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleDeleteReview(review.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa đánh giá"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <p className="mt-3 text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
+                        {review.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

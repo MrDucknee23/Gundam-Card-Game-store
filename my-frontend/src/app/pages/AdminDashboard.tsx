@@ -23,6 +23,8 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Card, CardContent } from '../components/ui/card';
 import { useProducts } from '../hooks/useProducts';
 import { useUsers } from '../hooks/useUsers';
+import { buildApiUrl } from '../utils/api';
+import { orders as fallbackOrders } from '../data/orders';
 import type { Order } from '../data/orders';
 
 ChartJS.register(
@@ -162,6 +164,9 @@ const DATE_RANGE_DAYS: Record<string, number> = {
   '1year': 365,
 };
 
+const ORDERS_API_URL = buildApiUrl('/orders?summary=1');
+const REQUEST_TIMEOUT_MS = 5000;
+
 const calculatePercentChange = (current: number, previous: number) => {
   if (previous === 0) {
     return current > 0 ? 100 : 0;
@@ -199,8 +204,8 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { products, loading: productsLoading } = useProducts();
   const { users, loading: usersLoading } = useUsers();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>(fallbackOrders);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [activeAnalyticsTab, setActiveAnalyticsTab] = useState('revenue');
   const [dateRange, setDateRange] = useState('6months');
@@ -213,23 +218,33 @@ export const AdminDashboard: React.FC = () => {
     let isMounted = true;
 
     const loadOrders = async () => {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
       try {
-        setOrdersLoading(true);
         setDashboardError(null);
-        const response = await fetch('http://localhost:5000/api/orders');
+        const response = await fetch(ORDERS_API_URL, { signal: controller.signal });
         if (!response.ok) {
           throw new Error('Không thể tải dữ liệu dashboard');
         }
 
         const data = await response.json();
-        if (isMounted) {
+        const isStale = response.headers.get('x-orders-stale') === '1';
+
+        if (isMounted && Array.isArray(data) && data.length > 0 && !isStale) {
           setOrders(data);
         }
       } catch (error) {
         if (isMounted) {
-          setDashboardError(error instanceof Error ? error.message : 'Không thể tải dữ liệu dashboard');
+          setOrders(fallbackOrders);
+          setDashboardError(
+            error instanceof Error && error.name === 'AbortError'
+              ? 'Máy chủ phản hồi chậm. Đang hiển thị dữ liệu tạm thời.'
+              : 'Không thể tải dữ liệu đơn hàng mới nhất. Đang hiển thị dữ liệu tạm thời.'
+          );
         }
       } finally {
+        window.clearTimeout(timeoutId);
         if (isMounted) {
           setOrdersLoading(false);
         }
@@ -571,7 +586,7 @@ export const AdminDashboard: React.FC = () => {
     };
   }, [orders, products, users, dateRange, categoryFilter, statusFilter, activeCategoryTab]);
 
-  const isDashboardLoading = productsLoading || usersLoading || ordersLoading;
+  const isDashboardLoading = (productsLoading && products.length === 0) || ordersLoading;
 
   const exportData = (format: 'csv' | 'excel') => {
     const csvRows = [

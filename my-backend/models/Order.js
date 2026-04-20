@@ -29,4 +29,9 @@ const orderSchema = new mongoose.Schema({
   paidAt: { type: Date }
 }, { timestamps: true });
 
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ orderCode: 1 });
+orderSchema.index({ 'customer.email': 1 });
+orderSchema.index({ 'customer.phone': 1 });
+
 module.exports = mongoose.model('Order', orderSchema);

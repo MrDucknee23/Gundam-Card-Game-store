@@ -2,10 +2,59 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order'); // Import Model của bạn
 
+const isTruthyQuery = (value) => ['1', 'true', 'yes'].includes(String(value || '').toLowerCase());
+const SUMMARY_FIELDS = 'orderCode customer totalAmount subtotal shippingFee paymentStatus orderStatus paymentMethod items.productName items.quantity items.price createdAt';
+const SUMMARY_CACHE_TTL_MS = 30_000;
+const summaryCache = new Map();
+
+const formatOrderStatus = (status) => {
+  if (status === 'Đang xử lý') return 'processing';
+  if (status === 'Đã giao hàng' || status === 'Đang giao' || status === 'Đang vận chuyển') return 'shipped';
+  if (status === 'Đã gửi hàng' || status === 'Giao thành công') return 'delivered';
+  if (status === 'Đã hủy') return 'cancelled';
+  return 'processing';
+};
+
+const formatPaymentStatus = (status) => {
+  if (status === 'Đã thanh toán') return 'paid';
+  if (status === 'Chờ thanh toán' || status === 'Chưa thanh toán') return 'pending';
+  return 'failed';
+};
+
+const mapOrderToFrontend = (order) => ({
+  id: order._id.toString(),
+  orderNumber: order.orderCode || `ORD-${order._id.toString().slice(-6)}`,
+  customerName: order.customer?.name || 'Khách vãng lai',
+  customerEmail: order.customer?.email || 'N/A',
+  customerPhone: order.customer?.phone || 'N/A',
+  orderDate: order.createdAt || new Date().toISOString(),
+  total: order.totalAmount || 0,
+  subtotal: order.subtotal || 0,
+  shippingFee: order.shippingFee || 0,
+  paymentStatus: formatPaymentStatus(order.paymentStatus),
+  orderStatus: formatOrderStatus(order.orderStatus),
+  paymentMethod: order.paymentMethod || 'cod',
+  shippingAddress: {
+    street: order.customer?.address || '',
+    ward: '', district: '', city: ''
+  },
+  items: (order.items || []).map(item => ({
+    productId: item._id?.toString(),
+    productName: item.productName,
+    quantity: item.quantity,
+    price: item.price,
+    productImage: item.productImage || '',
+    category: 'Sản phẩm'
+  })),
+  notes: order.history?.[0]?.note || ''
+});
+
+const getCacheKey = (filter, limit) => JSON.stringify({ filter, limit });
+
 // 1. Lấy danh sách toàn bộ đơn hàng
 router.get('/', async (req, res) => {
   try {
-    let filter = {};
+    const filter = {};
 
     // Nếu có truyền email hoặc số điện thoại, chỉ lấy đơn hàng của người đó
     if (req.query.email) {
@@ -15,53 +64,60 @@ router.get('/', async (req, res) => {
       filter['customer.phone'] = req.query.phone;
     }
 
-    const dbOrders = await Order.find(filter).sort({ _id: -1 }); // Sắp xếp theo _id để đơn mới nhất luôn ở trên cùng
-    
-    // Format lại dữ liệu từ DB (Tiếng Việt) sang Interface của React (Tiếng Anh)
-    const formattedOrders = dbOrders.map(order => {
-      const mapOrderStatus = (status) => {
-        if (status === 'Đang xử lý') return 'processing';
-        if (status === 'Đã giao hàng' || status === 'Đang giao' || status === 'Đang vận chuyển') return 'shipped';
-        if (status === 'Đã gửi hàng' || status === 'Giao thành công') return 'delivered';
-        if (status === 'Đã hủy') return 'cancelled';
-        return 'processing';
-      };
-      
-      const mapPaymentStatus = (status) => {
-        if (status === 'Đã thanh toán') return 'paid';
-        if (status === 'Chờ thanh toán' || status === 'Chưa thanh toán') return 'pending';
-        return 'failed';
-      };
+    const summaryOnly = isTruthyQuery(req.query.summary);
+    const rawLimit = Number.parseInt(String(req.query.limit || ''), 10);
+    const safeLimit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 500) : null;
 
-      return {
-        id: order._id.toString(),
-        orderNumber: order.orderCode || `ORD-${order._id.toString().slice(-6)}`,
-        customerName: order.customer?.name || 'Khách vãng lai',
-        customerEmail: order.customer?.email || 'N/A',
-        customerPhone: order.customer?.phone || 'N/A',
-        orderDate: order.createdAt || new Date().toISOString(),
-        total: order.totalAmount || 0,
-        subtotal: order.subtotal || 0,
-        shippingFee: order.shippingFee || 0,
-        paymentStatus: mapPaymentStatus(order.paymentStatus),
-        orderStatus: mapOrderStatus(order.orderStatus),
-        paymentMethod: order.paymentMethod || 'cod',
-        shippingAddress: {
-          street: order.customer?.address || '',
-          ward: '', district: '', city: ''
-        },
-        items: order.items.map(item => ({
-          productId: item._id?.toString(),
-          productName: item.productName,
-          quantity: item.quantity,
-          price: item.price,
-          productImage: item.productImage,
-          category: 'Sản phẩm'
-        })),
-        notes: order.history?.[0]?.note || ''
-      };
+    let query = Order.find(filter)
+      .sort({ _id: -1 })
+      .lean()
+      .maxTimeMS(8000);
+
+    if (summaryOnly) {
+      query = query.select(SUMMARY_FIELDS);
+    }
+
+    if (safeLimit) {
+      query = query.limit(safeLimit);
+    }
+
+    const cacheKey = getCacheKey(filter, safeLimit ?? 0);
+    const cachedEntry = summaryOnly ? summaryCache.get(cacheKey) : null;
+
+    if (summaryOnly && cachedEntry && Date.now() - cachedEntry.timestamp < SUMMARY_CACHE_TTL_MS) {
+      res.set('X-Orders-Cache', 'HIT');
+      return res.json(cachedEntry.data);
+    }
+
+    const fetchPromise = query.then((dbOrders) => {
+      const formattedOrders = dbOrders.map(mapOrderToFrontend);
+
+      if (summaryOnly) {
+        summaryCache.set(cacheKey, {
+          data: formattedOrders,
+          timestamp: Date.now(),
+        });
+      }
+
+      return formattedOrders;
     });
-    
+
+    if (summaryOnly) {
+      const timedResult = await Promise.race([
+        fetchPromise,
+        new Promise((resolve) => setTimeout(() => resolve(null), 2500)),
+      ]);
+
+      if (timedResult) {
+        res.set('X-Orders-Cache', 'MISS');
+        return res.json(timedResult);
+      }
+
+      res.set('X-Orders-Stale', '1');
+      return res.json(cachedEntry?.data || []);
+    }
+
+    const formattedOrders = await fetchPromise;
     res.json(formattedOrders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -143,7 +199,7 @@ router.get('/stats/top-customers', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).lean().maxTimeMS(8000);
     if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
 
     const requestedEmail = typeof req.query.email === 'string' ? req.query.email.trim() : '';
