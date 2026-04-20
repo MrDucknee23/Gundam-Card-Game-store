@@ -20,7 +20,8 @@ const productSchema = new mongoose.Schema({
   featured: { type: Boolean, default: false },
   isPreorder: { type: Boolean, default: false },
   releaseDate: { type: String },
-  specifications: [{ name: String, value: String }]
+  specifications: [{ name: String, value: String }],
+  specificationText: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

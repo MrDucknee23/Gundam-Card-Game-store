@@ -57,6 +57,7 @@ export const AddProduct: React.FC = () => {
 
   const [mainImage, setMainImage] = useState<string>('');
   const [subImages, setSubImages] = useState<string[]>([]);
+  const [specificationText, setSpecificationText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(isEditMode);
 
@@ -133,6 +134,7 @@ export const AddProduct: React.FC = () => {
         const [primaryImage, ...secondaryImages] = product.images;
         setMainImage(primaryImage || '');
         setSubImages(secondaryImages);
+        setSpecificationText(product.specificationText || '');
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Không thể tải sản phẩm');
         navigate('/admin/products');
@@ -237,6 +239,7 @@ export const AddProduct: React.FC = () => {
       rarity: currentAttributeGroup?.key === 'rarity' ? attributeValue : undefined,
       cardType: isCardCategory ? formData.cardType.trim() || undefined : undefined,
       featured: formData.featured,
+      specificationText,
     };
   };
 
@@ -291,6 +294,7 @@ export const AddProduct: React.FC = () => {
     setFormData(emptyFormData);
     setMainImage('');
     setSubImages([]);
+    setSpecificationText('');
   };
 
   if (isLoadingProduct) {
@@ -379,6 +383,19 @@ export const AddProduct: React.FC = () => {
                   className="mt-2 bg-white border-gray-200 text-black focus:border-primary resize-none"
                   placeholder="Detailed product description"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="specificationText" className="text-black">Thông số kỹ thuật</Label>
+                <Textarea
+                  id="specificationText"
+                  value={specificationText}
+                  onChange={(e) => setSpecificationText(e.target.value)}
+                  rows={8}
+                  className="mt-2 bg-white border-gray-200 text-black focus:border-primary font-mono text-sm resize-y"
+                  placeholder={"Dán hoặc nhập thông số kỹ thuật ở đây.\nVí dụ:\nGrade: HG\nScale: 1/144\nChiều cao: 13cm"}
+                />
+                <p className="text-sm text-gray-500 mt-2">Nội dung này sẽ hiển thị bên dưới ảnh sản phẩm trên trang khách hàng.</p>
               </div>
 
               <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">

@@ -54,6 +54,7 @@ export const ProductDetails: React.FC = () => {
     material: currentProduct.material || undefined,
     cardType: currentProduct.cardType || undefined,
     featured: currentProduct.featured,
+    specificationText: currentProduct.specificationText || '',
   });
 
   if (loading) {
