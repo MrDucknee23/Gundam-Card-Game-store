@@ -6,6 +6,7 @@ const cors = require('cors');
 const multer = require('multer');
 const passport = require('passport');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 if (!process.env.GUEST_OTP_JWT_SECRET) {
@@ -20,6 +21,9 @@ const { initChatRealtime } = require('./realtime/chatRealtime');
 const app = express();
 const httpServer = http.createServer(app);
 const JSON_BODY_LIMIT = '5mb';
+const frontendDistDir = path.join(__dirname, '..', 'my-frontend', 'dist');
+const frontendIndexFile = path.join(frontendDistDir, 'index.html');
+const hasFrontendBuild = fs.existsSync(frontendIndexFile);
 
 ensureUploadsDirExists();
 configurePassport(passport);
@@ -90,9 +94,11 @@ const logMongoErrorHelp = (err) => {
   }
 };
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Server đang chạy!' });
-});
+if (!hasFrontendBuild) {
+  app.get('/', (req, res) => {
+    res.json({ message: 'Server đang chạy!' });
+  });
+}
 
 app.use('/api/products', require('./routes/products'));
 app.use('/api/users', require('./routes/users'));
@@ -116,6 +122,15 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/upload', require('./routes/upload'));
+
+if (hasFrontendBuild) {
+  app.use(express.static(frontendDistDir));
+
+  // Single-service deployment: route non-API traffic to React app.
+  app.get(/^\/(?!api\/|uploads\/|socket\.io\/).*/, (req, res) => {
+    res.sendFile(frontendIndexFile);
+  });
+}
 
 app.use((err, req, res, next) => {
   if (res.headersSent) {
