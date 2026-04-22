@@ -256,7 +256,11 @@ export const uploadProductFiles = async (files: File[]): Promise<string[]> => {
     body: formData,
   });
 
-  return normalizeImages(response.files).map(normalizeUploadedImagePath).filter((path) => path !== '');
+  return normalizeImages(response.files)
+    .map(normalizeUploadedImagePath)
+    .filter((path) => path !== '')
+    .map(resolveMediaUrl)
+    .filter((path) => path !== '');
 };
 
 export const ensureUploadedProductImages = async (images: string[]): Promise<string[]> => {
