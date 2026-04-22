@@ -4,8 +4,9 @@ services:
     name: gundam-store-backend
     runtime: node
     plan: free
-    buildCommand: cd my-backend && npm install
-    startCommand: cd my-backend && npm start
+    rootDir: my-backend
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: MONGODB_URI
         scope: all
@@ -51,8 +52,9 @@ services:
   - type: static
     name: gundam-store-frontend
     plan: free
-    buildCommand: cd my-frontend && npm install && npm run build
-    staticPublishPath: ./my-frontend/dist
+    rootDir: my-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
     routes:
       - path: /*
         destination: /index.html
