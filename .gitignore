@@ -11,6 +11,8 @@ my-backend/.env
 my-frontend/.env
 my-backend/.env.*
 my-frontend/.env.*
+# Allow production env for build-time vars (safe to commit)
+!my-frontend/.env.production
 
 # Build output
 dist
