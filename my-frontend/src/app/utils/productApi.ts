@@ -1,5 +1,5 @@
 import { Product, ProductCategory } from '../types/product';
-import { buildApiUrl } from './api';
+import { buildApiUrl, resolveMediaUrl } from './api';
 import { getCached, invalidateCache, setCache } from './cache';
 
 const API_URL = buildApiUrl('/products');
@@ -230,7 +230,7 @@ export const mapApiProduct = (product: ApiProduct): Product => ({
   price: Number(product.price) || 0,
   description: product.description || '',
   stock: Number(product.stock) || 0,
-  images: normalizeImages(product.images),
+  images: normalizeImages(product.images).map(resolveMediaUrl).filter((image) => image !== ''),
   grade: product.grade || undefined,
   rarity: product.rarity || undefined,
   subCategoryKey: product.subCategoryKey || undefined,
