@@ -2,7 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 
-const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+const configuredUploadsDir = process.env.UPLOADS_DIR?.trim();
+const UPLOADS_DIR = configuredUploadsDir
+  ? path.resolve(configuredUploadsDir)
+  : path.join(__dirname, '..', 'uploads');
 const MAX_IMAGE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 

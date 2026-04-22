@@ -7,6 +7,10 @@ services:
     rootDir: my-backend
     buildCommand: npm install
     startCommand: npm start
+    disks:
+      - name: uploads-disk
+        mountPath: /var/data
+        sizeGB: 1
     envVars:
       - key: MONGODB_URI
         scope: all
@@ -18,6 +22,8 @@ services:
         scope: all
       - key: API_BASE_URL
         scope: all
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: OTP_EXPIRES_IN

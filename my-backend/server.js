@@ -14,7 +14,7 @@ if (!process.env.GUEST_OTP_JWT_SECRET) {
   process.exit(1);
 }
 
-const { ensureUploadsDirExists } = require('./utils/imageStorage');
+const { ensureUploadsDirExists, UPLOADS_DIR } = require('./utils/imageStorage');
 const configurePassport = require('./config/passport');
 const { initChatRealtime } = require('./realtime/chatRealtime');
 
@@ -34,7 +34,7 @@ app.use(express.json({ limit: JSON_BODY_LIMIT }));
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = UPLOADS_DIR;
 const missingImageSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
   <rect width="640" height="640" fill="#f3f4f6" />
