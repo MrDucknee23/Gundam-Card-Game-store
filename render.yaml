@@ -37,15 +37,11 @@ services:
       - key: FACEBOOK_CALLBACK_URL
         scope: all
       # Email configuration (if needed)
-      - key: MAIL_HOST
+      - key: EMAIL_FROM
         scope: all
-      - key: MAIL_PORT
-        value: "465"
-      - key: MAIL_FROM
+      - key: EMAIL_USER
         scope: all
-      - key: MAIL_USER
-        scope: all
-      - key: MAIL_PASS
+      - key: EMAIL_PASS
         scope: all
 
   # Frontend Static Site
