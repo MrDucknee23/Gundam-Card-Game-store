@@ -1042,6 +1042,20 @@ router.put('/:id', async (req, res) => {
         updateData.paymentStatus = mapPaymentToVi[updateData.paymentStatus] || updateData.paymentStatus;
       }
 
+      // Refill stock khi admin chuyển đơn sang trạng thái hủy lần đầu tiên
+      const wasCancelledBefore = formatOrderStatus(order.orderStatus) === 'cancelled';
+      const willBeCancelled = updateData.orderStatus && formatOrderStatus(updateData.orderStatus) === 'cancelled';
+      if (!wasCancelledBefore && willBeCancelled && Array.isArray(order.items)) {
+        for (const item of order.items) {
+          if (item.productId && item.quantity > 0) {
+            await Product.updateOne(
+              { _id: item.productId },
+              { $inc: { stock: item.quantity } }
+            );
+          }
+        }
+      }
+
       if (updateData.notes !== undefined) {
         if (order.history && order.history.length > 0) {
           order.history[0].note = updateData.notes;
@@ -1065,6 +1079,19 @@ router.put('/:id', async (req, res) => {
         if (normalizedStatus !== 'Đã hủy') {
           return res.status(403).json({ message: 'Khách hàng chỉ được hủy đơn hàng' });
         }
+
+        // Refill stock khi user hủy đơn (guard đã có: chỉ cho phép khi đang 'processing')
+        if (Array.isArray(order.items)) {
+          for (const item of order.items) {
+            if (item.productId && item.quantity > 0) {
+              await Product.updateOne(
+                { _id: item.productId },
+                { $inc: { stock: item.quantity } }
+              );
+            }
+          }
+        }
+
         order.orderStatus = 'Đã hủy';
       }
 
