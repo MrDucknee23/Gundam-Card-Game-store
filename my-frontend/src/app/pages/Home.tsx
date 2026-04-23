@@ -74,7 +74,7 @@ export const Home: React.FC = () => {
       grade: 'HG' as GundamGrade,
       title: 'High Grade',
       description: 'Tỷ lệ 1/144 với khả năng tạo dáng linh hoạt',
-      image: '/images/hg_gundam.png'
+      image: 'https://cdn.hstatic.net/products/200000326537/538526313_1366261985503433_5113972436746293338_n_f658c1a1cf05403c9cae3e85a1e49d45_grande.jpg'
     },
     {
       grade: 'MG' as GundamGrade,
