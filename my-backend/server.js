@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const mongoose = require('mongoose');
 const compression = require('compression');
 const cors = require('cors');
@@ -67,9 +68,6 @@ const logMongoErrorHelp = (err) => {
   }
 };
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Server đang chạy!' });
-});
 
 app.use('/api/products', require('./routes/products'));
 app.use('/api/users', require('./routes/users'));
@@ -93,6 +91,16 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/upload', require('./routes/upload'));
+
+// ─── Serve React frontend (production) ──────────────────────────────────────
+const frontendDist = path.join(__dirname, '..', 'my-frontend', 'dist');
+app.use(express.static(frontendDist));
+
+// Mọi request không phải /api/* => trả về index.html (React Router)
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.use((err, req, res, next) => {
   if (res.headersSent) {

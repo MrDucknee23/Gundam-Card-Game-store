@@ -1,16 +1,11 @@
 services:
-  # Backend Web Service
+  # Single Web Service: Express serves both API and React frontend
   - type: web
-    name: gundam-store-backend
+    name: gundam-store
     runtime: node
     plan: free
-    rootDir: my-backend
-    buildCommand: npm install
-    startCommand: npm start
-    disks:
-      - name: uploads-disk
-        mountPath: /var/data
-        sizeGB: 1
+    buildCommand: npm --prefix my-frontend install && npm --prefix my-frontend run build && npm --prefix my-backend install
+    startCommand: npm --prefix my-backend start
     envVars:
       - key: MONGODB_URI
         scope: all
@@ -20,14 +15,16 @@ services:
         scope: all
       - key: CLIENT_URL
         scope: all
+      - key: FRONTEND_URL
+        scope: all
       - key: API_BASE_URL
         scope: all
-      - key: UPLOADS_DIR
-        value: /var/data/uploads
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: OTP_EXPIRES_IN
         value: 5m
+      - key: PORT
+        value: 5000
       # Google OAuth
       - key: GOOGLE_CLIENT_ID
         scope: all
@@ -42,24 +39,10 @@ services:
         scope: all
       - key: FACEBOOK_CALLBACK_URL
         scope: all
-      # Email configuration (if needed)
+      # Email configuration
       - key: EMAIL_FROM
         scope: all
       - key: EMAIL_USER
         scope: all
       - key: EMAIL_PASS
         scope: all
-
-  # Frontend Static Site
-  - type: static
-    name: gundam-store-frontend
-    plan: free
-    rootDir: my-frontend
-    buildCommand: npm install --include=dev && npm run build
-    staticPublishPath: ./dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://gundam-store-backend.onrender.com/api
-    routes:
-      - path: /*
-        destination: /index.html
