@@ -497,42 +497,42 @@ export const ManageProductsEnhanced: React.FC = () => {
                         <td className="px-6 py-4">
                           <StatusBadge status={status} />
                         </td>
-                        <td className="px-6 py-4 min-w-[160px]">
-                          <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                        <td className="px-6 py-4 min-w-[180px]">
+                          <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                             <button
                               onClick={() => navigate(`/admin/products/${product.id}`)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Xem chi tiết"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => navigate(`/admin/products/${product.id}/edit`)}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                              className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                               title="Chỉnh sửa"
                             >
-                              <Pencil className="w-4 h-4" />
+                              <Pencil className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleDuplicate(product)}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                              className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                               title="Sao chép"
                             >
-                              <Copy className="w-4 h-4" />
+                              <Copy className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleOpenReviews(product)}
-                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              className="p-2.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                               title="Xem đánh giá"
                             >
-                              <Star className="w-4 h-4" />
+                              <Star className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleDelete(product)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Xóa"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
                         </td>

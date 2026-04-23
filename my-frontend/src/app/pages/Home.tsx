@@ -74,25 +74,25 @@ export const Home: React.FC = () => {
       grade: 'HG' as GundamGrade,
       title: 'High Grade',
       description: 'Tỷ lệ 1/144 với khả năng tạo dáng linh hoạt',
-      image: 'https://images.unsplash.com/photo-1712971724897-a9ae95e0ec44?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjBtb2RlbCUyMHJvYm90JTIwc2ltcGxlfGVufDF8fHx8MTc3NDg3NTA2Nnww&ixlib=rb-4.1.0&q=80&w=1080'
+      image: 'https://images.unsplash.com/photo-1712971724897-a9ae95e0ec44?w=600&auto=format&fit=crop'
     },
     {
       grade: 'MG' as GundamGrade,
       title: 'Master Grade',
       description: 'Tỷ lệ 1/100 với khung xương chi tiết',
-      image: 'https://images.unsplash.com/photo-1681367050714-f170aad806ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjBkZXRhaWxlZCUyMG1lY2hhbmljYWwlMjBmcmFtZXxlbnwxfHx8fDE3NzQ4NzUwNjZ8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      image: 'https://images.unsplash.com/photo-1681367050714-f170aad806ca?w=600&auto=format&fit=crop'
     },
     {
       grade: 'RG' as GundamGrade,
       title: 'Real Grade',
       description: 'Tỷ lệ 1/144 với chi tiết nâng cao',
-      image: 'https://images.unsplash.com/photo-1644898262501-6e73916dce2e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjByZWFsaXN0aWMlMjBkeW5hbWljJTIwcG9zZXxlbnwxfHx8fDE3NzQ4NzUwNjZ8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      image: 'https://images.unsplash.com/photo-1644898262501-6e73916dce2e?w=600&auto=format&fit=crop'
     },
     {
       grade: 'PG' as GundamGrade,
       title: 'Perfect Grade',
       description: 'Tỷ lệ 1/60 với chất lượng hoàn thiện cao nhất',
-      image: 'https://images.unsplash.com/photo-1742407881242-a867b21fb364?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjBwZXJmZWN0JTIwZ3JhZGUlMjByb2JvdHxlbnwxfHx8fDE3NzQ4NzUwNjl8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      image: 'https://images.unsplash.com/photo-1742407881242-a867b21fb364?w=600&auto=format&fit=crop'
     }
   ];
 
