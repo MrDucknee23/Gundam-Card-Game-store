@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GundamGrade, ProductCategory } from '../types/product';
 
 interface CategoryCardProps {
@@ -20,6 +20,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   onClick,
   isActive = false
 }) => {
+  const [imgError, setImgError] = useState(false);
   const getOverlayColor = () => {
     if (grade) {
       switch (grade) {
@@ -55,15 +56,22 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
     >
       {/* Background Image */}
       <div className="aspect-[20/9] relative overflow-hidden">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        {!imgError && (
+          <img
+            src={image}
+            alt={title}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        )}
+
+        {/* Gradient Overlay — hiện đầy khi ảnh lỗi, nửa trong suốt khi ảnh load */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t ${getOverlayColor()} ${
+            imgError ? 'opacity-100' : 'opacity-65 group-hover:opacity-75'
+          } transition-opacity`}
         />
-        
-        {/* Gradient Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t ${getOverlayColor()} opacity-65 group-hover:opacity-75 transition-opacity`} />
-        
+
         {/* Dark overlay for better text contrast */}
         <div className="absolute inset-0 bg-black/24" />
         <div className="absolute inset-x-4 top-4 h-7 rounded-full bg-white/18 blur-xl" />

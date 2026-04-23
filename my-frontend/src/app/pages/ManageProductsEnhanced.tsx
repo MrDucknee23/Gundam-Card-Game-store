@@ -497,8 +497,8 @@ export const ManageProductsEnhanced: React.FC = () => {
                         <td className="px-6 py-4">
                           <StatusBadge status={status} />
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-1">
+                        <td className="px-6 py-4 min-w-[160px]">
+                          <div className="flex items-center justify-center gap-1 whitespace-nowrap">
                             <button
                               onClick={() => navigate(`/admin/products/${product.id}`)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
