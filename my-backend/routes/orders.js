@@ -27,6 +27,8 @@ const DATE_RANGE_DAYS = {
 const NAME_REGEX = /^[A-Za-z├Ç-ß╗╣\s]+$/u;
 const PHONE_REGEX = /^[0-9]{9,11}$/;
 const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', '─æ├ú hß╗ºy']);
+const CANCELLED_STATUS_VALUE = 'cancelled';
+const CANCELLABLE_ORDER_STATUSES = new Set(['processing', 'pending', 'confirmed']);
 
 const formatOrderStatus = (status) => {
   const normalizedStatus = String(status || '').trim().toLowerCase();
@@ -45,6 +47,41 @@ const formatOrderStatus = (status) => {
 };
 
 const isCancelledStatus = (status) => CANCELLED_STATUSES.has(String(status || '').trim().toLowerCase());
+
+const normalizeOrderStatus = (status) => {
+  const normalizedStatus = String(status || '').trim().toLowerCase();
+
+  if (normalizedStatus === 'pending' || normalizedStatus === 'cho xac nhan' || normalizedStatus === 'chờ xác nhận') {
+    return 'pending';
+  }
+
+  if (normalizedStatus === 'confirmed' || normalizedStatus === 'da xac nhan' || normalizedStatus === 'đã xác nhận') {
+    return 'confirmed';
+  }
+
+  if (normalizedStatus === 'processing' || normalizedStatus === '─æang xß╗¡ l├╜' || normalizedStatus === 'dang xu ly') {
+    return 'processing';
+  }
+
+  if (
+    normalizedStatus === 'shipped'
+    || normalizedStatus === '─æ├ú giao h├áng'
+    || normalizedStatus === '─æang giao'
+    || normalizedStatus === '─æang vß║¡n chuyß╗ân'
+  ) {
+    return 'shipped';
+  }
+
+  if (normalizedStatus === 'delivered' || normalizedStatus === '─æ├ú gß╗¡i h├áng' || normalizedStatus === 'giao th├ánh c├┤ng') {
+    return 'delivered';
+  }
+
+  if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled' || normalizedStatus === '─æ├ú hß╗ºy') {
+    return 'cancelled';
+  }
+
+  return 'processing';
+};
 
 const normalizePersonName = (value) => String(value || '').trim().replace(/\s+/g, ' ');
 const normalizePhoneNumber = (value) => String(value || '').trim();
@@ -113,7 +150,11 @@ const restoreStockAndCancelOrder = async (orderId) => {
   const session = await Order.startSession();
 
   try {
-    let didRestore = false;
+    let result = {
+      didRestore: false,
+      wasAlreadyCancelled: false,
+      order: null,
+    };
 
     await session.withTransaction(async () => {
       const order = await Order.findOne({ _id: orderId }).session(session);
@@ -122,7 +163,43 @@ const restoreStockAndCancelOrder = async (orderId) => {
         throw createHttpError(404, 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng');
       }
 
-      if (isCancelledStatus(order.orderStatus)) {
+      const currentStatus = normalizeOrderStatus(order.orderStatus);
+
+      if (currentStatus === 'cancelled') {
+        result = {
+          didRestore: false,
+          wasAlreadyCancelled: true,
+          order: order.toObject(),
+        };
+        return;
+      }
+
+      if (!CANCELLABLE_ORDER_STATUSES.has(currentStatus)) {
+        throw createHttpError(409, 'Kh├┤ng thß╗â hß╗ºy ─æ╞ín h├áng tß╗½ tr╞░ß╗¥ng th├íi hiß╗çn tß║íi');
+      }
+
+      // Atomic state transition: only one request can switch non-cancelled -> cancelled.
+      const switchedOrder = await Order.findOneAndUpdate(
+        {
+          _id: orderId,
+          orderStatus: { $nin: ['cancelled', 'canceled', '─É├ú hß╗ºy'] },
+        },
+        {
+          $set: { orderStatus: CANCELLED_STATUS_VALUE },
+        },
+        {
+          new: true,
+          session,
+        }
+      );
+
+      if (!switchedOrder) {
+        const latest = await Order.findOne({ _id: orderId }).session(session);
+        result = {
+          didRestore: false,
+          wasAlreadyCancelled: true,
+          order: latest ? latest.toObject() : order.toObject(),
+        };
         return;
       }
 
@@ -139,12 +216,14 @@ const restoreStockAndCancelOrder = async (orderId) => {
         );
       }
 
-      order.orderStatus = '─É├ú hß╗ºy';
-      await order.save({ session });
-      didRestore = true;
+      result = {
+        didRestore: true,
+        wasAlreadyCancelled: false,
+        order: switchedOrder.toObject(),
+      };
     });
 
-    return didRestore;
+    return result;
   } finally {
     await session.endSession();
   }
@@ -252,16 +331,7 @@ const resolveGuestContext = (req) => {
   };
 };
 
-const normalizeOrderStatusToVi = (status) => {
-  const mapToVi = {
-    processing: '─Éang xß╗¡ l├╜',
-    shipped: '─Éang vß║¡n chuyß╗ân',
-    delivered: 'Giao th├ánh c├┤ng',
-    cancelled: '─É├ú hß╗ºy',
-  };
-
-  return mapToVi[status] || status;
-};
+const normalizeOrderStatusToVi = (status) => normalizeOrderStatus(status);
 
 const mapOrderToFrontend = (order) => ({
   id: order._id.toString(),
@@ -1059,8 +1129,16 @@ router.put('/:id', async (req, res) => {
           return res.status(409).json({ message: 'Kh├┤ng thß╗â cß║¡p nhß║¡t thanh to├ín c├╣ng l├║c khi hß╗ºy ─æ╞ín' });
         }
 
-        await restoreStockAndCancelOrder(order._id);
-        return res.json({ message: 'Cß║¡p nhß║¡t th├ánh c├┤ng' });
+        const cancelResult = await restoreStockAndCancelOrder(order._id);
+        const latestOrder = await Order.findById(order._id).lean().maxTimeMS(8000);
+        return res.json({
+          message: cancelResult.wasAlreadyCancelled
+            ? '─É╞ín h├áng ─æ├ú ß╗ƒ tr╞░ß╗¥ng th├íi hß╗ºy'
+            : 'Cß║¡p nhß║¡t th├ánh c├┤ng',
+          didRestoreStock: cancelResult.didRestore,
+          wasAlreadyCancelled: cancelResult.wasAlreadyCancelled,
+          order: latestOrder ? mapOrderToFrontend(latestOrder) : null,
+        });
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -1073,12 +1151,21 @@ router.put('/:id', async (req, res) => {
 
       if (updateData.orderStatus !== undefined) {
         const normalizedStatus = normalizeOrderStatusToVi(updateData.orderStatus);
-        if (normalizedStatus !== '─É├ú hß╗ºy') {
+        if (normalizedStatus !== 'cancelled') {
           return res.status(403).json({ message: 'Kh├ích h├áng chß╗ë ─æ╞░ß╗úc hß╗ºy ─æ╞ín h├áng' });
         }
-        await restoreStockAndCancelOrder(order._id);
+        const cancelResult = await restoreStockAndCancelOrder(order._id);
+        const latestOrder = await Order.findById(order._id).lean().maxTimeMS(8000);
+
         if (updateData.customer === undefined) {
-          return res.json({ message: 'Cß║¡p nhß║¡t th├ánh c├┤ng' });
+          return res.json({
+            message: cancelResult.wasAlreadyCancelled
+              ? '─É╞ín h├áng ─æ├ú ß╗ƒ tr╞░ß╗¥ng th├íi hß╗ºy'
+              : 'Cß║¡p nhß║¡t th├ánh c├┤ng',
+            didRestoreStock: cancelResult.didRestore,
+            wasAlreadyCancelled: cancelResult.wasAlreadyCancelled,
+            order: latestOrder ? mapOrderToFrontend(latestOrder) : null,
+          });
         }
       }
 
@@ -1097,7 +1184,11 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    res.json({ message: 'Cß║¡p nhß║¡t th├ánh c├┤ng' });
+    const latestOrder = await Order.findById(order._id).lean().maxTimeMS(8000);
+    res.json({
+      message: 'Cß║¡p nhß║¡t th├ánh c├┤ng',
+      order: latestOrder ? mapOrderToFrontend(latestOrder) : null,
+    });
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
   }

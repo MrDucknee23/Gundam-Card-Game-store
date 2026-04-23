@@ -167,6 +167,31 @@ export const MyOrders: React.FC = () => {
     }
   }, [fetchGuestOrders, fetchOrders, guestSession]);
 
+  useEffect(() => {
+    const refreshOrders = () => {
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('authToken') || '';
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      if (user?.email && token) {
+        void fetchOrders(user.email);
+        return;
+      }
+
+      if (guestSession?.email && guestSession.phone && guestSession.accessToken) {
+        void fetchGuestOrders(guestSession);
+      }
+    };
+
+    const intervalId = window.setInterval(refreshOrders, 15000);
+    window.addEventListener('focus', refreshOrders);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshOrders);
+    };
+  }, [fetchGuestOrders, fetchOrders, guestSession]);
+
   const storedGuestInfo = getStoredGuestOrderAccess();
 
   const formatDate = (dateString: string) => {

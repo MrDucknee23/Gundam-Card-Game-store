@@ -46,9 +46,21 @@ export const OrderDetail: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed'>('pending');
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [customerTotalSpent, setCustomerTotalSpent] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const isCancelledOrder = orderStatus === 'cancelled' || order?.orderStatus === 'cancelled';
+
+  const applyOrderSnapshot = (nextOrder: any) => {
+    if (!nextOrder) {
+      return;
+    }
+
+    setOrder(nextOrder);
+    setOrderStatus(nextOrder.orderStatus || 'processing');
+    setPaymentStatus(nextOrder.paymentStatus || 'pending');
+    setAdminNotes(nextOrder.notes || '');
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -80,10 +92,7 @@ export const OrderDetail: React.FC = () => {
           return;
         }
 
-        setOrder(data);
-        setOrderStatus(data.orderStatus);
-        setPaymentStatus(data.paymentStatus || 'pending');
-        setAdminNotes(data.notes || '');
+        applyOrderSnapshot(data);
 
         if (data.customerEmail && data.customerEmail !== 'N/A') {
           fetch(buildApiUrl(`/orders/stats/customer?email=${encodeURIComponent(data.customerEmail)}`))
@@ -151,6 +160,16 @@ export const OrderDetail: React.FC = () => {
   };
 
   const handleUpdateStatus = async () => {
+    if (isUpdatingStatus) {
+      return;
+    }
+
+    if (orderStatus === order.orderStatus) {
+      toast.info('Trạng thái đơn hàng chưa thay đổi.');
+      return;
+    }
+
+    setIsUpdatingStatus(true);
     try {
       const res = await fetch(buildApiUrl(`/orders/${id}`), {
         method: 'PUT',
@@ -158,8 +177,18 @@ export const OrderDetail: React.FC = () => {
         body: JSON.stringify({ orderStatus })
       });
       if (res.ok) {
-        setOrder((current: any) => current ? { ...current, orderStatus } : current);
-        toast.success('Trạng thái đơn hàng đã được cập nhật!');
+        const payload = await res.json().catch(() => ({}));
+        if (payload.order) {
+          applyOrderSnapshot(payload.order);
+        } else {
+          setOrder((current: any) => current ? { ...current, orderStatus } : current);
+        }
+
+        if (payload.wasAlreadyCancelled) {
+          toast.info(payload.message || 'Đơn hàng đã ở trạng thái hủy trước đó.');
+        } else {
+          toast.success(payload.message || 'Trạng thái đơn hàng đã được cập nhật!');
+        }
       } else {
         const payload = await res.json().catch(() => ({}));
         setOrderStatus(order.orderStatus);
@@ -168,6 +197,8 @@ export const OrderDetail: React.FC = () => {
     } catch (error) {
       setOrderStatus(order.orderStatus);
       toast.error('Lỗi kết nối đến máy chủ');
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -671,9 +702,10 @@ export const OrderDetail: React.FC = () => {
                 </select>
                 <button
                   onClick={handleUpdateStatus}
-                  className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  disabled={isUpdatingStatus || orderStatus === order.orderStatus}
+                  className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
-                  Cập nhật trạng thái
+                  {isUpdatingStatus ? 'Đang cập nhật...' : 'Cập nhật trạng thái'}
                 </button>
               </div>
             </div>
