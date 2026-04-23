@@ -1,4 +1,10 @@
 import type { OrderStatus, PaymentStatus } from '../../data/orders';
+import {
+  getOrderStatusLabel,
+  getPaymentStatusLabel,
+  normalizeOrderStatus,
+  normalizePaymentStatus,
+} from '../../utils/orderDisplay';
 
 interface StatusBadgeProps {
   status: OrderStatus | PaymentStatus;
@@ -8,7 +14,7 @@ interface StatusBadgeProps {
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, type }) => {
   const getStyles = () => {
     if (type === 'order') {
-      const orderStatus = status as OrderStatus;
+      const orderStatus = normalizeOrderStatus(status);
       switch (orderStatus) {
         case 'processing':
           return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -22,7 +28,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, type }) => {
           return 'bg-gray-100 text-gray-800 border-gray-200';
       }
     } else {
-      const paymentStatus = status as PaymentStatus;
+      const paymentStatus = normalizePaymentStatus(status);
       switch (paymentStatus) {
         case 'paid':
           return 'bg-green-100 text-green-800 border-green-200';
@@ -38,22 +44,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, type }) => {
 
   const getLabel = () => {
     if (type === 'order') {
-      const orderStatus = status as OrderStatus;
-      const labels: Record<OrderStatus, string> = {
-        processing: 'Đang xử lý',
-        shipped: 'Đã gửi hàng',
-        delivered: 'Đã giao hàng',
-        cancelled: 'Đã hủy'
-      };
-      return labels[orderStatus];
+      return getOrderStatusLabel(status);
     } else {
-      const paymentStatus = status as PaymentStatus;
-      const labels: Record<PaymentStatus, string> = {
-        paid: 'Đã thanh toán',
-        pending: 'Chờ thanh toán',
-        failed: 'Thất bại'
-      };
-      return labels[paymentStatus];
+      return getPaymentStatusLabel(status);
     }
   };
 

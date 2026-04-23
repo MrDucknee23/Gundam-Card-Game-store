@@ -10,6 +10,14 @@ import { toast } from 'sonner';
 import { formatCurrency } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
 import { buildGuestOrderHeaders, clearGuestOrderVerification, getStoredGuestOrderAccess } from '../utils/guestOrderAccess';
+import {
+  formatAddressParts,
+  getPaymentMethodLabel,
+  getPaymentStatusLabel,
+  normalizeOrderLike,
+  normalizeOrderStatus,
+  sanitizePossiblyMojibakeText,
+} from '../utils/orderDisplay';
 
 const USER_ORDER_API = (id: string) => buildApiUrl(`/user/orders/${id}`);
 const GUEST_ORDER_API = (id: string) => buildApiUrl(`/guest/orders/${id}`);
@@ -168,20 +176,21 @@ export const OrderTracking: React.FC = () => {
           return res.json();
         })
         .then((data) => {
-          setOrder(data);
-          setOrderStatus(data.orderStatus);
+          const normalizedOrder = normalizeOrderLike(data);
+          setOrder(normalizedOrder);
+          setOrderStatus(normalizeOrderStatus(normalizedOrder.orderStatus));
           setShippingInfo({
-            recipientName: data.customerName,
-            recipientPhone: data.customerPhone,
-            street: data.shippingAddress.street,
-            ward: data.shippingAddress.ward,
-            district: data.shippingAddress.district,
-            city: data.shippingAddress.city,
+            recipientName: normalizedOrder.customerName,
+            recipientPhone: normalizedOrder.customerPhone,
+            street: normalizedOrder.shippingAddress.street,
+            ward: normalizedOrder.shippingAddress.ward,
+            district: normalizedOrder.shippingAddress.district,
+            city: normalizedOrder.shippingAddress.city,
           });
           setIsLoading(false);
         })
         .catch((err) => {
-          setErrorMessage(err.message || 'Không tìm thấy đơn hàng');
+          setErrorMessage(sanitizePossiblyMojibakeText(err.message, 'Không tìm thấy đơn hàng'));
           setIsLoading(false);
         });
       return;
@@ -202,20 +211,21 @@ export const OrderTracking: React.FC = () => {
           return res.json();
         })
         .then((data) => {
-          setOrder(data);
-          setOrderStatus(data.orderStatus);
+          const normalizedOrder = normalizeOrderLike(data);
+          setOrder(normalizedOrder);
+          setOrderStatus(normalizeOrderStatus(normalizedOrder.orderStatus));
           setShippingInfo({
-            recipientName: data.customerName,
-            recipientPhone: data.customerPhone,
-            street: data.shippingAddress.street,
-            ward: data.shippingAddress.ward,
-            district: data.shippingAddress.district,
-            city: data.shippingAddress.city,
+            recipientName: normalizedOrder.customerName,
+            recipientPhone: normalizedOrder.customerPhone,
+            street: normalizedOrder.shippingAddress.street,
+            ward: normalizedOrder.shippingAddress.ward,
+            district: normalizedOrder.shippingAddress.district,
+            city: normalizedOrder.shippingAddress.city,
           });
           setIsLoading(false);
         })
         .catch((err) => {
-          setErrorMessage(err.message || 'Không tìm thấy đơn hàng');
+          setErrorMessage(sanitizePossiblyMojibakeText(err.message, 'Không tìm thấy đơn hàng'));
           setIsLoading(false);
         });
       return;
@@ -287,7 +297,7 @@ export const OrderTracking: React.FC = () => {
         toast.success('Cập nhật thông tin nhận hàng thành công!');
       } else {
         const payload = await res.json().catch(() => ({ message: '' }));
-        toast.error(payload.message || 'Cập nhật thất bại, vui lòng thử lại.');
+        toast.error(sanitizePossiblyMojibakeText(payload.message, 'Cập nhật thất bại, vui lòng thử lại.'));
       }
     } catch (error) {
       toast.error('Lỗi kết nối máy chủ');
@@ -304,7 +314,7 @@ export const OrderTracking: React.FC = () => {
 
       if (!res.ok) {
         const payload = await res.json().catch(() => ({ message: '' }));
-        toast.error(payload.message || 'Hủy đơn thất bại, vui lòng thử lại.');
+        toast.error(sanitizePossiblyMojibakeText(payload.message, 'Hủy đơn thất bại, vui lòng thử lại.'));
         return;
       }
 
@@ -399,8 +409,8 @@ export const OrderTracking: React.FC = () => {
                   <div key={i} className="flex gap-3 pb-4 border-b border-gray-100 last:pb-0 last:border-0">
                     <img src={item.productImage} alt={item.productName} className="w-16 h-16 rounded-xl object-cover border border-gray-100 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm leading-tight">{item.productName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{item.category}</p>
+                      <p className="font-semibold text-gray-900 text-sm leading-tight">{sanitizePossiblyMojibakeText(item.productName, 'Sản phẩm')}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{sanitizePossiblyMojibakeText(item.category, 'Sản phẩm')}</p>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-gray-500">{formatCurrency(item.price)} × {item.quantity}</p>
                         <p className="text-sm font-bold text-gray-900">{formatCurrency(item.price * item.quantity)}</p>
@@ -425,14 +435,14 @@ export const OrderTracking: React.FC = () => {
                   <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0"><User className="w-4 h-4 text-blue-600" /></div>
                   <div>
                     <p className="text-xs text-gray-400">Người nhận</p>
-                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{shippingInfo.recipientName}</p>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{sanitizePossiblyMojibakeText(shippingInfo.recipientName, 'Khách hàng')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-green-50 rounded-lg flex-shrink-0"><Phone className="w-4 h-4 text-green-600" /></div>
                   <div>
                     <p className="text-xs text-gray-400">Số điện thoại</p>
-                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{shippingInfo.recipientPhone}</p>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{sanitizePossiblyMojibakeText(shippingInfo.recipientPhone, 'N/A')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -440,8 +450,12 @@ export const OrderTracking: React.FC = () => {
                   <div>
                     <p className="text-xs text-gray-400">Địa chỉ giao hàng</p>
                     <p className="text-sm font-semibold text-gray-900 mt-0.5">
-                      {shippingInfo.street}, {shippingInfo.ward},<br />
-                      {shippingInfo.district}, {shippingInfo.city}
+                      {formatAddressParts([
+                        shippingInfo.street,
+                        shippingInfo.ward,
+                        shippingInfo.district,
+                        shippingInfo.city,
+                      ]) || 'Chưa cập nhật địa chỉ giao hàng'}
                     </p>
                   </div>
                 </div>
@@ -470,18 +484,10 @@ export const OrderTracking: React.FC = () => {
                 <div>
                   <p className="text-xs text-gray-400">Phương thức</p>
                 <p className="text-sm font-semibold text-gray-900 mt-0.5">
-                  {order.paymentMethod === 'bank_transfer'
-                    ? 'Chuyển khoản ngân hàng'
-                    : order.paymentMethod === 'cod'
-                      ? 'Thanh toán khi nhận hàng (COD)'
-                      : order.paymentMethod === 'momo'
-                        ? 'Ví MoMo'
-                        : order.paymentMethod === 'zalopay'
-                          ? 'ZaloPay'
-                          : 'Thẻ tín dụng / ghi nợ'}
+                  {getPaymentMethodLabel(order.paymentMethod)}
                 </p>
                   <span className={`inline-block mt-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : order.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                    {order.paymentStatus === 'paid' ? 'Đã thanh toán' : order.paymentStatus === 'pending' ? 'Chờ thanh toán' : 'Thanh toán lỗi'}
+                    {getPaymentStatusLabel(order.paymentStatus)}
                   </span>
                 </div>
               </div>

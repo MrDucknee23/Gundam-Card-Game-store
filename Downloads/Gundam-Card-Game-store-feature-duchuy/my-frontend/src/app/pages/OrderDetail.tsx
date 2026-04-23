@@ -7,6 +7,14 @@ import { EditOrderModal } from '../components/admin/EditOrderModal';
 import { formatCurrency } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
 import {
+  formatAddressParts,
+  getPaymentMethodLabel,
+  normalizeOrderLike,
+  normalizeOrderStatus,
+  normalizePaymentStatus,
+  sanitizePossiblyMojibakeText,
+} from '../utils/orderDisplay';
+import {
   ArrowLeft,
   Pencil,
   Printer,
@@ -75,15 +83,15 @@ export const OrderDetail: React.FC = () => {
           );
         }
 
-        const data = await res.json();
+        const data = normalizeOrderLike(await res.json());
         if (!isMounted) {
           return;
         }
 
         setOrder(data);
-        setOrderStatus(data.orderStatus);
-        setPaymentStatus(data.paymentStatus || 'pending');
-        setAdminNotes(data.notes || '');
+        setOrderStatus(normalizeOrderStatus(data.orderStatus));
+        setPaymentStatus(normalizePaymentStatus(data.paymentStatus));
+        setAdminNotes(sanitizePossiblyMojibakeText(data.notes));
 
         if (data.customerEmail && data.customerEmail !== 'N/A') {
           fetch(buildApiUrl(`/orders/stats/customer?email=${encodeURIComponent(data.customerEmail)}`))
@@ -190,7 +198,7 @@ export const OrderDetail: React.FC = () => {
         res = await fetch(buildApiUrl(`/orders/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(true),
-          body: JSON.stringify({ paymentStatus: 'Đã thanh toán' }),
+          body: JSON.stringify({ paymentStatus: 'paid' }),
         });
       }
 
@@ -398,11 +406,11 @@ export const OrderDetail: React.FC = () => {
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1">{item.productName}</h3>
+                      <h3 className="font-semibold text-gray-900 mb-1">{sanitizePossiblyMojibakeText(item.productName, 'Sản phẩm')}</h3>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs text-gray-500">SKU: {item.productId}</span>
                         <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                          {item.category}
+                          {sanitizePossiblyMojibakeText(item.category, 'Sản phẩm')}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -431,7 +439,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Họ và tên</p>
-                      <p className="text-sm font-semibold text-gray-900">{order.customerName}</p>
+                      <p className="text-sm font-semibold text-gray-900">{sanitizePossiblyMojibakeText(order.customerName, 'Khách hàng')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -440,7 +448,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Email</p>
-                      <p className="text-sm text-gray-900">{order.customerEmail}</p>
+                      <p className="text-sm text-gray-900">{sanitizePossiblyMojibakeText(order.customerEmail, 'N/A')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -449,7 +457,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Số điện thoại</p>
-                      <p className="text-sm text-gray-900">{order.customerPhone}</p>
+                      <p className="text-sm text-gray-900">{sanitizePossiblyMojibakeText(order.customerPhone, 'N/A')}</p>
                     </div>
                   </div>
                 </div>
@@ -463,9 +471,12 @@ export const OrderDetail: React.FC = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Địa chỉ giao hàng</p>
                       <p className="text-sm text-gray-900">
-                        {order.shippingAddress.street}<br />
-                        {order.shippingAddress.ward}, {order.shippingAddress.district}<br />
-                        {order.shippingAddress.city}
+                        {formatAddressParts([
+                          order.shippingAddress.street,
+                          order.shippingAddress.ward,
+                          order.shippingAddress.district,
+                          order.shippingAddress.city,
+                        ]) || 'Chưa cập nhật địa chỉ giao hàng'}
                       </p>
                     </div>
                   </div>
@@ -574,9 +585,7 @@ export const OrderDetail: React.FC = () => {
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Phương thức thanh toán</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {order.paymentMethod === 'bank' 
-                        ? 'Chuyển khoản ngân hàng' 
-                        : 'Thanh toán khi nhận hàng (COD)'}
+                      {getPaymentMethodLabel(order.paymentMethod)}
                     </p>
                   </div>
                 </div>
