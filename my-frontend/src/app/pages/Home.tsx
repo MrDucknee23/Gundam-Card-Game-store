@@ -133,7 +133,7 @@ export const Home: React.FC = () => {
         <Slider ref={sliderRef} {...sliderSettings}>
           {heroSlides.map((slide, index) => (
             <div key={index}>
-              <div className="relative h-[500px] md:h-[600px]">
+              <div className="relative h-[260px] sm:h-[380px] md:h-[480px] lg:h-[600px]">
                 <img
                   src={slide.image}
                   alt={slide.title}
@@ -144,11 +144,11 @@ export const Home: React.FC = () => {
                 <div className="absolute inset-0 flex items-center">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                     <div className="max-w-2xl text-white">
-                      <h1 className="text-4xl md:text-6xl font-bold mb-4">{slide.title}</h1>
-                      <p className="text-xl md:text-2xl mb-8 text-white/90">{slide.subtitle}</p>
+                      <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4">{slide.title}</h1>
+                      <p className="text-sm sm:text-lg md:text-xl lg:text-2xl mb-4 sm:mb-8 text-white/90 hidden sm:block">{slide.subtitle}</p>
                       <button
                         onClick={() => navigate(slide.link)}
-                        className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                        className="bg-primary hover:bg-primary/90 text-white px-5 sm:px-8 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all duration-300 hover:scale-105"
                       >
                         {slide.cta}
                       </button>
@@ -198,14 +198,14 @@ export const Home: React.FC = () => {
       />
 
       {/* Gundam Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">Bộ mô hình Gundam</h2>
-          <p className="text-gray-600 text-lg">Chọn cấp độ và bắt đầu lắp ráp</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-3">Bộ mô hình Gundam</h2>
+          <p className="text-gray-600 text-sm sm:text-lg">Chọn cấp độ và bắt đầu lắp ráp</p>
         </div>
 
         {/* Category Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 sm:mb-12">
           {categories.map((category) => (
             <CategoryCard
               key={category.grade}
@@ -225,7 +225,7 @@ export const Home: React.FC = () => {
         ) : error ? (
           <p className="text-center text-red-500">{error}</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {gundamProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -243,11 +243,11 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Card Games Section */}
-      <section className="bg-gradient-to-b from-gray-50 via-gray-100 to-gray-50 py-16 border-y border-gray-200">
+      <section className="bg-gradient-to-b from-gray-50 via-gray-100 to-gray-50 py-10 sm:py-16 border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">Thẻ bài sưu tầm</h2>
-            <p className="text-gray-600 text-lg">Xây dựng bộ bài tối ưu của bạn</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-3">Thẻ bài sưu tầm</h2>
+            <p className="text-gray-600 text-sm sm:text-lg">Xây dựng bộ bài tối ưu của bạn</p>
           </div>
 
           {/* Category Cards - Centered with larger size */}
@@ -273,7 +273,7 @@ export const Home: React.FC = () => {
           ) : error ? (
             <p className="text-center text-red-500">{error}</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-500">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 transition-all duration-500">
               {cardGameProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

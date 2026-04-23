@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCategory } from '../types/product';
 import { useProducts } from '../hooks/useProducts';
@@ -42,6 +42,7 @@ export const Shop: React.FC = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [minPriceInput, setMinPriceInput] = useState('0');
   const [maxPriceInput, setMaxPriceInput] = useState(formatPriceNumber(10000000));
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
   const currentSearchQuery = (searchParams.get('search') || '').trim();
 
   useEffect(() => {
@@ -163,12 +164,23 @@ export const Shop: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-black mb-8">Cửa hàng</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black">Cửa hàng</h1>
+          {/* Mobile filter toggle button */}
+          <button
+            onClick={() => setShowMobileFilter(!showMobileFilter)}
+            className="flex lg:hidden items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-black hover:bg-gray-50 transition-colors"
+          >
+            {showMobileFilter ? <X className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
+            {showMobileFilter ? 'Đóng bộ lọc' : 'Bộ lọc'}
+          </button>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <aside className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-6 sticky top-24 border border-gray-200 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+          {/* Filter sidebar - collapsible on mobile */}
+          <aside className={`lg:col-span-1 ${showMobileFilter ? 'block' : 'hidden lg:block'}`}>
+            <div className="bg-white rounded-xl p-5 sm:p-6 lg:sticky lg:top-24 border border-gray-200 shadow-sm">
               <h2 className="text-xl font-bold mb-6 text-black border-b border-gray-200 pb-3">Bộ lọc</h2>
 
               <Collapsible defaultOpen className="mb-6">
@@ -254,20 +266,20 @@ export const Shop: React.FC = () => {
             </div>
           </aside>
 
-          <div className="lg:col-span-3 mt-4 lg:mt-6">
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-gray-600">
+          <div className="lg:col-span-3 mt-0 lg:mt-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <p className="text-sm sm:text-base text-gray-600">
                 {filteredProducts.length} sản phẩm được tìm thấy
               </p>
               {currentSearchQuery && (
-                <p className="text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500">
                   Kết quả tìm cho: <span className="font-semibold text-black">{currentSearchQuery}</span>
                 </p>
               )}
             </div>
 
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                 {filteredProducts.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}

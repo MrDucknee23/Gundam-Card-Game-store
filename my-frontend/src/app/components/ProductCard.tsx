@@ -213,11 +213,13 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
         </div>
 
         {/* CONTENT AREA */}
-        <div className="p-5 flex flex-col flex-grow">
+        <div className="p-3 sm:p-5 flex flex-col flex-grow">
           
           <h3 
             className="
-              text-lg
+              text-sm
+              sm:text-base
+              lg:text-lg
               font-bold
               text-black 
               line-clamp-2 
@@ -244,10 +246,12 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
             </span>
           </div>
           
-          <div className="pt-5">
+          <div className="pt-3 sm:pt-5">
             <p 
               className="
-                text-2xl 
+                text-lg
+                sm:text-xl
+                lg:text-2xl 
                 font-bold 
                 text-primary
                 tracking-tight
@@ -257,11 +261,11 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
             </p>
           </div>
 
-          <div className="pt-3 space-y-2.5">
+          <div className="pt-2 sm:pt-3 space-y-2">
             <button
               onClick={handleBuyNow}
               disabled={isSoldOut}
-              className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:scale-[1.02] hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(227,24,55,0.35)] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:scale-100 disabled:hover:shadow-none"
+              className="w-full rounded-xl bg-primary px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:scale-[1.02] hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(227,24,55,0.35)] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:scale-100 disabled:hover:shadow-none"
             >
               Mua ngay
             </button>
@@ -270,14 +274,17 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
               disabled={isSoldOut}
               className={`
                 w-full
-                px-6 
-                py-3
+                px-3
+                sm:px-6 
+                py-2
+                sm:py-3
                 bg-white
                 border-2 
                 ${isGundamProduct ? 'border-primary text-primary' : 'border-secondary text-secondary'}
                 rounded-xl
                 font-semibold
-                text-sm
+                text-xs
+                sm:text-sm
                 transition-all 
                 duration-300
                 hover:scale-[1.02]

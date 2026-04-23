@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Search, ShoppingCart, User, LogOut } from 'lucide-react';
+import { Search, ShoppingCart, User, LogOut, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Input } from './ui/input';
@@ -13,6 +13,14 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Close mobile menu on route change / resize
+  useEffect(() => {
+    const handleResize = () => { if (window.innerWidth >= 768) setShowMobileMenu(false); };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,18 +40,19 @@ export const Header: React.FC = () => {
     toast.success('Đăng xuất thành công');
     navigate('/');
     setShowUserMenu(false);
+    setShowMobileMenu(false);
   };
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-black shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold text-white whitespace-nowrap">GUNDAM <span className="text-primary">STORE</span></span>
+          <Link to="/" className="flex items-center" onClick={() => setShowMobileMenu(false)}>
+            <span className="text-xl md:text-2xl font-bold text-white whitespace-nowrap">GUNDAM <span className="text-primary">STORE</span></span>
           </Link>
 
-          {/* Navigation */}
+          {/* Navigation - desktop */}
           <nav className="hidden md:flex items-center gap-5 lg:gap-7">
             <Link to="/" className="text-gray-300 hover:text-primary transition-colors whitespace-nowrap">
               Trang chủ
@@ -63,8 +72,8 @@ export const Header: React.FC = () => {
           </nav>
 
           {/* Search, Cart, User */}
-          <div className="flex items-center gap-4 lg:gap-6">
-            {/* Search */}
+          <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+            {/* Search - desktop only */}
             <form onSubmit={handleSearch} className="relative hidden lg:block group">
               <Input
                 type="text"
@@ -83,8 +92,8 @@ export const Header: React.FC = () => {
             </form>
 
             {/* Cart */}
-            <Link to="/cart" className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-800">
-              <ShoppingCart className="h-5 w-5" />
+            <Link to="/cart" className="relative flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-800">
+              <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
               {getTotalItems() > 0 && (
                 <Badge className="absolute -top-2 -right-2 bg-primary text-white rounded-full w-5 h-5 flex items-center justify-center p-0 text-xs">
                   {getTotalItems()}
@@ -99,14 +108,14 @@ export const Header: React.FC = () => {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2 transition-opacity hover:opacity-80"
                 >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-800">
-                    <User className="h-5 w-5" />
+                  <span className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-800">
+                    <User className="h-4 w-4 md:h-5 md:w-5" />
                   </span>
                   <span className="hidden md:block max-w-[11rem] truncate text-white text-sm whitespace-nowrap">{user?.fullName}</span>
                 </button>
                 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
                     <Link
                       to="/profile"
                       onClick={() => setShowUserMenu(false)}
@@ -144,13 +153,13 @@ export const Header: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-800"
+                  className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-800"
                 >
-                  <User className="h-5 w-5" />
+                  <User className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
                     <button
                       type="button"
                       onClick={() => {
@@ -185,28 +194,61 @@ export const Header: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Hamburger - mobile only */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              aria-label="Menu"
+              className="flex md:hidden h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-800"
+            >
+              {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
 
         {/* Mobile Search */}
-        <form onSubmit={handleSearch} className="pb-4 lg:hidden group">
+        <form onSubmit={handleSearch} className="pb-3 lg:hidden group">
           <div className="relative">
             <Input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-11 w-full rounded-full border border-slate-700 bg-slate-900 pl-5 pr-14 text-sm text-white shadow-[0_8px_24px_rgba(0,0,0,0.28)] placeholder:text-gray-400 transition-all duration-300 focus-visible:ring-0 focus-visible:border-primary/70 focus-visible:shadow-[0_10px_30px_rgba(227,24,55,0.28)] group-hover:border-slate-500"
+              className="h-10 w-full rounded-full border border-slate-700 bg-slate-900 pl-5 pr-12 text-sm text-white shadow-[0_8px_24px_rgba(0,0,0,0.28)] placeholder:text-gray-400 transition-all duration-300 focus-visible:ring-0 focus-visible:border-primary/70 focus-visible:shadow-[0_10px_30px_rgba(227,24,55,0.28)] group-hover:border-slate-500"
             />
             <button
               type="submit"
               aria-label="Tìm kiếm"
-              className="absolute right-1.5 top-1/2 flex h-8.5 w-8.5 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-white shadow-[0_10px_18px_rgba(227,24,55,0.3)] transition-all duration-300 hover:scale-105 hover:bg-primary/90"
+              className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-white shadow-[0_10px_18px_rgba(227,24,55,0.3)] transition-all duration-300 hover:scale-105 hover:bg-primary/90"
             >
               <Search className="h-4 w-4" />
             </button>
           </div>
         </form>
+
+        {/* Mobile Navigation Menu */}
+        {showMobileMenu && (
+          <nav className="md:hidden border-t border-slate-800 pb-4">
+            <div className="flex flex-col gap-1 pt-3">
+              {[
+                { to: '/', label: 'Trang chủ' },
+                { to: '/shop', label: 'Cửa hàng' },
+                { to: '/about', label: 'Giới thiệu' },
+                { to: '/faq', label: 'FAQ' },
+                { to: '/contact', label: 'Liên hệ' },
+              ].map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setShowMobileMenu(false)}
+                  className="px-3 py-2.5 text-gray-300 hover:text-primary hover:bg-slate-900 rounded-lg transition-colors text-base font-medium"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
       </div>
     </header>
   );
