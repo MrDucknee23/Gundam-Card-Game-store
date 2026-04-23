@@ -74,25 +74,25 @@ export const Home: React.FC = () => {
       grade: 'HG' as GundamGrade,
       title: 'High Grade',
       description: 'Tỷ lệ 1/144 với khả năng tạo dáng linh hoạt',
-      image: 'https://images.unsplash.com/photo-1712971724897-a9ae95e0ec44?w=600&auto=format&fit=crop'
+      image: '/images/hg_gundam.png'
     },
     {
       grade: 'MG' as GundamGrade,
       title: 'Master Grade',
       description: 'Tỷ lệ 1/100 với khung xương chi tiết',
-      image: 'https://images.unsplash.com/photo-1681367050714-f170aad806ca?w=600&auto=format&fit=crop'
+      image: '/images/mg_gundam.png'
     },
     {
       grade: 'RG' as GundamGrade,
       title: 'Real Grade',
       description: 'Tỷ lệ 1/144 với chi tiết nâng cao',
-      image: 'https://images.unsplash.com/photo-1644898262501-6e73916dce2e?w=600&auto=format&fit=crop'
+      image: '/images/rg_gundam.png'
     },
     {
       grade: 'PG' as GundamGrade,
       title: 'Perfect Grade',
       description: 'Tỷ lệ 1/60 với chất lượng hoàn thiện cao nhất',
-      image: 'https://images.unsplash.com/photo-1742407881242-a867b21fb364?w=600&auto=format&fit=crop'
+      image: '/images/pg_gundam.png'
     }
   ];
 
