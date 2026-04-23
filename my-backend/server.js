@@ -7,9 +7,14 @@ const multer = require('multer');
 const passport = require('passport');
 require('dotenv').config();
 
-if (!process.env.GUEST_OTP_JWT_SECRET) {
-  console.error('❌ Missing GUEST_OTP_JWT_SECRET');
-  process.exit(1);
+if (!process.env.GUEST_OTP_JWT_SECRET?.trim()) {
+  if (process.env.JWT_SECRET?.trim()) {
+    process.env.GUEST_OTP_JWT_SECRET = process.env.JWT_SECRET.trim();
+    console.warn('⚠️ GUEST_OTP_JWT_SECRET is missing, fallback to JWT_SECRET');
+  } else {
+    console.error('❌ Missing GUEST_OTP_JWT_SECRET and JWT_SECRET');
+    process.exit(1);
+  }
 }
 
 const configurePassport = require('./config/passport');

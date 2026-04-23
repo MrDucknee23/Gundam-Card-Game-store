@@ -55,8 +55,11 @@ services:
     name: gundam-store-frontend
     plan: free
     rootDir: my-frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://gundam-store-backend.onrender.com/api
     routes:
       - path: /*
         destination: /index.html
