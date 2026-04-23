@@ -269,6 +269,10 @@ const normalizeOrderItems = (items) => {
       throw createHttpError(400, 'Thiếu mã sản phẩm trong đơn hàng');
     }
 
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      throw createHttpError(400, `Mã sản phẩm không hợp lệ: ${productId}`);
+    }
+
     if (!Number.isInteger(quantity) || quantity <= 0) {
       throw createHttpError(400, 'Số lượng sản phẩm không hợp lệ');
     }
@@ -788,6 +792,52 @@ router.post('/', async (req, res) => {
 
     const authUser = await resolveOptionalAuthUser(req);
     const authUserId = authUser?.id || null;
+
+    console.log('=== ORDER DEBUG ===');
+    console.log('BODY:', {
+      hasBody: Boolean(req.body),
+      userId: req.body?.userId || null,
+      paymentMethod: req.body?.paymentMethod || null,
+      hasCustomer: Boolean(req.body?.customer),
+      customerEmail: req.body?.customer?.email || null,
+      customerPhone: req.body?.customer?.phone || null,
+      customerAddress: req.body?.customer?.address || null,
+      itemCount: Array.isArray(req.body?.items) ? req.body.items.length : 0,
+      itemProductIds: Array.isArray(req.body?.items) ? req.body.items.map((item) => item?.productId) : [],
+    });
+    console.log('USER:', authUser ? { id: authUser.id, role: authUser.role, email: authUser.email } : null);
+
+    const customer = req.body?.customer || {};
+    const customerName = typeof customer.name === 'string' ? customer.name.trim() : '';
+    const customerEmail = typeof customer.email === 'string' ? customer.email.trim() : '';
+    const customerPhone = typeof customer.phone === 'string' ? customer.phone.trim() : '';
+    const customerAddress = typeof customer.address === 'string' ? customer.address.trim() : '';
+    const paymentMethod = typeof req.body?.paymentMethod === 'string' ? req.body.paymentMethod.trim() : '';
+
+    if (!customerName) {
+      return res.status(400).json({ message: 'Thiếu tên khách hàng' });
+    }
+
+    if (!customerPhone) {
+      return res.status(400).json({ message: 'Thiếu số điện thoại nhận hàng' });
+    }
+
+    if (!customerAddress) {
+      return res.status(400).json({ message: 'Thiếu địa chỉ giao hàng' });
+    }
+
+    if (!paymentMethod) {
+      return res.status(400).json({ message: 'Thiếu phương thức thanh toán' });
+    }
+
+    if (!['cod', 'bank', 'bank_transfer', 'momo', 'zalopay', 'credit_card'].includes(paymentMethod)) {
+      return res.status(400).json({ message: 'Phương thức thanh toán không hợp lệ' });
+    }
+
+    if (!authUserId && !customerEmail) {
+      return res.status(400).json({ message: 'Đơn guest bắt buộc phải có email' });
+    }
+
     const requestedUserId = req.body?.userId ? String(req.body.userId).trim() : '';
 
     if (requestedUserId && (!authUserId || requestedUserId !== authUserId)) {
@@ -845,6 +895,14 @@ router.post('/', async (req, res) => {
 
         const newOrder = new Order({
           ...req.body,
+          customer: {
+            ...customer,
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            address: customerAddress,
+          },
+          paymentMethod,
           // userId chỉ lấy từ JWT đã verify ở server.
           user: authUserId,
           userId: authUserId,
@@ -866,7 +924,7 @@ router.post('/', async (req, res) => {
       updatedStocks,
     });
   } catch (error) {
-    const statusCode = error?.statusCode || 400;
+    const statusCode = error?.statusCode || (error?.name === 'CastError' ? 400 : 500);
     res.status(statusCode).json({ message: error.message });
   }
 });

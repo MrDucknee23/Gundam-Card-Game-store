@@ -12,6 +12,7 @@ import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 import { CheckCircle } from 'lucide-react';
 
 const ORDERS_API_URL = buildApiUrl('/orders');
+const MONGODB_OBJECT_ID_REGEX = /^[a-fA-F0-9]{24}$/;
 
 export const Checkout: React.FC = () => {
   const { items, getTotalPrice, clearCart } = useCart();
@@ -72,6 +73,17 @@ export const Checkout: React.FC = () => {
       return;
     }
 
+    if (items.length === 0) {
+      toast.error('Giỏ hàng đang trống, không thể tạo đơn hàng');
+      return;
+    }
+
+    const hasInvalidProductId = items.some((item) => !MONGODB_OBJECT_ID_REGEX.test(String(item.product.id || '').trim()));
+    if (hasInvalidProductId) {
+      toast.error('Giỏ hàng chứa sản phẩm không hợp lệ. Vui lòng làm mới trang và thêm lại sản phẩm.');
+      return;
+    }
+
     const invalidStockItem = items.find((item) => item.product.stock <= 0 || item.quantity > item.product.stock);
     if (invalidStockItem) {
       toast.error(`Sản phẩm ${invalidStockItem.product.name} không còn đủ tồn kho`);
@@ -99,7 +111,7 @@ export const Checkout: React.FC = () => {
         orderStatus: 'Đang xử lý',
         paymentMethod: formData.paymentMethod,
         items: items.map((item) => ({
-          productId: item.product.id,
+          productId: String(item.product.id).trim(),
           productName: item.product.name,
           quantity: item.quantity,
           price: item.product.price,
