@@ -1,0 +1,57 @@
+# Dependencies
+node_modules
+node_modules/.vite
+.pnpm-store
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.*.local
+my-backend/.env
+my-frontend/.env
+my-backend/.env.*
+my-frontend/.env.*
+# Allow production env for build-time vars (safe to commit)
+!my-frontend/.env.production
+
+# Build output
+dist
+coverage
+.cache
+.eslintcache
+*.tsbuildinfo
+my-backend/coverage/
+my-frontend/coverage/
+my-backend/dist/
+my-frontend/.vite/
+
+# Editor & OS
+.DS_Store
+Thumbs.db
+*.local
+*.log
+*.pid
+*.pid.lock
+*.seed
+*.out
+*.err
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime generated files
+my-backend/uploads/
+my-frontend/dist/
+tmp/
+temp/
+tmp-chat-e2e.js
+
+# Accidentally committed downloads
+Downloads/

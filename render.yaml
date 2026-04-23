@@ -1,0 +1,62 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: gundam-store-backend
+    runtime: node
+    plan: free
+    rootDir: my-backend
+    buildCommand: npm install
+    startCommand: npm start
+    disks:
+      - name: uploads-disk
+        mountPath: /var/data
+        sizeGB: 1
+    envVars:
+      - key: MONGODB_URI
+        scope: all
+      - key: JWT_SECRET
+        scope: all
+      - key: GUEST_OTP_JWT_SECRET
+        scope: all
+      - key: CLIENT_URL
+        scope: all
+      - key: API_BASE_URL
+        scope: all
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: OTP_EXPIRES_IN
+        value: 5m
+      # Google OAuth
+      - key: GOOGLE_CLIENT_ID
+        scope: all
+      - key: GOOGLE_CLIENT_SECRET
+        scope: all
+      - key: GOOGLE_CALLBACK_URL
+        scope: all
+      # Facebook OAuth
+      - key: FACEBOOK_APP_ID
+        scope: all
+      - key: FACEBOOK_APP_SECRET
+        scope: all
+      - key: FACEBOOK_CALLBACK_URL
+        scope: all
+      # Email configuration (if needed)
+      - key: EMAIL_FROM
+        scope: all
+      - key: EMAIL_USER
+        scope: all
+      - key: EMAIL_PASS
+        scope: all
+
+  # Frontend Static Site
+  - type: static
+    name: gundam-store-frontend
+    plan: free
+    rootDir: my-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - path: /*
+        destination: /index.html
