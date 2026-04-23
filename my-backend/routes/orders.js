@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const Order = require('../models/Order'); // Import Model của bạn
 const Product = require('../models/Product');
@@ -285,6 +286,65 @@ const normalizeOrderItems = (items) => {
       fallbackCategory: typeof item?.category === 'string' ? item.category.trim() : 'Sản phẩm',
     };
   });
+};
+
+const normalizeOrderRequestPayload = (body) => {
+  const requestBody = body && typeof body === 'object' ? body : {};
+  const customer = requestBody.customer && typeof requestBody.customer === 'object' ? requestBody.customer : {};
+  const shippingAddress = requestBody.shippingAddress && typeof requestBody.shippingAddress === 'object'
+    ? requestBody.shippingAddress
+    : null;
+
+  const customerName = typeof customer.name === 'string' ? customer.name.trim() : '';
+  const customerEmail = typeof customer.email === 'string' ? customer.email.trim() : '';
+  const customerPhone = typeof customer.phone === 'string' ? customer.phone.trim() : '';
+  const paymentMethod = typeof requestBody.paymentMethod === 'string' ? requestBody.paymentMethod.trim() : '';
+
+  const street = typeof shippingAddress?.street === 'string'
+    ? shippingAddress.street.trim()
+    : typeof customer.address === 'string'
+      ? customer.address.trim()
+      : '';
+  const city = typeof shippingAddress?.city === 'string' ? shippingAddress.city.trim() : '';
+  const ward = typeof shippingAddress?.ward === 'string' ? shippingAddress.ward.trim() : '';
+  const district = typeof shippingAddress?.district === 'string' ? shippingAddress.district.trim() : '';
+
+  const productsSource = Array.isArray(requestBody.products)
+    ? requestBody.products
+    : Array.isArray(requestBody.items)
+      ? requestBody.items
+      : [];
+
+  const rawProducts = productsSource.map((item) => {
+    const productId = typeof item?.productId === 'string'
+      ? item.productId
+      : typeof item?.id === 'string'
+        ? item.id
+        : '';
+
+    return {
+      ...item,
+      productId,
+      quantity: item?.quantity,
+    };
+  });
+
+  return {
+    requestedUserId: requestBody?.userId ? String(requestBody.userId).trim() : '',
+    customerName,
+    customerEmail,
+    customerPhone,
+    shippingAddress: {
+      street,
+      ward,
+      district,
+      city,
+    },
+    customerAddressLine: [street, ward, district, city].filter(Boolean).join(', '),
+    paymentMethod,
+    rawProducts,
+    history: Array.isArray(requestBody.history) ? requestBody.history : [],
+  };
 };
 
 // 1. Lấy danh sách toàn bộ đơn hàng (CHỈ dành cho Admin)
@@ -792,27 +852,24 @@ router.post('/', async (req, res) => {
 
     const authUser = await resolveOptionalAuthUser(req);
     const authUserId = authUser?.id || null;
+    const reqUser = req.user || null;
 
     console.log('=== ORDER DEBUG ===');
-    console.log('BODY:', {
-      hasBody: Boolean(req.body),
-      userId: req.body?.userId || null,
-      paymentMethod: req.body?.paymentMethod || null,
-      hasCustomer: Boolean(req.body?.customer),
-      customerEmail: req.body?.customer?.email || null,
-      customerPhone: req.body?.customer?.phone || null,
-      customerAddress: req.body?.customer?.address || null,
-      itemCount: Array.isArray(req.body?.items) ? req.body.items.length : 0,
-      itemProductIds: Array.isArray(req.body?.items) ? req.body.items.map((item) => item?.productId) : [],
-    });
-    console.log('USER:', authUser ? { id: authUser.id, role: authUser.role, email: authUser.email } : null);
+    console.log('BODY:', req.body);
+    console.log('USER:', reqUser || (authUser ? { id: authUser.id, role: authUser.role, email: authUser.email } : null));
 
-    const customer = req.body?.customer || {};
-    const customerName = typeof customer.name === 'string' ? customer.name.trim() : '';
-    const customerEmail = typeof customer.email === 'string' ? customer.email.trim() : '';
-    const customerPhone = typeof customer.phone === 'string' ? customer.phone.trim() : '';
-    const customerAddress = typeof customer.address === 'string' ? customer.address.trim() : '';
-    const paymentMethod = typeof req.body?.paymentMethod === 'string' ? req.body.paymentMethod.trim() : '';
+    const normalizedPayload = normalizeOrderRequestPayload(req.body);
+    const {
+      requestedUserId,
+      customerName,
+      customerEmail,
+      customerPhone,
+      shippingAddress,
+      customerAddressLine,
+      paymentMethod,
+      rawProducts,
+      history,
+    } = normalizedPayload;
 
     if (!customerName) {
       return res.status(400).json({ message: 'Thiếu tên khách hàng' });
@@ -822,7 +879,11 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Thiếu số điện thoại nhận hàng' });
     }
 
-    if (!customerAddress) {
+    if (!rawProducts || rawProducts.length === 0) {
+      return res.status(400).json({ message: 'No products in order' });
+    }
+
+    if (!shippingAddress.street || !shippingAddress.city) {
       return res.status(400).json({ message: 'Thiếu địa chỉ giao hàng' });
     }
 
@@ -838,13 +899,11 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Đơn guest bắt buộc phải có email' });
     }
 
-    const requestedUserId = req.body?.userId ? String(req.body.userId).trim() : '';
-
     if (requestedUserId && (!authUserId || requestedUserId !== authUserId)) {
       return res.status(403).json({ message: 'Không được giả mạo userId khi tạo đơn hàng' });
     }
 
-    const normalizedItems = normalizeOrderItems(req.body.items);
+    const normalizedItems = normalizeOrderItems(rawProducts);
     const session = await Order.startSession();
     let savedOrder;
     let updatedStocks = [];
@@ -896,17 +955,19 @@ router.post('/', async (req, res) => {
         const newOrder = new Order({
           ...req.body,
           customer: {
-            ...customer,
             name: customerName,
             email: customerEmail,
             phone: customerPhone,
-            address: customerAddress,
+            address: customerAddressLine,
           },
+          shippingAddress,
           paymentMethod,
           // userId chỉ lấy từ JWT đã verify ở server.
           user: authUserId,
           userId: authUserId,
           items: orderItems,
+          products: undefined,
+          history,
           totalAmount: orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + (Number(req.body.shippingFee) || 0),
           subtotal: orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
           orderCode: req.body.orderCode || `ORD-${Date.now().toString().slice(-6).toUpperCase()}`,

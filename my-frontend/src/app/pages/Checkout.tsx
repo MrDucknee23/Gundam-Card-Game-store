@@ -95,20 +95,38 @@ export const Checkout: React.FC = () => {
       const authToken = localStorage.getItem('authToken') || '';
       // userId: có giá trị → đơn user đã đăng nhập; null → đơn guest
       const loggedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+      const normalizedStreet = formData.address.trim();
+      const normalizedCity = formData.city.trim();
+
+      if (!normalizedStreet || !normalizedCity) {
+        toast.error('Địa chỉ giao hàng không hợp lệ');
+        return;
+      }
+
       const orderData = {
         userId: loggedUser?.id || null,
+        products: items.map((item) => ({
+          productId: String(item.product.id).trim(),
+          quantity: item.quantity,
+        })),
+        shippingAddress: {
+          street: normalizedStreet,
+          ward: '',
+          district: '',
+          city: normalizedCity,
+        },
+        paymentMethod: formData.paymentMethod,
         customer: {
           name: `${formData.lastName} ${formData.firstName}`.trim(),
-          email: formData.email,
+          email: formData.email.trim(),
           phone: formData.phone.trim(),
-          address: `${formData.address}, ${formData.city}`
+          address: `${normalizedStreet}, ${normalizedCity}`,
         },
         totalAmount: getTotalPrice(),
         subtotal: getTotalPrice(),
         shippingFee: 0, // Đang được thiết lập miễn phí ở UI
         paymentStatus: formData.paymentMethod === 'cod' ? 'Chưa thanh toán' : 'Chờ thanh toán',
         orderStatus: 'Đang xử lý',
-        paymentMethod: formData.paymentMethod,
         items: items.map((item) => ({
           productId: String(item.product.id).trim(),
           productName: item.product.name,
