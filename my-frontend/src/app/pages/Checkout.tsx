@@ -25,7 +25,6 @@ export const Checkout: React.FC = () => {
     phone: '',
     address: '',
     city: '',
-    postalCode: '',
     paymentMethod: 'cod'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,8 +100,8 @@ export const Checkout: React.FC = () => {
         customer: {
           name: `${formData.lastName} ${formData.firstName}`.trim(),
           email: formData.email,
-          phone: formData.phone,
-          address: `${formData.address}, ${formData.city}${formData.postalCode ? `, ${formData.postalCode}` : ''}`
+          phone: formData.phone.trim(),
+          address: `${formData.address}, ${formData.city}`
         },
         totalAmount: getTotalPrice(),
         subtotal: getTotalPrice(),
@@ -219,7 +218,7 @@ export const Checkout: React.FC = () => {
               <div className="bg-gray-50 rounded-xl p-6">
                 <h2 className="text-xl font-bold mb-6">Thông tin cá nhân</h2>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">Họ *</Label>
                     <Input
@@ -228,7 +227,7 @@ export const Checkout: React.FC = () => {
                       value={formData.firstName}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
+                      className="mt-1 rounded-2xl border-gray-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-primary/35"
                     />
                   </div>
                   <div>
@@ -239,7 +238,7 @@ export const Checkout: React.FC = () => {
                       value={formData.lastName}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
+                      className="mt-1 rounded-2xl border-gray-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-primary/35"
                     />
                   </div>
                   <div>
@@ -251,7 +250,7 @@ export const Checkout: React.FC = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
+                      className="mt-1 rounded-2xl border-gray-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-primary/35"
                     />
                   </div>
                   <div>
@@ -262,8 +261,9 @@ export const Checkout: React.FC = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
+                      inputMode="numeric"
                       required
-                      className="mt-1"
+                      className="mt-1 rounded-2xl border-gray-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-primary/35"
                     />
                   </div>
                 </div>
@@ -282,10 +282,10 @@ export const Checkout: React.FC = () => {
                       value={formData.address}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
+                      className="mt-1 rounded-2xl border-gray-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-primary/35"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="city">Thành phố *</Label>
                       <Input
@@ -294,17 +294,7 @@ export const Checkout: React.FC = () => {
                         value={formData.city}
                         onChange={handleInputChange}
                         required
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="postalCode">Mã bưu điện</Label>
-                      <Input
-                        id="postalCode"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleInputChange}
-                        className="mt-1"
+                        className="mt-1 rounded-2xl border-gray-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-primary/35"
                       />
                     </div>
                   </div>

@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { ChevronLeft, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchProductById, fetchProducts } from '../utils/productApi';
 import { fetchReviews, createReview, Review } from '../utils/reviewApi';
@@ -109,7 +109,10 @@ export const ProductDetail: React.FC = () => {
 
   // Related products
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [relatedIndex, setRelatedIndex] = useState(0);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id]);
 
   useEffect(() => {
     if (!id) {
@@ -152,8 +155,6 @@ export const ProductDetail: React.FC = () => {
       .slice(0, 12);
   }, [allProducts, product]);
 
-  const maxRelatedIndex = Math.max(0, relatedProducts.length - 4);
-
   useEffect(() => {
     if (!carouselApi) return;
 
@@ -179,7 +180,6 @@ export const ProductDetail: React.FC = () => {
   useEffect(() => {
     setSelectedImage(0);
     setQuantity(1);
-    setRelatedIndex(0);
     setActiveTab('description');
   }, [product?.id]);
 
@@ -200,12 +200,12 @@ export const ProductDetail: React.FC = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4 text-black">Product not found</h1>
+          <h1 className="text-2xl font-bold mb-4 text-black">Không tìm thấy sản phẩm</h1>
           <button
             onClick={() => navigate('/shop')}
             className="text-primary hover:underline"
           >
-            Return to Shop
+            Quay về cửa hàng
           </button>
         </div>
       </div>
@@ -244,7 +244,7 @@ export const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (product.stock < quantity) {
-      toast.error('Not enough stock available');
+      toast.error('Số lượng vượt quá tồn kho hiện tại');
       return;
     }
     const result = addToCart(product, quantity);
@@ -435,11 +435,18 @@ export const ProductDetail: React.FC = () => {
                   min="1"
                   max={product.stock}
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    const parsedQuantity = parseInt(e.target.value, 10);
+                    const safeQuantity = Number.isFinite(parsedQuantity)
+                      ? Math.min(Math.max(1, parsedQuantity), Math.max(1, product.stock))
+                      : 1;
+                    setQuantity(safeQuantity);
+                  }}
                   className="w-20 text-center bg-white border-gray-300 text-black"
                 />
                 <button
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  disabled={quantity >= product.stock}
                   className="w-10 h-10 rounded-lg border-2 border-gray-300 bg-white text-black hover:border-primary transition-colors"
                 >
                   +
@@ -633,34 +640,13 @@ export const ProductDetail: React.FC = () => {
           <div className="mt-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Sản phẩm liên quan</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setRelatedIndex((i) => Math.max(0, i - 1))}
-                  disabled={relatedIndex === 0}
-                  className="w-10 h-10 rounded-full border border-gray-300 bg-white shadow-sm flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-0 disabled:pointer-events-none transition-all"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setRelatedIndex((i) => Math.min(maxRelatedIndex, i + 1))}
-                  disabled={relatedIndex >= maxRelatedIndex}
-                  className="w-10 h-10 rounded-full border border-gray-300 bg-white shadow-sm flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-0 disabled:pointer-events-none transition-all"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
             </div>
-            <div className="overflow-hidden">
-              <div
-                className="flex transition-transform duration-300 ease-out"
-                style={{ transform: `translateX(-${relatedIndex * 25}%)` }}
-              >
-                {relatedProducts.map((p) => (
-                  <div key={p.id} className="w-1/4 flex-shrink-0 px-2">
-                    <ProductCard product={p} />
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {relatedProducts.map((p) => (
+                <div key={p.id} className="min-w-0">
+                  <ProductCard product={p} />
+                </div>
+              ))}
             </div>
           </div>
         )}
