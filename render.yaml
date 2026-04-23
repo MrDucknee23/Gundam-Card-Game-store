@@ -46,3 +46,12 @@ services:
         scope: all
       - key: EMAIL_PASS
         scope: all
+      # Cloudinary — dùng để lưu ảnh sản phẩm
+      - key: CLOUDINARY_CLOUD_NAME
+        scope: all
+      - key: CLOUDINARY_API_KEY
+        scope: all
+      - key: CLOUDINARY_API_SECRET
+        scope: all
+      - key: CLOUDINARY_PRODUCT_FOLDER
+        value: gundam-store/products

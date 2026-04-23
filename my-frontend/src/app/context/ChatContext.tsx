@@ -136,7 +136,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const socketAuth = getChatSocketAuth();
     const socket = io(getChatSocketBaseUrl(), {
       path: '/socket.io',
-      transports: ['websocket', 'polling'],
+      // polling trước để Render proxy hoàn thành handshake, rồi tự upgrade lên websocket
+      transports: ['polling', 'websocket'],
       auth: socketAuth,
     });
 

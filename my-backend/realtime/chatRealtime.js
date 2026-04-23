@@ -88,12 +88,16 @@ const buildActorRooms = (actor) => {
 };
 
 const initChatRealtime = (httpServer) => {
+  const allowedOrigin = process.env.FRONTEND_URL || process.env.CLIENT_URL || '*';
   const io = new Server(httpServer, {
     cors: {
-      origin: '*',
+      origin: allowedOrigin,
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    // Render proxy: phải handshake qua polling trước, sau đó mới upgrade lên websocket
+    transports: ['polling', 'websocket'],
+    allowEIO3: true,
   });
 
   io.use(async (socket, next) => {
