@@ -1,4 +1,4 @@
-# Dependencies
+#-=mpkno=pkool,=k==pl``pllp=m nDependencies
 node_modules
 node_modules/.vite
 .pnpm-store
@@ -11,12 +11,10 @@ my-backend/.env
 my-frontend/.env
 my-backend/.env.*
 my-frontend/.env.*
-# Allow production env for build-time vars (safe to commit)
-!my-frontend/.env.production
 
 # Build output
 dist
-coverage
+coverage    
 .cache
 .eslintcache
 *.tsbuildinfo

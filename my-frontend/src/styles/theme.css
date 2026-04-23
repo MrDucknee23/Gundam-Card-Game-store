@@ -6,7 +6,7 @@
 :root {
   /* Typography */
   --font-size: 16px;
-  --font-family: 'Inter', sans-serif;
+  --font-family: 'Poppins', sans-serif;
   
   /* Colors - Strict palette: Red, Blue, Black, White only */
   --background: #ffffff;

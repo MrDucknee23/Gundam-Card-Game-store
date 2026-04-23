@@ -5,8 +5,6 @@ const compression = require('compression');
 const cors = require('cors');
 const multer = require('multer');
 const passport = require('passport');
-const path = require('path');
-const fs = require('fs');
 require('dotenv').config();
 
 if (!process.env.GUEST_OTP_JWT_SECRET) {
@@ -14,18 +12,13 @@ if (!process.env.GUEST_OTP_JWT_SECRET) {
   process.exit(1);
 }
 
-const { ensureUploadsDirExists, UPLOADS_DIR } = require('./utils/imageStorage');
 const configurePassport = require('./config/passport');
 const { initChatRealtime } = require('./realtime/chatRealtime');
 
 const app = express();
 const httpServer = http.createServer(app);
 const JSON_BODY_LIMIT = '5mb';
-const frontendDistDir = path.join(__dirname, '..', 'my-frontend', 'dist');
-const frontendIndexFile = path.join(frontendDistDir, 'index.html');
-const hasFrontendBuild = fs.existsSync(frontendIndexFile);
 
-ensureUploadsDirExists();
 configurePassport(passport);
 
 app.use(cors());
@@ -33,31 +26,6 @@ app.use(compression());
 app.use(express.json({ limit: JSON_BODY_LIMIT }));
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
-
-const uploadsDir = UPLOADS_DIR;
-const missingImageSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
-  <rect width="640" height="640" fill="#f3f4f6" />
-  <rect x="80" y="80" width="480" height="480" rx="32" fill="#e5e7eb" stroke="#cbd5e1" stroke-width="8" />
-  <path d="M200 420l92-112 72 88 52-60 104 124H200z" fill="#94a3b8" />
-  <circle cx="250" cy="232" r="42" fill="#cbd5e1" />
-  <text x="320" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#475569">Image unavailable</text>
-</svg>`;
-
-const setUploadHeaders = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-};
-
-app.use('/uploads', express.static(uploadsDir, {
-  fallthrough: true,
-  setHeaders: setUploadHeaders,
-}));
-
-app.use('/uploads', (req, res) => {
-  setUploadHeaders(res);
-  res.type('image/svg+xml').status(200).send(missingImageSvg);
-});
 
 const buildMongoUri = () => {
   if (process.env.MONGODB_URI && process.env.MONGODB_URI.trim()) {
@@ -94,11 +62,9 @@ const logMongoErrorHelp = (err) => {
   }
 };
 
-if (!hasFrontendBuild) {
-  app.get('/', (req, res) => {
-    res.json({ message: 'Server đang chạy!' });
-  });
-}
+app.get('/', (req, res) => {
+  res.json({ message: 'Server đang chạy!' });
+});
 
 app.use('/api/products', require('./routes/products'));
 app.use('/api/users', require('./routes/users'));
@@ -122,15 +88,6 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/upload', require('./routes/upload'));
-
-if (hasFrontendBuild) {
-  app.use(express.static(frontendDistDir));
-
-  // Single-service deployment: route non-API traffic to React app.
-  app.get(/^\/(?!api\/|uploads\/|socket\.io\/).*/, (req, res) => {
-    res.sendFile(frontendIndexFile);
-  });
-}
 
 app.use((err, req, res, next) => {
   if (res.headersSent) {

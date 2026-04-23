@@ -9,6 +9,7 @@ import { ProductCategory, GundamGrade, CardRarity } from '../types/product';
 import { toast } from 'sonner';
 import { createProduct, fetchProductById, ProductPayload, updateProduct, uploadProductFiles } from '../utils/productApi';
 import { useCategories } from '../hooks/useCategories';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 
 const emptyFormData = {
   name: '',
@@ -49,6 +50,7 @@ const MAX_PRODUCT_IMAGES = 9;
 const MAX_SUB_IMAGES = MAX_PRODUCT_IMAGES - 1;
 const MAX_IMAGE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_FILE_SIZE_MB = 5;
+const ALLOWED_UPLOAD_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 type UploadAreaTarget = 'main' | 'gallery' | null;
 
 export const AddProduct: React.FC = () => {
@@ -159,7 +161,7 @@ export const AddProduct: React.FC = () => {
     const acceptedFiles: File[] = [];
 
     files.forEach((file) => {
-      if (!file.type.startsWith('image/')) {
+      if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.type)) {
         toast.error(`${file.name} khong phai la tep anh hop le`);
         return;
       }
@@ -665,8 +667,9 @@ export const AddProduct: React.FC = () => {
                     onDrop={handleDrop('main')}
                   >
                     <img
-                      src={mainImage}
+                      src={resolveProductImageUrl(mainImage)}
                       alt="Main preview"
+                      onError={withImageFallback}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent opacity-0 transition-opacity hover:opacity-100">
@@ -698,7 +701,7 @@ export const AddProduct: React.FC = () => {
                     <input
                       ref={mainImageInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       multiple
                       onChange={handleMainImageUpload}
                       className="hidden"
@@ -724,7 +727,7 @@ export const AddProduct: React.FC = () => {
                       {isUploadingImages ? <Loader2 className="h-7 w-7 animate-spin" /> : <UploadCloud className="h-7 w-7" />}
                     </div>
                     <p className="mb-2 text-base font-semibold text-gray-900">Kéo thả ảnh chính vào đây</p>
-                    <p className="mb-5 text-sm text-gray-500">Hoặc bấm để tải lên. Hỗ trợ JPG, PNG, WEBP, GIF tối đa {MAX_IMAGE_FILE_SIZE_MB}MB.</p>
+                    <p className="mb-5 text-sm text-gray-500">Hoặc bấm để tải lên. Hỗ trợ JPG, PNG, WEBP tối đa {MAX_IMAGE_FILE_SIZE_MB}MB.</p>
                     <button
                       type="button"
                       disabled={isUploadingImages}
@@ -735,7 +738,7 @@ export const AddProduct: React.FC = () => {
                     <input
                       ref={mainImageInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       multiple
                       onChange={handleMainImageUpload}
                       className="hidden"
@@ -773,7 +776,7 @@ export const AddProduct: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900">Kéo ảnh thư viện vào đây hoặc bấm để chọn</p>
-                      <p className="text-sm text-gray-500">Chỉ chấp nhận tệp ảnh. Mỗi ảnh tối đa {MAX_IMAGE_FILE_SIZE_MB}MB.</p>
+                      <p className="text-sm text-gray-500">Chỉ chấp nhận JPG, PNG, WEBP. Mỗi ảnh tối đa {MAX_IMAGE_FILE_SIZE_MB}MB.</p>
                     </div>
                   </div>
                   <button
@@ -787,7 +790,7 @@ export const AddProduct: React.FC = () => {
                 <input
                   ref={galleryImageInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
                   onChange={handleSubImageUpload}
                   className="hidden"
@@ -798,8 +801,9 @@ export const AddProduct: React.FC = () => {
                 {subImages.map((image, index) => (
                   <div key={index} className="relative aspect-square overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 group transition-all hover:-translate-y-0.5 hover:shadow-md">
                     <img
-                      src={image}
+                      src={resolveProductImageUrl(image)}
                       alt={`Sub preview ${index + 1}`}
+                      onError={withImageFallback}
                       className="w-full h-full object-cover cursor-pointer"
                       onClick={() => selectSubImage(image)}
                     />

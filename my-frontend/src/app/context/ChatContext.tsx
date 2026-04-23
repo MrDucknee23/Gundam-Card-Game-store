@@ -136,10 +136,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const socketAuth = getChatSocketAuth();
     const socket = io(getChatSocketBaseUrl(), {
       path: '/socket.io',
-      // On hosted proxies (Render/Cloudflare), starting with polling is more stable,
-      // then Socket.IO will upgrade to websocket automatically when available.
-      transports: ['polling', 'websocket'],
-      upgrade: true,
+      transports: ['websocket', 'polling'],
       auth: socketAuth,
     });
 

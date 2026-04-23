@@ -7,9 +7,9 @@ const orderSchema = new mongoose.Schema({
     default: null,
     index: true,
   },
-  // userId ─æ╞░ß╗úc d├╣ng ─æß╗â ph├ón biß╗çt ─æ╞ín h├áng cß╗ºa user ─æ├ú ─æ─âng nhß║¡p v├á guest.
-  // - userId != null ΓåÆ ─æ╞ín h├áng user (chß╗ë truy vß║Ñn qua JWT)
-  // - userId == null ΓåÆ ─æ╞ín h├áng guest (chß╗ë truy vß║Ñn qua OTP + guest token)
+  // userId được dùng để phân biệt đơn hàng của user đã đăng nhập và guest.
+  // - userId != null → đơn hàng user (chỉ truy vấn qua JWT)
+  // - userId == null → đơn hàng guest (chỉ truy vấn qua OTP + guest token)
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -26,8 +26,8 @@ const orderSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true, default: 0 },
   subtotal: { type: Number, default: 0 },
   shippingFee: { type: Number, default: 0 },
-  paymentStatus: { type: String, default: 'Ch╞░a thanh to├ín' },
-  orderStatus: { type: String, default: '─Éang xß╗¡ l├╜' },
+  paymentStatus: { type: String, default: 'Chưa thanh toán' },
+  orderStatus: { type: String, default: 'Đang xử lý' },
   paymentMethod: { type: String, default: 'cod' },
   items: [
     {

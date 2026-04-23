@@ -7,15 +7,15 @@ import { toast } from 'sonner';
 import { formatPrice } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
 import { clearGuestOrderVerification, setGuestLookupContact } from '../utils/guestOrderAccess';
-import { fetchProducts, syncCachedProductStocks } from '../utils/productApi';
+import { syncCachedProductStocks } from '../utils/productApi';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 import { CheckCircle } from 'lucide-react';
 
 const ORDERS_API_URL = buildApiUrl('/orders');
-const NAME_REGEX = /^[A-Za-zÀ-ỹ\s]+$/u;
-const PHONE_REGEX = /^[0-9]{9,11}$/;
+const MONGODB_OBJECT_ID_REGEX = /^[a-fA-F0-9]{24}$/;
 
 export const Checkout: React.FC = () => {
-  const { items, getTotalPrice, clearCart, syncWithLatestProducts } = useCart();
+  const { items, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -56,19 +56,6 @@ export const Checkout: React.FC = () => {
     }
   }, [items.length, navigate]);
 
-  useEffect(() => {
-    const syncCart = async () => {
-      try {
-        const latestProducts = await fetchProducts();
-        syncWithLatestProducts(latestProducts);
-      } catch {
-        // Keep current snapshot when refresh fails.
-      }
-    };
-
-    syncCart();
-  }, [syncWithLatestProducts]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -86,14 +73,14 @@ export const Checkout: React.FC = () => {
       return;
     }
 
-    const fullName = `${formData.lastName} ${formData.firstName}`.trim();
-    if (!NAME_REGEX.test(fullName)) {
-      toast.error('Họ và tên chỉ được chứa chữ cái và khoảng trắng');
+    if (items.length === 0) {
+      toast.error('Giỏ hàng đang trống, không thể tạo đơn hàng');
       return;
     }
 
-    if (!PHONE_REGEX.test(formData.phone.trim())) {
-      toast.error('Số điện thoại không hợp lệ (9-11 chữ số)');
+    const hasInvalidProductId = items.some((item) => !MONGODB_OBJECT_ID_REGEX.test(String(item.product.id || '').trim()));
+    if (hasInvalidProductId) {
+      toast.error('Giỏ hàng chứa sản phẩm không hợp lệ. Vui lòng làm mới trang và thêm lại sản phẩm.');
       return;
     }
 
@@ -112,9 +99,9 @@ export const Checkout: React.FC = () => {
       const orderData = {
         userId: loggedUser?.id || null,
         customer: {
-          name: fullName,
+          name: `${formData.lastName} ${formData.firstName}`.trim(),
           email: formData.email,
-          phone: formData.phone.trim(),
+          phone: formData.phone,
           address: `${formData.address}, ${formData.city}${formData.postalCode ? `, ${formData.postalCode}` : ''}`
         },
         totalAmount: getTotalPrice(),
@@ -124,7 +111,7 @@ export const Checkout: React.FC = () => {
         orderStatus: 'Đang xử lý',
         paymentMethod: formData.paymentMethod,
         items: items.map((item) => ({
-          productId: item.product.id,
+          productId: String(item.product.id).trim(),
           productName: item.product.name,
           quantity: item.quantity,
           price: item.product.price,
@@ -364,8 +351,9 @@ export const Checkout: React.FC = () => {
                   {items.map((item) => (
                     <div key={item.product.id} className="flex gap-3">
                       <img
-                        src={item.product.images[0]}
+                        src={resolveProductImageUrl(item.product.images[0])}
                         alt={item.product.name}
+                        onError={withImageFallback}
                         className="w-16 h-16 object-cover rounded"
                       />
                       <div className="flex-1">

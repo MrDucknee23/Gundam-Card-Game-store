@@ -7,6 +7,14 @@ import { EditOrderModal } from '../components/admin/EditOrderModal';
 import { formatCurrency } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
 import {
+  formatAddressParts,
+  getPaymentMethodLabel,
+  normalizeOrderLike,
+  normalizeOrderStatus,
+  normalizePaymentStatus,
+  sanitizePossiblyMojibakeText,
+} from '../utils/orderDisplay';
+import {
   ArrowLeft,
   Pencil,
   Printer,
@@ -46,21 +54,9 @@ export const OrderDetail: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed'>('pending');
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [customerTotalSpent, setCustomerTotalSpent] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const isCancelledOrder = orderStatus === 'cancelled' || order?.orderStatus === 'cancelled';
-
-  const applyOrderSnapshot = (nextOrder: any) => {
-    if (!nextOrder) {
-      return;
-    }
-
-    setOrder(nextOrder);
-    setOrderStatus(nextOrder.orderStatus || 'processing');
-    setPaymentStatus(nextOrder.paymentStatus || 'pending');
-    setAdminNotes(nextOrder.notes || '');
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -87,12 +83,15 @@ export const OrderDetail: React.FC = () => {
           );
         }
 
-        const data = await res.json();
+        const data = normalizeOrderLike(await res.json());
         if (!isMounted) {
           return;
         }
 
-        applyOrderSnapshot(data);
+        setOrder(data);
+        setOrderStatus(normalizeOrderStatus(data.orderStatus));
+        setPaymentStatus(normalizePaymentStatus(data.paymentStatus));
+        setAdminNotes(sanitizePossiblyMojibakeText(data.notes));
 
         if (data.customerEmail && data.customerEmail !== 'N/A') {
           fetch(buildApiUrl(`/orders/stats/customer?email=${encodeURIComponent(data.customerEmail)}`))
@@ -160,16 +159,6 @@ export const OrderDetail: React.FC = () => {
   };
 
   const handleUpdateStatus = async () => {
-    if (isUpdatingStatus) {
-      return;
-    }
-
-    if (orderStatus === order.orderStatus) {
-      toast.info('Trạng thái đơn hàng chưa thay đổi.');
-      return;
-    }
-
-    setIsUpdatingStatus(true);
     try {
       const res = await fetch(buildApiUrl(`/orders/${id}`), {
         method: 'PUT',
@@ -177,18 +166,8 @@ export const OrderDetail: React.FC = () => {
         body: JSON.stringify({ orderStatus })
       });
       if (res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        if (payload.order) {
-          applyOrderSnapshot(payload.order);
-        } else {
-          setOrder((current: any) => current ? { ...current, orderStatus } : current);
-        }
-
-        if (payload.wasAlreadyCancelled) {
-          toast.info(payload.message || 'Đơn hàng đã ở trạng thái hủy trước đó.');
-        } else {
-          toast.success(payload.message || 'Trạng thái đơn hàng đã được cập nhật!');
-        }
+        setOrder((current: any) => current ? { ...current, orderStatus } : current);
+        toast.success('Trạng thái đơn hàng đã được cập nhật!');
       } else {
         const payload = await res.json().catch(() => ({}));
         setOrderStatus(order.orderStatus);
@@ -197,8 +176,6 @@ export const OrderDetail: React.FC = () => {
     } catch (error) {
       setOrderStatus(order.orderStatus);
       toast.error('Lỗi kết nối đến máy chủ');
-    } finally {
-      setIsUpdatingStatus(false);
     }
   };
 
@@ -221,7 +198,7 @@ export const OrderDetail: React.FC = () => {
         res = await fetch(buildApiUrl(`/orders/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(true),
-          body: JSON.stringify({ paymentStatus: 'Đã thanh toán' }),
+          body: JSON.stringify({ paymentStatus: 'paid' }),
         });
       }
 
@@ -429,11 +406,11 @@ export const OrderDetail: React.FC = () => {
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1">{item.productName}</h3>
+                      <h3 className="font-semibold text-gray-900 mb-1">{sanitizePossiblyMojibakeText(item.productName, 'Sản phẩm')}</h3>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs text-gray-500">SKU: {item.productId}</span>
                         <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                          {item.category}
+                          {sanitizePossiblyMojibakeText(item.category, 'Sản phẩm')}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -462,7 +439,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Họ và tên</p>
-                      <p className="text-sm font-semibold text-gray-900">{order.customerName}</p>
+                      <p className="text-sm font-semibold text-gray-900">{sanitizePossiblyMojibakeText(order.customerName, 'Khách hàng')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -471,7 +448,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Email</p>
-                      <p className="text-sm text-gray-900">{order.customerEmail}</p>
+                      <p className="text-sm text-gray-900">{sanitizePossiblyMojibakeText(order.customerEmail, 'N/A')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -480,7 +457,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Số điện thoại</p>
-                      <p className="text-sm text-gray-900">{order.customerPhone}</p>
+                      <p className="text-sm text-gray-900">{sanitizePossiblyMojibakeText(order.customerPhone, 'N/A')}</p>
                     </div>
                   </div>
                 </div>
@@ -494,9 +471,12 @@ export const OrderDetail: React.FC = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Địa chỉ giao hàng</p>
                       <p className="text-sm text-gray-900">
-                        {order.shippingAddress.street}<br />
-                        {order.shippingAddress.ward}, {order.shippingAddress.district}<br />
-                        {order.shippingAddress.city}
+                        {formatAddressParts([
+                          order.shippingAddress.street,
+                          order.shippingAddress.ward,
+                          order.shippingAddress.district,
+                          order.shippingAddress.city,
+                        ]) || 'Chưa cập nhật địa chỉ giao hàng'}
                       </p>
                     </div>
                   </div>
@@ -605,9 +585,7 @@ export const OrderDetail: React.FC = () => {
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Phương thức thanh toán</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {order.paymentMethod === 'bank' 
-                        ? 'Chuyển khoản ngân hàng' 
-                        : 'Thanh toán khi nhận hàng (COD)'}
+                      {getPaymentMethodLabel(order.paymentMethod)}
                     </p>
                   </div>
                 </div>
@@ -702,10 +680,9 @@ export const OrderDetail: React.FC = () => {
                 </select>
                 <button
                   onClick={handleUpdateStatus}
-                  disabled={isUpdatingStatus || orderStatus === order.orderStatus}
-                  className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
                 >
-                  {isUpdatingStatus ? 'Đang cập nhật...' : 'Cập nhật trạng thái'}
+                  Cập nhật trạng thái
                 </button>
               </div>
             </div>

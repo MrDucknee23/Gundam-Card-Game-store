@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
-const Order = require('../models/Order'); // Import Model cß╗ºa bß║ín
+const Order = require('../models/Order'); // Import Model của bạn
 const Product = require('../models/Product');
 const User = require('../models/User');
 const { verifyGuestAccessToken } = require('../services/guestOtpService');
@@ -24,214 +24,26 @@ const DATE_RANGE_DAYS = {
   '6months': 180,
   '1year': 365,
 };
-const NAME_REGEX = /^[A-Za-z├Ç-ß╗╣\s]+$/u;
-const PHONE_REGEX = /^[0-9]{9,11}$/;
-const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', '─æ├ú hß╗ºy']);
-const CANCELLED_STATUS_VALUE = 'cancelled';
-const CANCELLABLE_ORDER_STATUSES = new Set(['processing', 'pending', 'confirmed']);
 
 const formatOrderStatus = (status) => {
   const normalizedStatus = String(status || '').trim().toLowerCase();
 
-  if (normalizedStatus === 'processing' || normalizedStatus === '─æang xß╗¡ l├╜') return 'processing';
+  if (normalizedStatus === 'processing' || normalizedStatus === 'đang xử lý') return 'processing';
   if (
     normalizedStatus === 'shipped'
-    || normalizedStatus === '─æ├ú giao h├áng'
-    || normalizedStatus === '─æang giao'
-    || normalizedStatus === '─æang vß║¡n chuyß╗ân'
+    || normalizedStatus === 'đã giao hàng'
+    || normalizedStatus === 'đang giao'
+    || normalizedStatus === 'đang vận chuyển'
   ) return 'shipped';
-  if (normalizedStatus === 'delivered' || normalizedStatus === '─æ├ú gß╗¡i h├áng' || normalizedStatus === 'giao th├ánh c├┤ng') return 'delivered';
-  if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled' || normalizedStatus === '─æ├ú hß╗ºy') return 'cancelled';
+  if (normalizedStatus === 'delivered' || normalizedStatus === 'đã gửi hàng' || normalizedStatus === 'giao thành công') return 'delivered';
+  if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled' || normalizedStatus === 'đã hủy') return 'cancelled';
 
   return 'processing';
-};
-
-const isCancelledStatus = (status) => CANCELLED_STATUSES.has(String(status || '').trim().toLowerCase());
-
-const normalizeOrderStatus = (status) => {
-  const normalizedStatus = String(status || '').trim().toLowerCase();
-
-  if (normalizedStatus === 'pending' || normalizedStatus === 'cho xac nhan' || normalizedStatus === 'chờ xác nhận') {
-    return 'pending';
-  }
-
-  if (normalizedStatus === 'confirmed' || normalizedStatus === 'da xac nhan' || normalizedStatus === 'đã xác nhận') {
-    return 'confirmed';
-  }
-
-  if (normalizedStatus === 'processing' || normalizedStatus === '─æang xß╗¡ l├╜' || normalizedStatus === 'dang xu ly') {
-    return 'processing';
-  }
-
-  if (
-    normalizedStatus === 'shipped'
-    || normalizedStatus === '─æ├ú giao h├áng'
-    || normalizedStatus === '─æang giao'
-    || normalizedStatus === '─æang vß║¡n chuyß╗ân'
-  ) {
-    return 'shipped';
-  }
-
-  if (normalizedStatus === 'delivered' || normalizedStatus === '─æ├ú gß╗¡i h├áng' || normalizedStatus === 'giao th├ánh c├┤ng') {
-    return 'delivered';
-  }
-
-  if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled' || normalizedStatus === '─æ├ú hß╗ºy') {
-    return 'cancelled';
-  }
-
-  return 'processing';
-};
-
-const normalizePersonName = (value) => String(value || '').trim().replace(/\s+/g, ' ');
-const normalizePhoneNumber = (value) => String(value || '').trim();
-
-const assertValidName = (value, fieldName) => {
-  const normalized = normalizePersonName(value);
-
-  if (!normalized) {
-    throw createHttpError(400, `${fieldName} kh├┤ng ─æ╞░ß╗úc ─æß╗â trß╗æng`);
-  }
-
-  if (!NAME_REGEX.test(normalized)) {
-    throw createHttpError(400, `${fieldName} chß╗ë ─æ╞░ß╗úc chß╗⌐a chß╗» c├íi v├á khoß║úng trß║»ng`);
-  }
-
-  return normalized;
-};
-
-const assertValidPhone = (value) => {
-  const normalized = normalizePhoneNumber(value);
-
-  if (!PHONE_REGEX.test(normalized)) {
-    throw createHttpError(400, 'Sß╗æ ─æiß╗çn thoß║íi kh├┤ng hß╗úp lß╗ç (9-11 chß╗» sß╗æ)');
-  }
-
-  return normalized;
-};
-
-const normalizeCustomerForCreate = (customer) => {
-  if (!customer || typeof customer !== 'object') {
-    throw createHttpError(400, 'Thiß║┐u th├┤ng tin kh├ích h├áng');
-  }
-
-  return {
-    ...customer,
-    name: assertValidName(customer.name, 'Hß╗ì v├á t├¬n'),
-    phone: assertValidPhone(customer.phone),
-    address: String(customer.address || '').trim(),
-    email: String(customer.email || '').trim(),
-  };
-};
-
-const normalizeCustomerPatch = (customer) => {
-  if (!customer || typeof customer !== 'object') {
-    return null;
-  }
-
-  const patch = {};
-
-  if (customer.name !== undefined) {
-    patch.name = assertValidName(customer.name, 'Hß╗ì v├á t├¬n');
-  }
-
-  if (customer.phone !== undefined) {
-    patch.phone = assertValidPhone(customer.phone);
-  }
-
-  if (customer.address !== undefined) {
-    patch.address = String(customer.address || '').trim();
-  }
-
-  return patch;
-};
-
-const restoreStockAndCancelOrder = async (orderId) => {
-  const session = await Order.startSession();
-
-  try {
-    let result = {
-      didRestore: false,
-      wasAlreadyCancelled: false,
-      order: null,
-    };
-
-    await session.withTransaction(async () => {
-      const order = await Order.findOne({ _id: orderId }).session(session);
-
-      if (!order) {
-        throw createHttpError(404, 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng');
-      }
-
-      const currentStatus = normalizeOrderStatus(order.orderStatus);
-
-      if (currentStatus === 'cancelled') {
-        result = {
-          didRestore: false,
-          wasAlreadyCancelled: true,
-          order: order.toObject(),
-        };
-        return;
-      }
-
-      if (!CANCELLABLE_ORDER_STATUSES.has(currentStatus)) {
-        throw createHttpError(409, 'Kh├┤ng thß╗â hß╗ºy ─æ╞ín h├áng tß╗½ tr╞░ß╗¥ng th├íi hiß╗çn tß║íi');
-      }
-
-      // Atomic state transition: only one request can switch non-cancelled -> cancelled.
-      const switchedOrder = await Order.findOneAndUpdate(
-        {
-          _id: orderId,
-          orderStatus: { $nin: ['cancelled', 'canceled', '─É├ú hß╗ºy'] },
-        },
-        {
-          $set: { orderStatus: CANCELLED_STATUS_VALUE },
-        },
-        {
-          new: true,
-          session,
-        }
-      );
-
-      if (!switchedOrder) {
-        const latest = await Order.findOne({ _id: orderId }).session(session);
-        result = {
-          didRestore: false,
-          wasAlreadyCancelled: true,
-          order: latest ? latest.toObject() : order.toObject(),
-        };
-        return;
-      }
-
-      for (const item of order.items || []) {
-        const quantity = Number(item.quantity) || 0;
-        if (quantity <= 0) {
-          continue;
-        }
-
-        await Product.updateOne(
-          { _id: item.productId },
-          { $inc: { stock: quantity } },
-          { session }
-        );
-      }
-
-      result = {
-        didRestore: true,
-        wasAlreadyCancelled: false,
-        order: switchedOrder.toObject(),
-      };
-    });
-
-    return result;
-  } finally {
-    await session.endSession();
-  }
 };
 
 const formatPaymentStatus = (status) => {
-  if (status === '─É├ú thanh to├ín') return 'paid';
-  if (status === 'Chß╗¥ thanh to├ín' || status === 'Ch╞░a thanh to├ín') return 'pending';
+  if (status === 'Đã thanh toán') return 'paid';
+  if (status === 'Chờ thanh toán' || status === 'Chưa thanh toán') return 'pending';
   return 'failed';
 };
 
@@ -278,16 +90,16 @@ const resolveOptionalAuthUser = async (req) => {
   try {
     payload = jwt.verify(token, getJwtSecret());
   } catch {
-    throw createHttpError(401, 'Token kh├┤ng hß╗úp lß╗ç hoß║╖c ─æ├ú hß║┐t hß║ín');
+    throw createHttpError(401, 'Token không hợp lệ hoặc đã hết hạn');
   }
 
   const user = await User.findById(payload.sub).select('_id status role email').lean();
   if (!user) {
-    throw createHttpError(401, 'Phi├¬n ─æ─âng nhß║¡p kh├┤ng hß╗úp lß╗ç');
+    throw createHttpError(401, 'Phiên đăng nhập không hợp lệ');
   }
 
   if (user.status === 'blocked') {
-    throw createHttpError(403, 'T├ái khoß║ún ─æ├ú bß╗ï kh├│a');
+    throw createHttpError(403, 'Tài khoản đã bị khóa');
   }
 
   return {
@@ -300,11 +112,11 @@ const resolveOptionalAuthUser = async (req) => {
 const resolveRequiredAdminUser = async (req) => {
   const authUser = await resolveOptionalAuthUser(req);
   if (!authUser) {
-    throw createHttpError(401, 'Thiß║┐u token x├íc thß╗▒c');
+    throw createHttpError(401, 'Thiếu token xác thực');
   }
 
   if (!isAdminRole(authUser.role)) {
-    throw createHttpError(403, 'Bß║ín kh├┤ng c├│ quyß╗ün thß╗▒c hiß╗çn thao t├íc n├áy');
+    throw createHttpError(403, 'Bạn không có quyền thực hiện thao tác này');
   }
 
   return authUser;
@@ -331,12 +143,21 @@ const resolveGuestContext = (req) => {
   };
 };
 
-const normalizeOrderStatusToVi = (status) => normalizeOrderStatus(status);
+const normalizeOrderStatusToVi = (status) => {
+  const mapToVi = {
+    processing: 'Đang xử lý',
+    shipped: 'Đang vận chuyển',
+    delivered: 'Giao thành công',
+    cancelled: 'Đã hủy',
+  };
+
+  return mapToVi[status] || status;
+};
 
 const mapOrderToFrontend = (order) => ({
   id: order._id.toString(),
   orderNumber: order.orderCode || `ORD-${order._id.toString().slice(-6)}`,
-  customerName: order.customer?.name || 'Kh├ích v├úng lai',
+  customerName: order.customer?.name || 'Khách vãng lai',
   customerEmail: order.customer?.email || 'N/A',
   customerPhone: order.customer?.phone || 'N/A',
   orderDate: order.createdAt || new Date().toISOString(),
@@ -356,7 +177,7 @@ const mapOrderToFrontend = (order) => ({
     quantity: item.quantity,
     price: item.price,
     productImage: item.productImage || '',
-    category: 'Sß║ún phß║⌐m'
+    category: 'Sản phẩm'
   })),
   notes: order.history?.[0]?.note || ''
 });
@@ -424,7 +245,7 @@ const createDashboardFallback = () => ({
     products: 0,
   },
   revenueTrend: {
-    labels: ['Ch╞░a c├│ dß╗» liß╗çu'],
+    labels: ['Chưa có dữ liệu'],
     revenue: [0],
     paidRevenue: [0],
     pendingRevenue: [0],
@@ -437,7 +258,7 @@ const createDashboardFallback = () => ({
 
 const normalizeOrderItems = (items) => {
   if (!Array.isArray(items) || items.length === 0) {
-    throw createHttpError(400, '─É╞ín h├áng phß║úi c├│ ├¡t nhß║Ñt mß╗Öt sß║ún phß║⌐m');
+    throw createHttpError(400, 'Đơn hàng phải có ít nhất một sản phẩm');
   }
 
   return items.map((item) => {
@@ -445,11 +266,15 @@ const normalizeOrderItems = (items) => {
     const quantity = Number(item?.quantity);
 
     if (!productId) {
-      throw createHttpError(400, 'Thiß║┐u m├ú sß║ún phß║⌐m trong ─æ╞ín h├áng');
+      throw createHttpError(400, 'Thiếu mã sản phẩm trong đơn hàng');
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      throw createHttpError(400, `Mã sản phẩm không hợp lệ: ${productId}`);
     }
 
     if (!Number.isInteger(quantity) || quantity <= 0) {
-      throw createHttpError(400, 'Sß╗æ l╞░ß╗úng sß║ún phß║⌐m kh├┤ng hß╗úp lß╗ç');
+      throw createHttpError(400, 'Số lượng sản phẩm không hợp lệ');
     }
 
     return {
@@ -457,18 +282,18 @@ const normalizeOrderItems = (items) => {
       quantity,
       fallbackName: typeof item?.productName === 'string' ? item.productName.trim() : '',
       fallbackImage: typeof item?.productImage === 'string' ? item.productImage.trim() : '',
-      fallbackCategory: typeof item?.category === 'string' ? item.category.trim() : 'Sß║ún phß║⌐m',
+      fallbackCategory: typeof item?.category === 'string' ? item.category.trim() : 'Sản phẩm',
     };
   });
 };
 
-// 1. Lß║Ñy danh s├ích to├án bß╗Ö ─æ╞ín h├áng (CHß╗ê d├ánh cho Admin)
-// USER v├á GUEST d├╣ng /api/user/orders v├á /api/guest/orders t╞░╞íng ß╗⌐ng.
+// 1. Lấy danh sách toàn bộ đơn hàng (CHỈ dành cho Admin)
+// USER và GUEST dùng /api/user/orders và /api/guest/orders tương ứng.
 router.get('/my-orders', auth, async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
-      return res.status(401).json({ message: 'Thiß║┐u token x├íc thß╗▒c', error: 'auth_token_missing' });
+      return res.status(401).json({ message: 'Thiếu token xác thực', error: 'auth_token_missing' });
     }
 
     const orders = await Order.find(buildOwnedOrderFilter(userId))
@@ -478,14 +303,14 @@ router.get('/my-orders', auth, async (req, res) => {
 
     return res.json(orders.map(mapOrderToFrontend));
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ message: error.message || 'Kh├┤ng thß╗â tß║úi lß╗ïch sß╗¡ ─æ╞ín h├áng' });
+    return res.status(error.statusCode || 500).json({ message: error.message || 'Không thể tải lịch sử đơn hàng' });
   }
 });
 
 router.get('/', auth, async (req, res) => {
   try {
     if (!isAdminRole(req.user?.role)) {
-      return res.status(403).json({ message: 'Bß║ín kh├┤ng c├│ quyß╗ün truy cß║¡p danh s├ích ─æ╞ín h├áng n├áy' });
+      return res.status(403).json({ message: 'Bạn không có quyền truy cập danh sách đơn hàng này' });
     }
 
     const filter = {};
@@ -578,17 +403,17 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// 1.1 Lß║Ñy chi tiß║┐t mß╗Öt ─æ╞ín h├áng theo ID (D├╣ng cho trang Order Detail)
+// 1.1 Lấy chi tiết một đơn hàng theo ID (Dùng cho trang Order Detail)
 
-// 5. Thß╗æng k├¬ chi ti├¬u cß╗ºa tß╗½ng kh├ích h├áng (phß║úi ─æß║╖t tr╞░ß╗¢c /:id)
+// 5. Thống kê chi tiêu của từng khách hàng (phải đặt trước /:id)
 router.get('/stats/customer', async (req, res) => {
   try {
     const { email } = req.query;
-    if (!email) return res.status(400).json({ message: 'Thiß║┐u email' });
+    if (!email) return res.status(400).json({ message: 'Thiếu email' });
 
     const paidOrders = await Order.find({
       'customer.email': email,
-      paymentStatus: '─É├ú thanh to├ín'
+      paymentStatus: 'Đã thanh toán'
     });
 
     const totalSpent = paidOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
@@ -600,7 +425,7 @@ router.get('/stats/customer', async (req, res) => {
   }
 });
 
-// 6. Thß╗æng k├¬ doanh thu (theo th├íng & n─âm) (phß║úi ─æß║╖t tr╞░ß╗¢c /:id)
+// 6. Thống kê doanh thu (theo tháng & năm) (phải đặt trước /:id)
 router.get('/stats/revenue', async (req, res) => {
   try {
     const { year } = req.query;
@@ -610,7 +435,7 @@ router.get('/stats/revenue', async (req, res) => {
     const endOfYear = new Date(targetYear + 1, 0, 1);
 
     const paidOrders = await Order.find({
-      paymentStatus: '─É├ú thanh to├ín',
+      paymentStatus: 'Đã thanh toán',
       createdAt: { $gte: startOfYear, $lt: endOfYear }
     });
 
@@ -635,11 +460,11 @@ router.get('/stats/revenue', async (req, res) => {
   }
 });
 
-// 7. Top kh├ích h├áng (phß║úi ─æß║╖t tr╞░ß╗¢c /:id)
+// 7. Top khách hàng (phải đặt trước /:id)
 router.get('/stats/top-customers', async (req, res) => {
   try {
     const pipeline = [
-      { $match: { paymentStatus: '─É├ú thanh to├ín' } },
+      { $match: { paymentStatus: 'Đã thanh toán' } },
       { $group: { _id: '$customer.email', name: { $first: '$customer.name' }, phone: { $first: '$customer.phone' }, totalSpent: { $sum: '$totalAmount' }, orderCount: { $sum: 1 } } },
       { $sort: { totalSpent: -1 } },
       { $limit: 20 }
@@ -781,8 +606,8 @@ router.get('/stats/dashboard', async (req, res) => {
       .map((order) => ({
         id: String(order._id),
         orderNumber: order.orderCode || `ORD-${String(order._id).slice(-6)}`,
-        customer: order.customer?.name || 'Kh├ích v├úng lai',
-        product: order.items?.[0]?.productName || 'Kh├┤ng c├│ sß║ún phß║⌐m',
+        customer: order.customer?.name || 'Khách vãng lai',
+        product: order.items?.[0]?.productName || 'Không có sản phẩm',
         amount: Number(order.totalAmount) || 0,
         status: formatOrderStatus(order.orderStatus),
       }));
@@ -791,8 +616,8 @@ router.get('/stats/dashboard', async (req, res) => {
     filteredOrders.forEach((order) => {
       const key = order.customer?.email || order.customer?.phone || String(order._id);
       const current = topCustomersMap.get(key) || {
-        name: order.customer?.name || 'Kh├ích v├úng lai',
-        email: order.customer?.email || 'Kh├ích v├úng lai',
+        name: order.customer?.name || 'Khách vãng lai',
+        email: order.customer?.email || 'Khách vãng lai',
         orders: 0,
         spending: 0,
       };
@@ -875,7 +700,7 @@ router.get('/stats/dashboard', async (req, res) => {
         products: calculatePercentChange(currentPeriodProducts, previousPeriodProducts),
       },
       revenueTrend: {
-        labels: sortedBuckets.length > 0 ? sortedBuckets.map((bucket) => bucket.label) : ['Ch╞░a c├│ dß╗» liß╗çu'],
+        labels: sortedBuckets.length > 0 ? sortedBuckets.map((bucket) => bucket.label) : ['Chưa có dữ liệu'],
         revenue: sortedBuckets.length > 0 ? sortedBuckets.map((bucket) => bucket.revenue) : [0],
         paidRevenue: sortedBuckets.length > 0 ? sortedBuckets.map((bucket) => bucket.paidRevenue) : [0],
         pendingRevenue: sortedBuckets.length > 0 ? sortedBuckets.map((bucket) => bucket.pendingRevenue) : [0],
@@ -902,33 +727,33 @@ router.get('/:id', auth, async (req, res) => {
       : { _id: req.params.id, ...buildOwnedOrderFilter(req.user.userId) };
 
     const order = await Order.findOne(filter).lean().maxTimeMS(8000);
-    if (!order) return res.status(404).json({ message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng' });
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
 
     const mapOrderStatus = (status) => {
       const normalizedStatus = String(status || '').trim().toLowerCase();
 
-      if (normalizedStatus === 'processing' || normalizedStatus === '─æang xß╗¡ l├╜') return 'processing';
+      if (normalizedStatus === 'processing' || normalizedStatus === 'đang xử lý') return 'processing';
       if (
         normalizedStatus === 'shipped'
-        || normalizedStatus === '─æ├ú giao h├áng'
-        || normalizedStatus === '─æang giao'
-        || normalizedStatus === '─æang vß║¡n chuyß╗ân'
+        || normalizedStatus === 'đã giao hàng'
+        || normalizedStatus === 'đang giao'
+        || normalizedStatus === 'đang vận chuyển'
       ) return 'shipped';
-      if (normalizedStatus === 'delivered' || normalizedStatus === '─æ├ú gß╗¡i h├áng' || normalizedStatus === 'giao th├ánh c├┤ng') return 'delivered';
-      if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled' || normalizedStatus === '─æ├ú hß╗ºy') return 'cancelled';
+      if (normalizedStatus === 'delivered' || normalizedStatus === 'đã gửi hàng' || normalizedStatus === 'giao thành công') return 'delivered';
+      if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled' || normalizedStatus === 'đã hủy') return 'cancelled';
 
       return 'processing';
     };
     const mapPaymentStatus = (status) => {
-      if (status === '─É├ú thanh to├ín') return 'paid';
-      if (status === 'Chß╗¥ thanh to├ín' || status === 'Ch╞░a thanh to├ín') return 'pending';
+      if (status === 'Đã thanh toán') return 'paid';
+      if (status === 'Chờ thanh toán' || status === 'Chưa thanh toán') return 'pending';
       return 'failed';
     };
 
     const formattedOrder = {
       id: order._id.toString(),
       orderNumber: order.orderCode || `ORD-${order._id.toString().slice(-6)}`,
-      customerName: order.customer?.name || 'Kh├ích v├úng lai',
+      customerName: order.customer?.name || 'Khách vãng lai',
       customerEmail: order.customer?.email || 'N/A',
       customerPhone: order.customer?.phone || 'N/A',
       orderDate: order.createdAt || new Date().toISOString(),
@@ -948,7 +773,7 @@ router.get('/:id', auth, async (req, res) => {
         quantity: item.quantity,
         price: item.price,
         productImage: item.productImage,
-        category: 'Sß║ún phß║⌐m'
+        category: 'Sản phẩm'
       })),
       notes: order.history?.[0]?.note || ''
     };
@@ -958,7 +783,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// 1.2 Tß║ío ─æ╞ín h├áng mß╗¢i (D├ánh cho trang Thanh to├ín / Checkout)
+// 1.2 Tạo đơn hàng mới (Dành cho trang Thanh toán / Checkout)
 router.post('/', async (req, res) => {
   try {
     if (!isDbReady()) {
@@ -967,14 +792,59 @@ router.post('/', async (req, res) => {
 
     const authUser = await resolveOptionalAuthUser(req);
     const authUserId = authUser?.id || null;
+
+    console.log('=== ORDER DEBUG ===');
+    console.log('BODY:', {
+      hasBody: Boolean(req.body),
+      userId: req.body?.userId || null,
+      paymentMethod: req.body?.paymentMethod || null,
+      hasCustomer: Boolean(req.body?.customer),
+      customerEmail: req.body?.customer?.email || null,
+      customerPhone: req.body?.customer?.phone || null,
+      customerAddress: req.body?.customer?.address || null,
+      itemCount: Array.isArray(req.body?.items) ? req.body.items.length : 0,
+      itemProductIds: Array.isArray(req.body?.items) ? req.body.items.map((item) => item?.productId) : [],
+    });
+    console.log('USER:', authUser ? { id: authUser.id, role: authUser.role, email: authUser.email } : null);
+
+    const customer = req.body?.customer || {};
+    const customerName = typeof customer.name === 'string' ? customer.name.trim() : '';
+    const customerEmail = typeof customer.email === 'string' ? customer.email.trim() : '';
+    const customerPhone = typeof customer.phone === 'string' ? customer.phone.trim() : '';
+    const customerAddress = typeof customer.address === 'string' ? customer.address.trim() : '';
+    const paymentMethod = typeof req.body?.paymentMethod === 'string' ? req.body.paymentMethod.trim() : '';
+
+    if (!customerName) {
+      return res.status(400).json({ message: 'Thiếu tên khách hàng' });
+    }
+
+    if (!customerPhone) {
+      return res.status(400).json({ message: 'Thiếu số điện thoại nhận hàng' });
+    }
+
+    if (!customerAddress) {
+      return res.status(400).json({ message: 'Thiếu địa chỉ giao hàng' });
+    }
+
+    if (!paymentMethod) {
+      return res.status(400).json({ message: 'Thiếu phương thức thanh toán' });
+    }
+
+    if (!['cod', 'bank', 'bank_transfer', 'momo', 'zalopay', 'credit_card'].includes(paymentMethod)) {
+      return res.status(400).json({ message: 'Phương thức thanh toán không hợp lệ' });
+    }
+
+    if (!authUserId && !customerEmail) {
+      return res.status(400).json({ message: 'Đơn guest bắt buộc phải có email' });
+    }
+
     const requestedUserId = req.body?.userId ? String(req.body.userId).trim() : '';
 
     if (requestedUserId && (!authUserId || requestedUserId !== authUserId)) {
-      return res.status(403).json({ message: 'Kh├┤ng ─æ╞░ß╗úc giß║ú mß║ío userId khi tß║ío ─æ╞ín h├áng' });
+      return res.status(403).json({ message: 'Không được giả mạo userId khi tạo đơn hàng' });
     }
 
     const normalizedItems = normalizeOrderItems(req.body.items);
-    const normalizedCustomer = normalizeCustomerForCreate(req.body.customer);
     const session = await Order.startSession();
     let savedOrder;
     let updatedStocks = [];
@@ -993,11 +863,11 @@ router.post('/', async (req, res) => {
           const product = productsById.get(item.productId);
 
           if (!product) {
-            throw createHttpError(404, 'Kh├┤ng t├¼m thß║Ñy sß║ún phß║⌐m trong ─æ╞ín h├áng');
+            throw createHttpError(404, 'Không tìm thấy sản phẩm trong đơn hàng');
           }
 
           if (!Number.isFinite(product.stock) || product.stock < item.quantity) {
-            throw createHttpError(409, `Sß║ún phß║⌐m ${product.name} kh├┤ng ─æß╗º sß╗æ l╞░ß╗úng tß╗ôn kho`);
+            throw createHttpError(409, `Sản phẩm ${product.name} không đủ số lượng tồn kho`);
           }
 
           const updateResult = await Product.updateOne(
@@ -1007,7 +877,7 @@ router.post('/', async (req, res) => {
           );
 
           if (updateResult.modifiedCount !== 1) {
-            throw createHttpError(409, `Sß║ún phß║⌐m ${product.name} ─æ├ú thay ─æß╗òi tß╗ôn kho, vui l├▓ng thß╗¡ lß║íi`);
+            throw createHttpError(409, `Sản phẩm ${product.name} đã thay đổi tồn kho, vui lòng thử lại`);
           }
 
           const nextStock = Math.max(0, Number(product.stock) - item.quantity);
@@ -1025,10 +895,17 @@ router.post('/', async (req, res) => {
 
         const newOrder = new Order({
           ...req.body,
-          // userId chß╗ë lß║Ñy tß╗½ JWT ─æ├ú verify ß╗ƒ server.
+          customer: {
+            ...customer,
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            address: customerAddress,
+          },
+          paymentMethod,
+          // userId chỉ lấy từ JWT đã verify ở server.
           user: authUserId,
           userId: authUserId,
-          customer: normalizedCustomer,
           items: orderItems,
           totalAmount: orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + (Number(req.body.shippingFee) || 0),
           subtotal: orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -1047,19 +924,19 @@ router.post('/', async (req, res) => {
       updatedStocks,
     });
   } catch (error) {
-    const statusCode = error?.statusCode || 400;
+    const statusCode = error?.statusCode || (error?.name === 'CastError' ? 400 : 500);
     res.status(statusCode).json({ message: error.message });
   }
 });
 
-// 2. Cß║¡p nhß║¡t trß║íng th├íi ─æ╞ín h├áng
+// 2. Cập nhật trạng thái đơn hàng
 router.put('/:id', async (req, res) => {
   try {
     const authUser = await resolveOptionalAuthUser(req);
     const guestContext = authUser ? null : resolveGuestContext(req);
 
     if (!authUser && !guestContext) {
-      return res.status(401).json({ message: 'Thiß║┐u quyß╗ün truy cß║¡p ─æ╞ín h├áng' });
+      return res.status(401).json({ message: 'Thiếu quyền truy cập đơn hàng' });
     }
 
     const isAdmin = isAdminRole(authUser?.role);
@@ -1076,40 +953,30 @@ router.put('/:id', async (req, res) => {
 
     const order = await Order.findOne(ownershipFilter);
     if (!order) {
-      return res.status(404).json({ message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng' });
+      return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
     }
 
-    // Kh├ích h├áng (user/guest) chß╗ë ─æ╞░ß╗úc sß╗¡a ─æ╞ín khi ─æang processing.
+    // Khách hàng (user/guest) chỉ được sửa đơn khi đang processing.
     if (!isAdmin && formatOrderStatus(order.orderStatus) !== 'processing') {
-      return res.status(409).json({ message: 'Chß╗ë c├│ thß╗â cß║¡p nhß║¡t ─æ╞ín h├áng ─æang xß╗¡ l├╜' });
+      return res.status(409).json({ message: 'Chỉ có thể cập nhật đơn hàng đang xử lý' });
     }
 
     const updateData = { ...req.body };
-    const incomingStatus = updateData.orderStatus ? formatOrderStatus(updateData.orderStatus) : null;
 
     if (isAdmin) {
-      if (updateData.customer && typeof updateData.customer === 'object') {
-        const customerPatch = normalizeCustomerPatch(updateData.customer);
-        updateData.customer = {
-          ...order.customer,
-          ...customerPatch,
-          email: order.customer?.email,
-        };
-      }
-
       if (updateData.orderStatus) {
         updateData.orderStatus = normalizeOrderStatusToVi(updateData.orderStatus);
       }
 
       if (updateData.paymentStatus) {
         if (formatOrderStatus(order.orderStatus) === 'cancelled') {
-          return res.status(409).json({ message: 'Kh├┤ng thß╗â ghi nhß║¡n thanh to├ín cho ─æ╞ín h├áng ─æ├ú hß╗ºy' });
+          return res.status(409).json({ message: 'Không thể ghi nhận thanh toán cho đơn hàng đã hủy' });
         }
 
         const mapPaymentToVi = {
-          paid: '─É├ú thanh to├ín',
-          pending: 'Ch╞░a thanh to├ín',
-          failed: 'Thanh to├ín thß║Ñt bß║íi',
+          paid: 'Đã thanh toán',
+          pending: 'Chưa thanh toán',
+          failed: 'Thanh toán thất bại',
         };
         updateData.paymentStatus = mapPaymentToVi[updateData.paymentStatus] || updateData.paymentStatus;
       }
@@ -1124,112 +991,78 @@ router.put('/:id', async (req, res) => {
         delete updateData.notes;
       }
 
-      if (incomingStatus === 'cancelled') {
-        if (updateData.paymentStatus !== undefined) {
-          return res.status(409).json({ message: 'Kh├┤ng thß╗â cß║¡p nhß║¡t thanh to├ín c├╣ng l├║c khi hß╗ºy ─æ╞ín' });
-        }
-
-        const cancelResult = await restoreStockAndCancelOrder(order._id);
-        const latestOrder = await Order.findById(order._id).lean().maxTimeMS(8000);
-        return res.json({
-          message: cancelResult.wasAlreadyCancelled
-            ? '─É╞ín h├áng ─æ├ú ß╗ƒ tr╞░ß╗¥ng th├íi hß╗ºy'
-            : 'Cß║¡p nhß║¡t th├ánh c├┤ng',
-          didRestoreStock: cancelResult.didRestore,
-          wasAlreadyCancelled: cancelResult.wasAlreadyCancelled,
-          order: latestOrder ? mapOrderToFrontend(latestOrder) : null,
-        });
-      }
-
       if (Object.keys(updateData).length > 0) {
         await Order.updateOne({ _id: order._id }, { $set: updateData });
       }
     } else {
       if (updateData.paymentStatus !== undefined || updateData.userId !== undefined || updateData.notes !== undefined) {
-        return res.status(403).json({ message: 'Bß║ín kh├┤ng c├│ quyß╗ün cß║¡p nhß║¡t tr╞░ß╗¥ng dß╗» liß╗çu n├áy' });
+        return res.status(403).json({ message: 'Bạn không có quyền cập nhật trường dữ liệu này' });
       }
 
       if (updateData.orderStatus !== undefined) {
         const normalizedStatus = normalizeOrderStatusToVi(updateData.orderStatus);
-        if (normalizedStatus !== 'cancelled') {
-          return res.status(403).json({ message: 'Kh├ích h├áng chß╗ë ─æ╞░ß╗úc hß╗ºy ─æ╞ín h├áng' });
+        if (normalizedStatus !== 'Đã hủy') {
+          return res.status(403).json({ message: 'Khách hàng chỉ được hủy đơn hàng' });
         }
-        const cancelResult = await restoreStockAndCancelOrder(order._id);
-        const latestOrder = await Order.findById(order._id).lean().maxTimeMS(8000);
-
-        if (updateData.customer === undefined) {
-          return res.json({
-            message: cancelResult.wasAlreadyCancelled
-              ? '─É╞ín h├áng ─æ├ú ß╗ƒ tr╞░ß╗¥ng th├íi hß╗ºy'
-              : 'Cß║¡p nhß║¡t th├ánh c├┤ng',
-            didRestoreStock: cancelResult.didRestore,
-            wasAlreadyCancelled: cancelResult.wasAlreadyCancelled,
-            order: latestOrder ? mapOrderToFrontend(latestOrder) : null,
-          });
-        }
+        order.orderStatus = 'Đã hủy';
       }
 
       if (updateData.customer && typeof updateData.customer === 'object') {
-        const customerPatch = normalizeCustomerPatch(updateData.customer);
-        const nextCustomer = {
+        order.customer = {
           ...order.customer,
-          ...customerPatch,
-          // Kh├┤ng cho ─æß╗òi email ─æß╗â tr├ính chiß║┐m quyß╗ün ─æ╞ín kh├íc.
+          name: updateData.customer.name ?? order.customer?.name,
+          phone: updateData.customer.phone ?? order.customer?.phone,
+          address: updateData.customer.address ?? order.customer?.address,
+          // Không cho đổi email để tránh chiếm quyền đơn khác.
           email: order.customer?.email,
         };
-
-        await Order.updateOne({ _id: order._id }, { $set: { customer: nextCustomer } });
-      } else {
-        await order.save();
       }
+
+      await order.save();
     }
 
-    const latestOrder = await Order.findById(order._id).lean().maxTimeMS(8000);
-    res.json({
-      message: 'Cß║¡p nhß║¡t th├ánh c├┤ng',
-      order: latestOrder ? mapOrderToFrontend(latestOrder) : null,
-    });
+    res.json({ message: 'Cập nhật thành công' });
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
   }
 });
 
-// 3. X├│a ─æ╞ín h├áng
+// 3. Xóa đơn hàng
 router.delete('/:id', async (req, res) => {
   try {
     await resolveRequiredAdminUser(req);
     await Order.findByIdAndDelete(req.params.id);
-    res.json({ message: 'X├│a ─æ╞ín h├áng th├ánh c├┤ng' });
+    res.json({ message: 'Xóa đơn hàng thành công' });
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
   }
 });
 
-// 4. X├íc nhß║¡n ─æ├ú thanh to├ín (Admin)
+// 4. Xác nhận đã thanh toán (Admin)
 router.post('/:id/confirm-payment', async (req, res) => {
   try {
     await resolveRequiredAdminUser(req);
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng' });
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
     if (formatOrderStatus(order.orderStatus) === 'cancelled') {
-      return res.status(409).json({ message: 'Kh├┤ng thß╗â ghi nhß║¡n thanh to├ín cho ─æ╞ín h├áng ─æ├ú hß╗ºy' });
+      return res.status(409).json({ message: 'Không thể ghi nhận thanh toán cho đơn hàng đã hủy' });
     }
 
-    order.paymentStatus = '─É├ú thanh to├ín';
+    order.paymentStatus = 'Đã thanh toán';
     order.paidAt = new Date();
     await order.save();
 
-    // T├¡nh tß╗òng chi ti├¬u cß╗ºa kh├ích h├áng (chß╗ë ─æ╞ín ─æ├ú thanh to├ín)
+    // Tính tổng chi tiêu của khách hàng (chỉ đơn đã thanh toán)
     let customerTotalSpent = 0;
     if (order.customer?.email) {
       const paidOrders = await Order.find({
         'customer.email': order.customer.email,
-        paymentStatus: '─É├ú thanh to├ín'
+        paymentStatus: 'Đã thanh toán'
       });
       customerTotalSpent = paidOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     }
 
-    res.json({ message: 'X├íc nhß║¡n thanh to├ín th├ánh c├┤ng', customerTotalSpent });
+    res.json({ message: 'Xác nhận thanh toán thành công', customerTotalSpent });
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
   }

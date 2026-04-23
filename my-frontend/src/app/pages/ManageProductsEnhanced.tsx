@@ -11,6 +11,7 @@ import { useCategories } from '../hooks/useCategories';
 import { formatPrice } from '../utils/format';
 import { deleteReview, fetchReviews, replyToReview, Review } from '../utils/reviewApi';
 import { useAuth } from '../context/AuthContext';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 
 type ProductStatus = 'active' | 'out_of_stock' | 'draft';
 type SortField = 'name' | 'price' | 'stock';
@@ -448,8 +449,9 @@ export const ManageProductsEnhanced: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <img
-                            src={product.images[0]}
+                            src={resolveProductImageUrl(product.images[0])}
                             alt={product.name}
+                            onError={withImageFallback}
                             className="w-16 h-16 object-cover rounded-lg"
                           />
                         </td>

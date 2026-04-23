@@ -7,6 +7,7 @@ import { GuestOrderLookupCard } from '../components/GuestOrderLookupCard';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import { formatCurrency } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
+import { getPaymentMethodLabel, normalizeOrderLike, sanitizePossiblyMojibakeText } from '../utils/orderDisplay';
 import {
   buildGuestOrderHeaders,
   clearGuestOrderVerification,
@@ -98,14 +99,14 @@ export const MyOrders: React.FC = () => {
 
       const data = await res.json();
 
-      setOrders(Array.isArray(data) ? data : []);
+      setOrders(Array.isArray(data) ? data.map((entry) => normalizeOrderLike(entry)) : []);
       setViewerEmail(email.trim());
       setIsGuestView(false);
-      redirectToPendingOrder(Array.isArray(data) ? data : []);
+      redirectToPendingOrder(Array.isArray(data) ? data.map((entry) => normalizeOrderLike(entry)) : []);
     } catch (error) {
       console.error('Lỗi khi fetch đơn hàng:', error);
       setOrders([]);
-      toast.error(error instanceof Error ? error.message : 'Không thể tải lịch sử đơn hàng');
+      toast.error(error instanceof Error ? sanitizePossiblyMojibakeText(error.message, 'Không thể tải lịch sử đơn hàng') : 'Không thể tải lịch sử đơn hàng');
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +134,7 @@ export const MyOrders: React.FC = () => {
       }
 
       const payload = await response.json();
-      const nextOrders = Array.isArray(payload) ? payload : [];
+      const nextOrders = Array.isArray(payload) ? payload.map((entry) => normalizeOrderLike(entry)) : [];
       setOrders(nextOrders);
       setViewerEmail(session.email);
       setIsGuestView(true);
@@ -141,7 +142,7 @@ export const MyOrders: React.FC = () => {
     } catch (error) {
       console.error('Lỗi khi fetch đơn hàng guest:', error);
       setOrders([]);
-      toast.error(error instanceof Error ? error.message : 'Không thể tải lịch sử đơn hàng guest');
+      toast.error(error instanceof Error ? sanitizePossiblyMojibakeText(error.message, 'Không thể tải lịch sử đơn hàng guest') : 'Không thể tải lịch sử đơn hàng guest');
     } finally {
       setIsLoading(false);
     }
@@ -165,31 +166,6 @@ export const MyOrders: React.FC = () => {
     } else {
       setIsLoading(false);
     }
-  }, [fetchGuestOrders, fetchOrders, guestSession]);
-
-  useEffect(() => {
-    const refreshOrders = () => {
-      const userStr = localStorage.getItem('user');
-      const token = localStorage.getItem('authToken') || '';
-      const user = userStr ? JSON.parse(userStr) : null;
-
-      if (user?.email && token) {
-        void fetchOrders(user.email);
-        return;
-      }
-
-      if (guestSession?.email && guestSession.phone && guestSession.accessToken) {
-        void fetchGuestOrders(guestSession);
-      }
-    };
-
-    const intervalId = window.setInterval(refreshOrders, 15000);
-    window.addEventListener('focus', refreshOrders);
-
-    return () => {
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', refreshOrders);
-    };
   }, [fetchGuestOrders, fetchOrders, guestSession]);
 
   const storedGuestInfo = getStoredGuestOrderAccess();
@@ -280,7 +256,7 @@ export const MyOrders: React.FC = () => {
                         <h3 className="font-bold text-gray-900">{order.orderNumber}</h3>
                         <p className="text-sm text-gray-500">Ngày đặt: {formatDate(order.orderDate)}</p>
                         <p className="text-sm text-gray-500 mt-1">
-                          Thanh toán: <span className="font-medium text-gray-700">{order.paymentMethod === 'bank' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}</span>
+                          Thanh toán: <span className="font-medium text-gray-700">{getPaymentMethodLabel(order.paymentMethod)}</span>
                         </p>
                       </div>
                     </div>

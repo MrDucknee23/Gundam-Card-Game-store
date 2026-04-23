@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/admin/StatusBadge';
 import type { Order, PaymentStatus, OrderStatus } from '../data/orders';
 import { formatCurrency } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
+import { getPaymentMethodLabel, normalizeOrderLike } from '../utils/orderDisplay';
 
 const ORDERS_API_URL = buildApiUrl('/orders?summary=1');
 const REQUEST_TIMEOUT_MS = 5000;
@@ -41,8 +42,8 @@ export const ManageOrders: React.FC = () => {
         const data = await res.json();
         const isStale = res.headers.get('x-orders-stale') === '1';
 
-        if (isMounted && Array.isArray(data) && data.length > 0 && !isStale) {
-          setOrders(data);
+        if (isMounted && Array.isArray(data) && !isStale) {
+          setOrders(data.map((entry) => normalizeOrderLike(entry as Order)));
         }
       } catch (error) {
         if (!(error instanceof Error && error.name === 'AbortError')) {
@@ -76,22 +77,6 @@ export const ManageOrders: React.FC = () => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
-  const getPaymentMethodLabel = (paymentMethod?: string) => {
-    switch (paymentMethod) {
-      case 'bank':
-      case 'bank_transfer':
-        return 'Chuyển khoản ngân hàng';
-      case 'momo':
-        return 'Ví MoMo';
-      case 'zalopay':
-        return 'ZaloPay';
-      case 'credit_card':
-        return 'Thẻ tín dụng';
-      default:
-        return 'Thanh toán khi nhận hàng (COD)';
-    }
-  };
-
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const filteredOrders = useMemo(() => {
@@ -119,7 +104,7 @@ export const ManageOrders: React.FC = () => {
         
         <div className="flex items-center justify-between mb-8 mt-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý hóa đơn</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý đơn hàng</h1>
             <p className="text-gray-600">Theo dõi và cập nhật trạng thái các đơn đặt hàng.</p>
           </div>
         </div>
@@ -161,8 +146,8 @@ export const ManageOrders: React.FC = () => {
             >
               <option value="all">Tất cả trạng thái đơn</option>
               <option value="processing">Đang xử lý</option>
-              <option value="shipped">Đang giao</option>
-              <option value="delivered">Hoàn thành</option>
+              <option value="shipped">Đang vận chuyển</option>
+              <option value="delivered">Giao thành công</option>
               <option value="cancelled">Đã hủy</option>
             </select>
           </div>

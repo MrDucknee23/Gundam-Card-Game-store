@@ -305,6 +305,7 @@ export const ProductDetail: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Gallery */}
+  import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
           <div>
             {/* Main Image */}
             <Carousel
@@ -317,8 +318,9 @@ export const ProductDetail: React.FC = () => {
                   <CarouselItem key={`${product.id}-${index}`}>
                     <div className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
                       <img
-                        src={image}
+                        src={resolveProductImageUrl(image)}
                         alt={`${product.name} ${index + 1}`}
+                        onError={withImageFallback}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -349,8 +351,9 @@ export const ProductDetail: React.FC = () => {
                   `}
                 >
                   <img
-                    src={image}
+                    src={resolveProductImageUrl(image)}
                     alt={`${product.name} ${index + 1}`}
+                    onError={withImageFallback}
                     className="w-full h-full object-cover"
                   />
                 </button>

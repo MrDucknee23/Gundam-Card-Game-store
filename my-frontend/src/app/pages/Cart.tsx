@@ -1,28 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useCart } from '../context/CartContext';
 import { Input } from '../components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { formatPrice } from '../utils/format';
 import { toast } from 'sonner';
-import { fetchProducts } from '../utils/productApi';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 
 export const Cart: React.FC = () => {
-  const { items, updateQuantity, removeFromCart, getTotalPrice, syncWithLatestProducts } = useCart();
+  const { items, updateQuantity, removeFromCart, getTotalPrice } = useCart();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const syncCart = async () => {
-      try {
-        const latestProducts = await fetchProducts();
-        syncWithLatestProducts(latestProducts);
-      } catch {
-        // Keep existing cart state if product refresh fails.
-      }
-    };
-
-    syncCart();
-  }, [syncWithLatestProducts]);
 
   const handleQuantityUpdate = (productId: string, quantity: number) => {
     const result = updateQuantity(productId, quantity);
@@ -47,8 +34,6 @@ export const Cart: React.FC = () => {
     );
   }
 
-  const hasOutOfStockItem = items.some((item) => item.product.stock <= 0 || item.quantity > item.product.stock);
-
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -67,8 +52,9 @@ export const Cart: React.FC = () => {
                     {/* Product Image */}
                     <Link to={`/product/${item.product.id}`}>
                       <img
-                        src={item.product.images[0]}
+                        src={resolveProductImageUrl(item.product.images[0])}
                         alt={item.product.name}
+                        onError={withImageFallback}
                         className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                       />
                     </Link>
@@ -86,9 +72,6 @@ export const Cart: React.FC = () => {
                         {item.product.rarity && `Độ hiếm: ${item.product.rarity}`}
                       </p>
                       <p className="text-sm text-gray-500 mb-4">Tồn kho hiện tại: {item.product.stock}</p>
-                      {item.product.stock <= 0 && (
-                        <p className="text-sm font-medium text-red-600 mb-4">Sản phẩm đã hết hàng</p>
-                      )}
 
                       <div className="flex items-center justify-between">
                         {/* Quantity Controls */}
@@ -167,14 +150,10 @@ export const Cart: React.FC = () => {
 
               <button
                 onClick={() => navigate('/checkout')}
-                disabled={hasOutOfStockItem}
-                className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:scale-100"
+                className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
               >
                 Thanh toán
               </button>
-              {hasOutOfStockItem && (
-                <p className="mt-2 text-xs text-red-600">Giỏ hàng có sản phẩm hết hàng. Vui lòng cập nhật lại trước khi thanh toán.</p>
-              )}
 
               <Link to="/shop">
                 <button className="w-full mt-3 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-lg font-semibold transition-all">

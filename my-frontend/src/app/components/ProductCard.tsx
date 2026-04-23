@@ -7,6 +7,7 @@ import { formatPrice } from '../utils/format';
 import { limitedToast } from '../utils/limitedToast';
 import { isWishlisted, toggleWishlist } from '../utils/wishlist';
 import { useCart } from '../context/CartContext';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 
 interface ProductCardProps {
   product: Product;
@@ -46,7 +47,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
   const navigate = useNavigate();
   const { addToCart, getAvailableStock } = useCart();
   const [isFavorite, setIsFavorite] = useState(false);
-  const primaryImage = product.images?.[0]?.trim() || '';
+  const primaryImage = resolveProductImageUrl(product.images?.[0]);
   const availableStock = getAvailableStock(product);
   const isSoldOut = availableStock <= 0;
 
@@ -68,6 +69,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
     }
 
     limitedToast.success('Đã thêm sản phẩm vào giỏ hàng');
+    navigate('/cart');
   };
 
   const handleBuyNow = (e: React.MouseEvent) => {
@@ -147,7 +149,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
                   src={primaryImage}
                   alt={product.name}
                   decoding="async"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  onError={withImageFallback}
                   className={`
                     w-full 
                     h-full 

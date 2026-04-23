@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Category = require('../models/Category');
-const { deleteUploadFile, isBase64Image, normalizeUploadPublicPath } = require('../utils/imageStorage');
+const { isBase64Image, normalizeUploadPublicPath } = require('../utils/imageStorage');
 const {
   isDbReady,
   isDbUnavailableError,
@@ -70,19 +70,6 @@ const normalizeProductImages = (images) => Array.from(
       .filter((image) => image !== '')
   )
 );
-
-const cleanupUnusedUploads = async (currentProductId, removedImages) => {
-  for (const imagePath of removedImages) {
-    const remainingUsageCount = await Product.countDocuments({
-      _id: { $ne: currentProductId },
-      images: imagePath,
-    });
-
-    if (remainingUsageCount === 0) {
-      await deleteUploadFile(imagePath);
-    }
-  }
-};
 
 const validateProductPayload = async (payload) => {
   const errors = [];
@@ -342,8 +329,6 @@ router.put('/:id', async (req, res) => {
     if (!existingProduct) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
 
     const updated = await Product.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
-    const removedImages = normalizeProductImages(existingProduct.images).filter((imagePath) => !payload.images.includes(imagePath));
-    await cleanupUnusedUploads(updated._id, removedImages);
     res.json({ ...updated.toObject(), id: updated._id.toString() });
   } catch (err) {
     if (err?.statusCode === 500) {
@@ -370,7 +355,6 @@ router.delete('/:id', async (req, res) => {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
 
-    await cleanupUnusedUploads(deleted._id, normalizeProductImages(deleted.images));
     res.json({ message: 'Đã xóa thành công' });
   } catch (err) {
     res.status(500).json({ message: err.message });
