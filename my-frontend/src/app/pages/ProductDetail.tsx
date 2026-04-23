@@ -19,6 +19,7 @@ import {
   CarouselPrevious,
 } from '../components/ui/carousel';
 import { ProductCard } from '../components/ProductCard';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 
 // ─── Avatar helper ───
 const UserAvatar: React.FC<{ name: string; avatar?: string | null; size?: number }> = ({
@@ -305,7 +306,6 @@ export const ProductDetail: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Gallery */}
-  import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
           <div>
             {/* Main Image */}
             <Carousel
