@@ -24,6 +24,9 @@ const DATE_RANGE_DAYS = {
   '6months': 180,
   '1year': 365,
 };
+const NAME_REGEX = /^[A-Za-zÀ-ỹ\s]+$/u;
+const PHONE_REGEX = /^[0-9]{9,11}$/;
+const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', 'đã hủy']);
 
 const formatOrderStatus = (status) => {
   const normalizedStatus = String(status || '').trim().toLowerCase();
@@ -39,6 +42,112 @@ const formatOrderStatus = (status) => {
   if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled' || normalizedStatus === 'đã hủy') return 'cancelled';
 
   return 'processing';
+};
+
+const isCancelledStatus = (status) => CANCELLED_STATUSES.has(String(status || '').trim().toLowerCase());
+
+const normalizePersonName = (value) => String(value || '').trim().replace(/\s+/g, ' ');
+const normalizePhoneNumber = (value) => String(value || '').trim();
+
+const assertValidName = (value, fieldName) => {
+  const normalized = normalizePersonName(value);
+
+  if (!normalized) {
+    throw createHttpError(400, `${fieldName} không được để trống`);
+  }
+
+  if (!NAME_REGEX.test(normalized)) {
+    throw createHttpError(400, `${fieldName} chỉ được chứa chữ cái và khoảng trắng`);
+  }
+
+  return normalized;
+};
+
+const assertValidPhone = (value) => {
+  const normalized = normalizePhoneNumber(value);
+
+  if (!PHONE_REGEX.test(normalized)) {
+    throw createHttpError(400, 'Số điện thoại không hợp lệ (9-11 chữ số)');
+  }
+
+  return normalized;
+};
+
+const normalizeCustomerForCreate = (customer) => {
+  if (!customer || typeof customer !== 'object') {
+    throw createHttpError(400, 'Thiếu thông tin khách hàng');
+  }
+
+  return {
+    ...customer,
+    name: assertValidName(customer.name, 'Họ và tên'),
+    phone: assertValidPhone(customer.phone),
+    address: String(customer.address || '').trim(),
+    email: String(customer.email || '').trim(),
+  };
+};
+
+const normalizeCustomerPatch = (customer) => {
+  if (!customer || typeof customer !== 'object') {
+    return null;
+  }
+
+  const patch = {};
+
+  if (customer.name !== undefined) {
+    patch.name = assertValidName(customer.name, 'Họ và tên');
+  }
+
+  if (customer.phone !== undefined) {
+    patch.phone = assertValidPhone(customer.phone);
+  }
+
+  if (customer.address !== undefined) {
+    patch.address = String(customer.address || '').trim();
+  }
+
+  return patch;
+};
+
+const restoreStockAndCancelOrder = async (orderId) => {
+  const session = await Order.startSession();
+
+  try {
+    let didRestore = false;
+
+    await session.withTransaction(async () => {
+      const order = await Order.findOne({ _id: orderId }).session(session);
+
+      if (!order) {
+        throw createHttpError(404, 'Không tìm thấy đơn hàng');
+      }
+
+      if (isCancelledStatus(order.orderStatus)) {
+        return;
+      }
+
+      for (const item of order.items || []) {
+        const quantity = Number(item.quantity) || 0;
+        if (quantity <= 0) {
+          continue;
+        }
+
+        await Product.updateOne(
+          { _id: item.productId },
+          { $inc: { stock: quantity } },
+          { session }
+        );
+      }
+
+      order.orderStatus = 'Đã hủy';
+      await order.save({ session });
+      didRestore = true;
+    });
+
+    return didRestore;
+  } finally {
+    await session.endSession();
+  }
 };
 
 const formatPaymentStatus = (status) => {
@@ -795,6 +904,7 @@ router.post('/', async (req, res) => {
     }
 
     const normalizedItems = normalizeOrderItems(req.body.items);
+    const normalizedCustomer = normalizeCustomerForCreate(req.body.customer);
     const session = await Order.startSession();
     let savedOrder;
     let updatedStocks = [];
@@ -848,6 +958,7 @@ router.post('/', async (req, res) => {
           // userId chỉ lấy từ JWT đã verify ở server.
           user: authUserId,
           userId: authUserId,
+          customer: normalizedCustomer,
           items: orderItems,
           totalAmount: orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + (Number(req.body.shippingFee) || 0),
           subtotal: orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -904,8 +1015,18 @@ router.put('/:id', async (req, res) => {
     }
 
     const updateData = { ...req.body };
+    const incomingStatus = updateData.orderStatus ? formatOrderStatus(updateData.orderStatus) : null;
 
     if (isAdmin) {
+      if (updateData.customer && typeof updateData.customer === 'object') {
+        const customerPatch = normalizeCustomerPatch(updateData.customer);
+        updateData.customer = {
+          ...order.customer,
+          ...customerPatch,
+          email: order.customer?.email,
+        };
+      }
+
       if (updateData.orderStatus) {
         updateData.orderStatus = normalizeOrderStatusToVi(updateData.orderStatus);
       }
@@ -933,6 +1054,15 @@ router.put('/:id', async (req, res) => {
         delete updateData.notes;
       }
 
+      if (incomingStatus === 'cancelled') {
+        if (updateData.paymentStatus !== undefined) {
+          return res.status(409).json({ message: 'Không thể cập nhật thanh toán cùng lúc khi hủy đơn' });
+        }
+
+        await restoreStockAndCancelOrder(order._id);
+        return res.json({ message: 'Cập nhật thành công' });
+      }
+
       if (Object.keys(updateData).length > 0) {
         await Order.updateOne({ _id: order._id }, { $set: updateData });
       }
@@ -946,21 +1076,25 @@ router.put('/:id', async (req, res) => {
         if (normalizedStatus !== 'Đã hủy') {
           return res.status(403).json({ message: 'Khách hàng chỉ được hủy đơn hàng' });
         }
-        order.orderStatus = 'Đã hủy';
+        await restoreStockAndCancelOrder(order._id);
+        if (updateData.customer === undefined) {
+          return res.json({ message: 'Cập nhật thành công' });
+        }
       }
 
       if (updateData.customer && typeof updateData.customer === 'object') {
-        order.customer = {
+        const customerPatch = normalizeCustomerPatch(updateData.customer);
+        const nextCustomer = {
           ...order.customer,
-          name: updateData.customer.name ?? order.customer?.name,
-          phone: updateData.customer.phone ?? order.customer?.phone,
-          address: updateData.customer.address ?? order.customer?.address,
+          ...customerPatch,
           // Không cho đổi email để tránh chiếm quyền đơn khác.
           email: order.customer?.email,
         };
-      }
 
-      await order.save();
+        await Order.updateOne({ _id: order._id }, { $set: { customer: nextCustomer } });
+      } else {
+        await order.save();
+      }
     }
 
     res.json({ message: 'Cập nhật thành công' });

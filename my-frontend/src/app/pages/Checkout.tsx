@@ -7,13 +7,15 @@ import { toast } from 'sonner';
 import { formatPrice } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
 import { clearGuestOrderVerification, setGuestLookupContact } from '../utils/guestOrderAccess';
-import { syncCachedProductStocks } from '../utils/productApi';
+import { fetchProducts, syncCachedProductStocks } from '../utils/productApi';
 import { CheckCircle } from 'lucide-react';
 
 const ORDERS_API_URL = buildApiUrl('/orders');
+const NAME_REGEX = /^[A-Za-zÀ-ỹ\s]+$/u;
+const PHONE_REGEX = /^[0-9]{9,11}$/;
 
 export const Checkout: React.FC = () => {
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { items, getTotalPrice, clearCart, syncWithLatestProducts } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -54,6 +56,19 @@ export const Checkout: React.FC = () => {
     }
   }, [items.length, navigate]);
 
+  useEffect(() => {
+    const syncCart = async () => {
+      try {
+        const latestProducts = await fetchProducts();
+        syncWithLatestProducts(latestProducts);
+      } catch {
+        // Keep current snapshot when refresh fails.
+      }
+    };
+
+    syncCart();
+  }, [syncWithLatestProducts]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -68,6 +83,17 @@ export const Checkout: React.FC = () => {
     if (!formData.firstName || !formData.lastName || !formData.email || 
         !formData.phone || !formData.address || !formData.city) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    const fullName = `${formData.lastName} ${formData.firstName}`.trim();
+    if (!NAME_REGEX.test(fullName)) {
+      toast.error('Họ và tên chỉ được chứa chữ cái và khoảng trắng');
+      return;
+    }
+
+    if (!PHONE_REGEX.test(formData.phone.trim())) {
+      toast.error('Số điện thoại không hợp lệ (9-11 chữ số)');
       return;
     }
 
@@ -86,9 +112,9 @@ export const Checkout: React.FC = () => {
       const orderData = {
         userId: loggedUser?.id || null,
         customer: {
-          name: `${formData.lastName} ${formData.firstName}`.trim(),
+          name: fullName,
           email: formData.email,
-          phone: formData.phone,
+          phone: formData.phone.trim(),
           address: `${formData.address}, ${formData.city}${formData.postalCode ? `, ${formData.postalCode}` : ''}`
         },
         totalAmount: getTotalPrice(),

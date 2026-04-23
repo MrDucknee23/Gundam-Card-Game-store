@@ -68,7 +68,6 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
     }
 
     limitedToast.success('Đã thêm sản phẩm vào giỏ hàng');
-    navigate('/cart');
   };
 
   const handleBuyNow = (e: React.MouseEvent) => {

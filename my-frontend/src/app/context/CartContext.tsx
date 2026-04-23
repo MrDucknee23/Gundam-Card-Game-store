@@ -22,6 +22,7 @@ interface CartContextType {
   getTotalItems: () => number;
   getTotalPrice: () => number;
   getAvailableStock: (product: Product) => number;
+  syncWithLatestProducts: (products: Product[]) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -202,6 +203,23 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return Math.max(0, product.stock - inCart);
   }, [items]);
 
+  const syncWithLatestProducts = useCallback((products: Product[]) => {
+    const productsById = new Map(products.map((product) => [product.id, product]));
+
+    setItems((currentItems) => currentItems.flatMap((item) => {
+      const latestProduct = productsById.get(item.product.id);
+
+      if (!latestProduct || latestProduct.stock <= 0) {
+        return [];
+      }
+
+      return [{
+        product: latestProduct,
+        quantity: Math.min(item.quantity, latestProduct.stock),
+      }];
+    }));
+  }, []);
+
   const getTotalItems = useCallback(() => {
     return items.reduce((total, item) => total + item.quantity, 0);
   }, [items]);
@@ -220,8 +238,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       getTotalItems,
       getTotalPrice,
       getAvailableStock,
+      syncWithLatestProducts,
     }),
-    [items, addToCart, removeFromCart, updateQuantity, clearCart, getTotalItems, getTotalPrice, getAvailableStock]
+    [items, addToCart, removeFromCart, updateQuantity, clearCart, getTotalItems, getTotalPrice, getAvailableStock, syncWithLatestProducts]
   );
 
   return (

@@ -1,14 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useCart } from '../context/CartContext';
 import { Input } from '../components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { formatPrice } from '../utils/format';
 import { toast } from 'sonner';
+import { fetchProducts } from '../utils/productApi';
 
 export const Cart: React.FC = () => {
-  const { items, updateQuantity, removeFromCart, getTotalPrice } = useCart();
+  const { items, updateQuantity, removeFromCart, getTotalPrice, syncWithLatestProducts } = useCart();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const syncCart = async () => {
+      try {
+        const latestProducts = await fetchProducts();
+        syncWithLatestProducts(latestProducts);
+      } catch {
+        // Keep existing cart state if product refresh fails.
+      }
+    };
+
+    syncCart();
+  }, [syncWithLatestProducts]);
 
   const handleQuantityUpdate = (productId: string, quantity: number) => {
     const result = updateQuantity(productId, quantity);
@@ -32,6 +46,8 @@ export const Cart: React.FC = () => {
       </div>
     );
   }
+
+  const hasOutOfStockItem = items.some((item) => item.product.stock <= 0 || item.quantity > item.product.stock);
 
   return (
     <div className="min-h-screen bg-white">
@@ -70,6 +86,9 @@ export const Cart: React.FC = () => {
                         {item.product.rarity && `Độ hiếm: ${item.product.rarity}`}
                       </p>
                       <p className="text-sm text-gray-500 mb-4">Tồn kho hiện tại: {item.product.stock}</p>
+                      {item.product.stock <= 0 && (
+                        <p className="text-sm font-medium text-red-600 mb-4">Sản phẩm đã hết hàng</p>
+                      )}
 
                       <div className="flex items-center justify-between">
                         {/* Quantity Controls */}
@@ -148,10 +167,14 @@ export const Cart: React.FC = () => {
 
               <button
                 onClick={() => navigate('/checkout')}
-                className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                disabled={hasOutOfStockItem}
+                className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:scale-100"
               >
                 Thanh toán
               </button>
+              {hasOutOfStockItem && (
+                <p className="mt-2 text-xs text-red-600">Giỏ hàng có sản phẩm hết hàng. Vui lòng cập nhật lại trước khi thanh toán.</p>
+              )}
 
               <Link to="/shop">
                 <button className="w-full mt-3 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-lg font-semibold transition-all">
