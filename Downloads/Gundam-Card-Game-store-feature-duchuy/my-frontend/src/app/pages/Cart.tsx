@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { formatPrice } from '../utils/format';
 import { toast } from 'sonner';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 
 export const Cart: React.FC = () => {
   const { items, updateQuantity, removeFromCart, getTotalPrice } = useCart();
@@ -51,8 +52,9 @@ export const Cart: React.FC = () => {
                     {/* Product Image */}
                     <Link to={`/product/${item.product.id}`}>
                       <img
-                        src={item.product.images[0]}
+                        src={resolveProductImageUrl(item.product.images[0])}
                         alt={item.product.name}
+                        onError={withImageFallback}
                         className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                       />
                     </Link>

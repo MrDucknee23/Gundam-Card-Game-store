@@ -1,6 +1,7 @@
 import { Product, ProductCategory } from '../types/product';
 import { buildApiUrl } from './api';
 import { getCached, invalidateCache, setCache } from './cache';
+import { normalizeProductImageUrl } from './imageUrl';
 
 const API_URL = buildApiUrl('/products');
 const UPLOAD_API_URL = buildApiUrl('/upload');
@@ -16,6 +17,7 @@ type ApiProduct = Partial<Product> & {
 
 type UploadResponse = {
   files?: string[];
+  imageUrl?: string;
 };
 
 export type ProductCategoryDistribution = {
@@ -107,23 +109,13 @@ const normalizeImages = (images: unknown): string[] => {
   }
 
   return Array.from(
-    new Set(images.filter((image): image is string => typeof image === 'string' && image.trim() !== '').map((image) => image.trim()))
+    new Set(
+      images
+        .filter((image): image is string => typeof image === 'string' && image.trim() !== '')
+        .map((image) => normalizeProductImageUrl(image))
+        .filter((image) => image !== '')
+    )
   );
-};
-
-const normalizeUploadedImagePath = (value: string) => {
-  const trimmedValue = value.trim();
-
-  if (trimmedValue === '') {
-    return '';
-  }
-
-  const uploadsSegmentIndex = trimmedValue.indexOf('/uploads/');
-  const normalizedValue = uploadsSegmentIndex >= 0 ? trimmedValue.slice(uploadsSegmentIndex) : trimmedValue;
-  const withoutQuery = normalizedValue.split('?')[0].split('#')[0].replace(/\\/g, '/');
-  const dedupedSlashes = withoutQuery.replace(/\/+/g, '/');
-
-  return dedupedSlashes.startsWith('/uploads/') ? dedupedSlashes : '';
 };
 
 const isBase64Image = (value: string) => /^data:image\//i.test(value.trim());
@@ -256,7 +248,14 @@ export const uploadProductFiles = async (files: File[]): Promise<string[]> => {
     body: formData,
   });
 
-  return normalizeImages(response.files).map(normalizeUploadedImagePath).filter((path) => path !== '');
+  const filesFromResponse = normalizeImages(response.files);
+  const firstImage = normalizeProductImageUrl(response.imageUrl || '');
+
+  if (filesFromResponse.length === 0 && firstImage) {
+    return [firstImage];
+  }
+
+  return filesFromResponse;
 };
 
 export const ensureUploadedProductImages = async (images: string[]): Promise<string[]> => {
@@ -265,7 +264,7 @@ export const ensureUploadedProductImages = async (images: string[]): Promise<str
   const orderedImages: string[] = [];
 
   normalizedImages.forEach((image) => {
-    const normalizedPath = normalizeUploadedImagePath(image);
+    const normalizedPath = normalizeProductImageUrl(image);
 
     if (normalizedPath) {
       orderedImages.push(normalizedPath);

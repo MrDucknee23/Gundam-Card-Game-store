@@ -8,6 +8,7 @@ import { formatPrice } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
 import { clearGuestOrderVerification, setGuestLookupContact } from '../utils/guestOrderAccess';
 import { syncCachedProductStocks } from '../utils/productApi';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
 import { CheckCircle } from 'lucide-react';
 
 const ORDERS_API_URL = buildApiUrl('/orders');
@@ -338,8 +339,9 @@ export const Checkout: React.FC = () => {
                   {items.map((item) => (
                     <div key={item.product.id} className="flex gap-3">
                       <img
-                        src={item.product.images[0]}
+                        src={resolveProductImageUrl(item.product.images[0])}
                         alt={item.product.name}
+                        onError={withImageFallback}
                         className="w-16 h-16 object-cover rounded"
                       />
                       <div className="flex-1">
