@@ -4,7 +4,8 @@ let transporter;
 
 const getMailerConfig = () => ({
   user: process.env.EMAIL_USER?.trim() || '',
-  pass: process.env.EMAIL_PASS?.trim() || '',
+  // Gmail App Password: xóa toàn bộ dấu cách (người dùng thường copy có space)
+  pass: (process.env.EMAIL_PASS || '').replace(/\s/g, ''),
   from: process.env.EMAIL_FROM?.trim() || process.env.EMAIL_USER?.trim() || '',
 });
 
