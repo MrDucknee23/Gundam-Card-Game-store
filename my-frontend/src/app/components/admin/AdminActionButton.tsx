@@ -38,7 +38,7 @@ export function AdminActionButton({
           aria-label={label}
           title={label}
           className={cn(
-            'inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-transparent bg-white/90 align-middle transition-all duration-200 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:h-5 [&_svg]:w-5 [&_svg]:shrink-0',
+            'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-transparent align-middle transition-all duration-150 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0',
             toneClasses[tone],
             className,
           )}
@@ -60,7 +60,7 @@ type AdminActionGroupProps = React.HTMLAttributes<HTMLDivElement>;
 export function AdminActionGroup({ className, ...props }: AdminActionGroupProps) {
   return (
     <div
-      className={cn('flex items-center justify-center gap-2 whitespace-nowrap', className)}
+      className={cn('flex items-center justify-center gap-1 whitespace-nowrap', className)}
       {...props}
     />
   );
