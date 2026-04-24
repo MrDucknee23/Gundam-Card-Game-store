@@ -4,6 +4,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { EditProductModal } from '../components/EditProductModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { toast } from 'sonner';
+import { AdminActionButton, AdminActionGroup } from '../components/admin/AdminActionButton';
 
 export const ManageProducts: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -150,22 +151,22 @@ export const ManageProducts: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <button 
+                      <AdminActionGroup className="justify-start">
+                        <AdminActionButton
                           onClick={() => handleEdit(product)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
-                          title="Chỉnh sửa"
+                          tone="neutral"
+                          label="Chỉnh sửa"
                         >
-                          <Pencil className="w-4 h-4 text-gray-700 group-hover:text-black" />
-                        </button>
-                        <button 
+                          <Pencil />
+                        </AdminActionButton>
+                        <AdminActionButton
                           onClick={() => handleDelete(product)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                          title="Xóa"
+                          tone="danger"
+                          label="Xóa"
                         >
-                          <Trash2 className="w-4 h-4 text-red-600 group-hover:text-red-700" />
-                        </button>
-                      </div>
+                          <Trash2 />
+                        </AdminActionButton>
+                      </AdminActionGroup>
                     </td>
                   </tr>
                   ))

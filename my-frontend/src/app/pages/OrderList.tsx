@@ -4,6 +4,7 @@ import { getPaymentMethodLabel } from '../data/orders';
 import type { OrderStatus, PaymentStatus } from '../data/orders';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import { Eye, Trash2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AdminActionButton, AdminActionGroup } from '../components/admin/AdminActionButton';
 
 export const OrderList: React.FC = () => {
   const navigate = useNavigate();
@@ -220,28 +221,28 @@ export const OrderList: React.FC = () => {
                         <StatusBadge status={order.orderStatus} type="order" />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
+                        <AdminActionGroup>
+                          <AdminActionButton
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/admin/orders/${order.id}`);
                             }}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Xem chi tiết"
+                            tone="primary"
+                            label="Xem chi tiết"
                           >
-                            <Eye className="w-5 h-5" />
-                          </button>
-                          <button
+                            <Eye />
+                          </AdminActionButton>
+                          <AdminActionButton
                             onClick={(e) => {
                               e.stopPropagation();
                               setShowDeleteConfirm(order.id);
                             }}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Xóa đơn hàng"
+                            tone="danger"
+                            label="Xóa đơn hàng"
                           >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
+                            <Trash2 />
+                          </AdminActionButton>
+                        </AdminActionGroup>
                       </td>
                     </tr>
                   ))

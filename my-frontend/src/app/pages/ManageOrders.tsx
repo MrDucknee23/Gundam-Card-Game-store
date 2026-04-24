@@ -7,6 +7,7 @@ import type { Order, PaymentStatus, OrderStatus } from '../data/orders';
 import { formatCurrency } from '../utils/format';
 import { buildApiUrl } from '../utils/api';
 import { getPaymentMethodLabel, normalizeOrderLike } from '../utils/orderDisplay';
+import { AdminActionButton, AdminActionGroup } from '../components/admin/AdminActionButton';
 
 const ORDERS_API_URL = buildApiUrl('/orders?summary=1');
 const REQUEST_TIMEOUT_MS = 5000;
@@ -203,12 +204,13 @@ export const ManageOrders: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         {/* Nút Xem chi tiết liên kết đến trang OrderDetail.tsx */}
-                        <Link
-                          to={`/admin/orders/${order.id}`}
-                          className="inline-flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </Link>
+                        <AdminActionGroup>
+                          <AdminActionButton asChild tone="primary" label="Xem chi tiết">
+                            <Link to={`/admin/orders/${order.id}`}>
+                              <Eye />
+                            </Link>
+                          </AdminActionButton>
+                        </AdminActionGroup>
                       </td>
                     </tr>
                   ))

@@ -12,6 +12,7 @@ import { formatPrice } from '../utils/format';
 import { deleteReview, fetchReviews, replyToReview, Review } from '../utils/reviewApi';
 import { useAuth } from '../context/AuthContext';
 import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
+import { AdminActionButton, AdminActionGroup } from '../components/admin/AdminActionButton';
 
 type ProductStatus = 'active' | 'out_of_stock' | 'draft';
 type SortField = 'name' | 'price' | 'stock';
@@ -498,43 +499,43 @@ export const ManageProductsEnhanced: React.FC = () => {
                           <StatusBadge status={status} />
                         </td>
                         <td className="px-4 py-4" style={{ minWidth: '200px', width: '200px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'nowrap' }}>
-                            <button
+                          <AdminActionGroup>
+                            <AdminActionButton
                               onClick={() => navigate(`/admin/products/${product.id}`)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Xem chi tiết"
+                              tone="primary"
+                              label="Xem chi tiết"
                             >
-                              <Eye className="w-5 h-5" />
-                            </button>
-                            <button
+                              <Eye />
+                            </AdminActionButton>
+                            <AdminActionButton
                               onClick={() => navigate(`/admin/products/${product.id}/edit`)}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Chỉnh sửa"
+                              tone="neutral"
+                              label="Chỉnh sửa"
                             >
-                              <Pencil className="w-5 h-5" />
-                            </button>
-                            <button
+                              <Pencil />
+                            </AdminActionButton>
+                            <AdminActionButton
                               onClick={() => handleDuplicate(product)}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Sao chép"
+                              tone="neutral"
+                              label="Sao chép"
                             >
-                              <Copy className="w-5 h-5" />
-                            </button>
-                            <button
+                              <Copy />
+                            </AdminActionButton>
+                            <AdminActionButton
                               onClick={() => handleOpenReviews(product)}
-                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                              title="Xem đánh giá"
+                              tone="warning"
+                              label="Xem đánh giá"
                             >
-                              <Star className="w-5 h-5" />
-                            </button>
-                            <button
+                              <Star />
+                            </AdminActionButton>
+                            <AdminActionButton
                               onClick={() => handleDelete(product)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Xóa"
+                              tone="danger"
+                              label="Xóa"
                             >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
+                              <Trash2 />
+                            </AdminActionButton>
+                          </AdminActionGroup>
                         </td>
                       </tr>
                     );

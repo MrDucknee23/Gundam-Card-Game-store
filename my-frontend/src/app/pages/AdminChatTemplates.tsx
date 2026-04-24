@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, Plus, Pencil, Trash2, Search, Tag, Save, X } from 'lucide-react';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { toast } from 'sonner';
+import { AdminActionButton, AdminActionGroup } from '../components/admin/AdminActionButton';
 
 const STORAGE_KEY = 'admin_chat_templates';
 
@@ -293,20 +294,22 @@ export const AdminChatTemplates: React.FC = () => {
                       {t.category}
                     </span>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0 ml-2">
-                    <button
+                  <AdminActionGroup className="ml-2 flex-shrink-0">
+                    <AdminActionButton
                       onClick={() => openEdit(t)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                      tone="neutral"
+                      label="Chỉnh sửa"
                     >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
+                      <Pencil />
+                    </AdminActionButton>
+                    <AdminActionButton
                       onClick={() => handleDelete(t)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                      tone="danger"
+                      label="Xóa"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                      <Trash2 />
+                    </AdminActionButton>
+                  </AdminActionGroup>
                 </div>
 
                 {/* Keywords */}

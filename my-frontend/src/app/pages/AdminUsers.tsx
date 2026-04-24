@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { Pencil, Lock, Unlock, Trash2 } from 'lucide-react';
 import { User, UserRole, UserStatus, getRoleBadgeColor, getStatusBadgeColor, formatCurrency } from '../data/users';
 import { useUsers } from '../hooks/useUsers';
+import { AdminActionButton, AdminActionGroup } from '../components/admin/AdminActionButton';
 
 export const AdminUsers: React.FC = () => {
   const navigate = useNavigate();
@@ -162,13 +163,29 @@ export const AdminUsers: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-1.5 whitespace-nowrap">
-                          <button onClick={() => openEditModal(user)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"><Pencil className="w-4 h-4 text-gray-700 group-hover:text-black" /></button>
-                          <button onClick={() => toggleUserStatus(user.id)} className={`p-2 rounded-lg transition-colors group ${user.status === 'active' ? 'hover:bg-red-50' : 'hover:bg-green-50'}`}>
-                            {user.status === 'active' ? <Lock className="w-4 h-4 text-red-600" /> : <Unlock className="w-4 h-4 text-green-600" />}
-                          </button>
-                          <button onClick={() => openDeleteModal(user)} className="p-2 hover:bg-red-50 rounded-lg transition-colors group"><Trash2 className="w-4 h-4 text-red-600" /></button>
-                        </div>
+                        <AdminActionGroup>
+                          <AdminActionButton
+                            onClick={() => openEditModal(user)}
+                            tone="neutral"
+                            label="Chỉnh sửa"
+                          >
+                            <Pencil />
+                          </AdminActionButton>
+                          <AdminActionButton
+                            onClick={() => toggleUserStatus(user.id)}
+                            tone={user.status === 'active' ? 'danger' : 'success'}
+                            label={user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                          >
+                            {user.status === 'active' ? <Lock /> : <Unlock />}
+                          </AdminActionButton>
+                          <AdminActionButton
+                            onClick={() => openDeleteModal(user)}
+                            tone="danger"
+                            label="Xóa"
+                          >
+                            <Trash2 />
+                          </AdminActionButton>
+                        </AdminActionGroup>
                       </td>
                     </tr>
                   ))}

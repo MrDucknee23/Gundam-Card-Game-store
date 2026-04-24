@@ -6,6 +6,7 @@ import { Search, Filter, Plus, Eye, Package, X } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 import { addInbound, getInboundList } from '../utils/inboundStorage';
 import { toast } from 'sonner';
+import { AdminActionButton, AdminActionGroup } from '../components/admin/AdminActionButton';
 
 type InboundProductDraft = {
   productName: string;
@@ -490,16 +491,18 @@ export const InventoryInbound: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/admin/inventory/inbound/${inbound.id}`);
-                          }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
+                        <AdminActionGroup>
+                          <AdminActionButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/admin/inventory/inbound/${inbound.id}`);
+                            }}
+                            tone="primary"
+                            label="Xem chi tiết"
+                          >
+                            <Eye />
+                          </AdminActionButton>
+                        </AdminActionGroup>
                       </td>
                     </tr>
                   ))
