@@ -4,11 +4,26 @@ import { useCart } from '../context/CartContext';
 import { Input } from '../components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { formatPrice } from '../utils/format';
+<<<<<<< HEAD
+=======
+import { toast } from 'sonner';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
+>>>>>>> main
 
 export const Cart: React.FC = () => {
   const { items, updateQuantity, removeFromCart, getTotalPrice } = useCart();
   const navigate = useNavigate();
 
+<<<<<<< HEAD
+=======
+  const handleQuantityUpdate = (productId: string, quantity: number) => {
+    const result = updateQuantity(productId, quantity);
+    if (!result.ok && result.message) {
+      toast.error(result.message);
+    }
+  };
+
+>>>>>>> main
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -43,8 +58,12 @@ export const Cart: React.FC = () => {
                     {/* Product Image */}
                     <Link to={`/product/${item.product.id}`}>
                       <img
-                        src={item.product.images[0]}
+                        src={resolveProductImageUrl(item.product.images[0])}
                         alt={item.product.name}
+<<<<<<< HEAD
+=======
+                        onError={withImageFallback}
+>>>>>>> main
                         className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                       />
                     </Link>
@@ -61,12 +80,17 @@ export const Cart: React.FC = () => {
                         {item.product.grade && `Cấp độ: ${item.product.grade}`}
                         {item.product.rarity && `Độ hiếm: ${item.product.rarity}`}
                       </p>
+                      <p className="text-sm text-gray-500 mb-4">Tồn kho hiện tại: {item.product.stock}</p>
 
                       <div className="flex items-center justify-between">
                         {/* Quantity Controls */}
                         <div className="flex items-center gap-3">
                           <button
+<<<<<<< HEAD
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+=======
+                            onClick={() => handleQuantityUpdate(item.product.id, item.quantity - 1)}
+>>>>>>> main
                             className="w-8 h-8 rounded border border-gray-300 bg-white text-gray-900 hover:border-primary transition-colors"
                           >
                             -
@@ -76,12 +100,22 @@ export const Cart: React.FC = () => {
                             min="1"
                             max={item.product.stock}
                             value={item.quantity}
+<<<<<<< HEAD
                             onChange={(e) => updateQuantity(item.product.id, parseInt(e.target.value) || 1)}
                             className="w-16 text-center bg-white border-gray-300 text-gray-900"
                           />
                           <button
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                             className="w-8 h-8 rounded border border-gray-300 bg-white text-gray-900 hover:border-primary transition-colors"
+=======
+                            onChange={(e) => handleQuantityUpdate(item.product.id, parseInt(e.target.value, 10) || 1)}
+                            className="w-16 text-center bg-white border-gray-300 text-gray-900"
+                          />
+                          <button
+                            onClick={() => handleQuantityUpdate(item.product.id, item.quantity + 1)}
+                            disabled={item.quantity >= item.product.stock}
+                            className="w-8 h-8 rounded border border-gray-300 bg-white text-gray-900 hover:border-primary transition-colors disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-300"
+>>>>>>> main
                           >
                             +
                           </button>

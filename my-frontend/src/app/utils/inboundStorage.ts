@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { inbounds as defaultInbounds, type Inbound } from '../data/inbounds';
+=======
+import type { Inbound } from '../data/inbounds';
+>>>>>>> main
 
 const INBOUND_STORAGE_KEY = 'admin_inbounds_v1';
 
@@ -30,8 +34,12 @@ export const getInboundList = (): Inbound[] => {
     return stored;
   }
 
+<<<<<<< HEAD
   writeStoredInbounds(defaultInbounds);
   return defaultInbounds;
+=======
+  return [];
+>>>>>>> main
 };
 
 export const addInbound = (inbound: Inbound): Inbound[] => {

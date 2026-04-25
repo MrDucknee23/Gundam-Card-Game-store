@@ -220,12 +220,20 @@ export const AdminCategories: React.FC = () => {
     );
 
     if (!label) {
+<<<<<<< HEAD
       toast.error('Vui lòng nhập tên nhóm con');
+=======
+      toast.error('Vui lòng nhập tên loại');
+>>>>>>> main
       return;
     }
 
     if (options.length === 0) {
+<<<<<<< HEAD
       toast.error('Vui lòng nhập ít nhất một giá trị con');
+=======
+      toast.error('Vui lòng nhập ít nhất một giá trị');
+>>>>>>> main
       return;
     }
 
@@ -259,7 +267,11 @@ export const AdminCategories: React.FC = () => {
 
   const handleClearAttributes = async () => {
     if (!selectedCategory) return;
+<<<<<<< HEAD
     if (!window.confirm(`Xóa toàn bộ cấu hình thuộc tính con của ${selectedCategory.label}?`)) return;
+=======
+    if (!window.confirm(`Xóa toàn bộ cấu hình loại của ${selectedCategory.label}?`)) return;
+>>>>>>> main
 
     try {
       setSavingAttributeId(selectedCategory.id);
@@ -278,7 +290,11 @@ export const AdminCategories: React.FC = () => {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-black">Danh mục sản phẩm</h1>
+<<<<<<< HEAD
           <p className="text-gray-500 mt-1">Quản lý danh mục sản phẩm và nhóm con cấp độ hoặc độ hiếm trong cùng một màn hình.</p>
+=======
+          <p className="text-gray-500 mt-1">Quản lý danh mục sản phẩm và các loại thuộc tính như cấp độ, độ hiếm hoặc tùy chỉnh trong cùng một màn hình.</p>
+>>>>>>> main
         </div>
         <button
           onClick={openCreateModal}
@@ -310,7 +326,11 @@ export const AdminCategories: React.FC = () => {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left px-5 py-4 text-sm font-semibold text-gray-700">Danh mục</th>
                   <th className="text-left px-5 py-4 text-sm font-semibold text-gray-700">Slug</th>
+<<<<<<< HEAD
                   <th className="text-left px-5 py-4 text-sm font-semibold text-gray-700">Thuộc tính con</th>
+=======
+                  <th className="text-left px-5 py-4 text-sm font-semibold text-gray-700">Loại</th>
+>>>>>>> main
                   <th className="text-right px-5 py-4 text-sm font-semibold text-gray-700">Thao tác</th>
                 </tr>
               </thead>
@@ -372,13 +392,21 @@ export const AdminCategories: React.FC = () => {
             {selectedCategory && selectedAttributeForm ? (
               <div className="p-6 space-y-5">
                 <div>
+<<<<<<< HEAD
                   <h2 className="text-lg font-bold text-black">Cấu hình thuộc tính con</h2>
+=======
+                  <h2 className="text-lg font-bold text-black">Cấu hình loại</h2>
+>>>>>>> main
                   <p className="text-sm text-gray-500 mt-1">Đang chỉnh sửa: {selectedCategory.label}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
                   <div>
+<<<<<<< HEAD
                     <label className="block text-sm font-medium text-gray-700 mb-1">Loại nhóm con</label>
+=======
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Loại</label>
+>>>>>>> main
                     <select
                       value={selectedAttributeForm.type}
                       onChange={e => handleChangeAttributeType(e.target.value as AttributeType)}
@@ -391,7 +419,11 @@ export const AdminCategories: React.FC = () => {
                   </div>
 
                   <div>
+<<<<<<< HEAD
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tên nhóm con</label>
+=======
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên loại</label>
+>>>>>>> main
                     <input
                       type="text"
                       value={selectedAttributeForm.label}
@@ -404,7 +436,11 @@ export const AdminCategories: React.FC = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
+<<<<<<< HEAD
                     <h3 className="text-sm font-semibold text-gray-800">Giá trị con</h3>
+=======
+                    <h3 className="text-sm font-semibold text-gray-800">Giá trị</h3>
+>>>>>>> main
                     <button
                       type="button"
                       onClick={() => updateSelectedAttributeForm(current => ({ ...current, options: [...current.options, ''] }))}
@@ -469,7 +505,11 @@ export const AdminCategories: React.FC = () => {
                 </div>
               </div>
             ) : (
+<<<<<<< HEAD
               <div className="p-10 text-center text-gray-500">Chọn một danh mục để chỉnh sửa thuộc tính con</div>
+=======
+              <div className="p-10 text-center text-gray-500">Chọn một danh mục để chỉnh sửa loại</div>
+>>>>>>> main
             )}
           </div>
         </div>

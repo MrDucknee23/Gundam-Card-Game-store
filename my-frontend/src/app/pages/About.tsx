@@ -98,7 +98,7 @@ export const About: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl text-black mb-4">
-              Giá trị cốt lõi
+              Giá Trị Cốt Lõi
             </h2>
             <div className="w-20 h-1 bg-primary mx-auto"></div>
           </div>

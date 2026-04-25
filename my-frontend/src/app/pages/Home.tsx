@@ -45,7 +45,7 @@ export const Home: React.FC = () => {
       subtitle: 'Sản phẩm chính hãng từ nhà phân phối chính thức',
       cta: 'Khám phá ngay',
       link: '/shop',
-      image: 'https://images.unsplash.com/photo-1757800735035-de547775ee6b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmVtaXVtJTIwcHJvZHVjdCUyMHF1YWxpdHklMjBhdXRoZW50aWN8ZW58MXx8fHwxNzc0ODc1NTQyfDA&ixlib=rb-4.1.0&q=80&w=1080'
+      image: '/images/Generated_Image_964vx0964vx0964v_removed.png'
     },
     {
       title: 'Tham gia cộng đồng',
@@ -73,26 +73,26 @@ export const Home: React.FC = () => {
     {
       grade: 'HG' as GundamGrade,
       title: 'High Grade',
-      description: '1/144 scale with excellent articulation',
-      image: 'https://images.unsplash.com/photo-1712971724897-a9ae95e0ec44?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjBtb2RlbCUyMHJvYm90JTIwc2ltcGxlfGVufDF8fHx8MTc3NDg3NTA2Nnww&ixlib=rb-4.1.0&q=80&w=1080'
+      description: 'Tỷ lệ 1/144 với khả năng tạo dáng linh hoạt',
+      image: '/images/hg_gundam.jpg'
     },
     {
       grade: 'MG' as GundamGrade,
       title: 'Master Grade',
-      description: '1/100 scale with detailed inner frame',
-      image: 'https://images.unsplash.com/photo-1681367050714-f170aad806ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjBkZXRhaWxlZCUyMG1lY2hhbmljYWwlMjBmcmFtZXxlbnwxfHx8fDE3NzQ4NzUwNjZ8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      description: 'Tỷ lệ 1/100 với khung xương chi tiết',
+      image: '/images/mg_gundam.png'
     },
     {
       grade: 'RG' as GundamGrade,
       title: 'Real Grade',
-      description: '1/144 scale with advanced detail',
-      image: 'https://images.unsplash.com/photo-1644898262501-6e73916dce2e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjByZWFsaXN0aWMlMjBkeW5hbWljJTIwcG9zZXxlbnwxfHx8fDE3NzQ4NzUwNjZ8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      description: 'Tỷ lệ 1/144 với chi tiết nâng cao',
+      image: '/images/rg_gundam.png'
     },
     {
       grade: 'PG' as GundamGrade,
       title: 'Perfect Grade',
-      description: '1/60 scale ultimate quality',
-      image: 'https://images.unsplash.com/photo-1742407881242-a867b21fb364?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxndW5kYW0lMjBwZXJmZWN0JTIwZ3JhZGUlMjByb2JvdHxlbnwxfHx8fDE3NzQ4NzUwNjl8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      description: 'Tỷ lệ 1/60 với chất lượng hoàn thiện cao nhất',
+      image: '/images/pg_gundam.png'
     }
   ];
 
@@ -115,13 +115,13 @@ export const Home: React.FC = () => {
     {
       category: 'pokemon',
       title: 'Pokémon TCG',
-      description: 'Collect legendary creatures and battle cards',
+      description: 'Sưu tầm những lá bài sinh vật huyền thoại và thẻ chiến đấu',
       image: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&q=80'
     },
     {
       category: 'onepiece',
       title: 'One Piece Card Game',
-      description: 'Join the adventure with pirate crew cards',
+      description: 'Đồng hành trong hành trình hải tặc với bộ thẻ nhân vật',
       image: 'https://images.unsplash.com/photo-1613771404721-1f92d799e49f?w=800&q=80'
     }
   ];
@@ -133,7 +133,7 @@ export const Home: React.FC = () => {
         <Slider ref={sliderRef} {...sliderSettings}>
           {heroSlides.map((slide, index) => (
             <div key={index}>
-              <div className="relative h-[500px] md:h-[600px]">
+              <div className="relative h-[260px] sm:h-[380px] md:h-[480px] lg:h-[600px]">
                 <img
                   src={slide.image}
                   alt={slide.title}
@@ -144,11 +144,11 @@ export const Home: React.FC = () => {
                 <div className="absolute inset-0 flex items-center">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                     <div className="max-w-2xl text-white">
-                      <h1 className="text-4xl md:text-6xl font-bold mb-4">{slide.title}</h1>
-                      <p className="text-xl md:text-2xl mb-8 text-white/90">{slide.subtitle}</p>
+                      <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4">{slide.title}</h1>
+                      <p className="text-sm sm:text-lg md:text-xl lg:text-2xl mb-4 sm:mb-8 text-white/90 hidden sm:block">{slide.subtitle}</p>
                       <button
                         onClick={() => navigate(slide.link)}
-                        className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                        className="bg-primary hover:bg-primary/90 text-white px-5 sm:px-8 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all duration-300 hover:scale-105"
                       >
                         {slide.cta}
                       </button>
@@ -181,7 +181,7 @@ export const Home: React.FC = () => {
                   ? 'w-8 bg-primary'
                   : 'w-2 bg-white/50 hover:bg-white/80'
               }`}
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={`Chuyển đến slide ${index + 1}`}
             />
           ))}
         </div>
@@ -189,8 +189,8 @@ export const Home: React.FC = () => {
 
       {/* Featured Products Section */}
       <FeaturedProducts 
-        title="Featured Products"
-        subtitle="Top picks for you"
+        title="Sản phẩm nổi bật"
+        subtitle="Những lựa chọn nổi bật dành cho bạn"
         showCarousel={true}
         products={products}
         loading={loading}
@@ -198,14 +198,14 @@ export const Home: React.FC = () => {
       />
 
       {/* Gundam Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">Bộ mô hình Gundam</h2>
-          <p className="text-gray-600 text-lg">Chọn cấp độ và bắt đầu lắp ráp</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-3">Bộ mô hình Gundam</h2>
+          <p className="text-gray-600 text-sm sm:text-lg">Chọn cấp độ và bắt đầu lắp ráp</p>
         </div>
 
         {/* Category Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 sm:mb-12">
           {categories.map((category) => (
             <CategoryCard
               key={category.grade}
@@ -225,7 +225,11 @@ export const Home: React.FC = () => {
         ) : error ? (
           <p className="text-center text-red-500">{error}</p>
         ) : (
+<<<<<<< HEAD
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+=======
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+>>>>>>> main
             {gundamProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -243,11 +247,11 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Card Games Section */}
-      <section className="bg-gradient-to-b from-gray-50 via-gray-100 to-gray-50 py-16 border-y border-gray-200">
+      <section className="bg-gradient-to-b from-gray-50 via-gray-100 to-gray-50 py-10 sm:py-16 border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">Thẻ bài sưu tầm</h2>
-            <p className="text-gray-600 text-lg">Xây dựng bộ bài tối ưu của bạn</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-3">Thẻ bài sưu tầm</h2>
+            <p className="text-gray-600 text-sm sm:text-lg">Xây dựng bộ bài tối ưu của bạn</p>
           </div>
 
           {/* Category Cards - Centered with larger size */}
@@ -273,7 +277,11 @@ export const Home: React.FC = () => {
           ) : error ? (
             <p className="text-center text-red-500">{error}</p>
           ) : (
+<<<<<<< HEAD
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-500">
+=======
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 transition-all duration-500">
+>>>>>>> main
               {cardGameProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

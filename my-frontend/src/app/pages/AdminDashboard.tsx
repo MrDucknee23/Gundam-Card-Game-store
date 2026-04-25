@@ -23,8 +23,13 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Card, CardContent } from '../components/ui/card';
 import { useProducts } from '../hooks/useProducts';
 import { useUsers } from '../hooks/useUsers';
+<<<<<<< HEAD
 import { buildApiUrl } from '../utils/api';
 import { orders as fallbackOrders } from '../data/orders';
+=======
+import { fetchProductCategoryDistribution, type ProductCategoryDistribution } from '../utils/productApi';
+import { buildApiUrl } from '../utils/api';
+>>>>>>> main
 import type { Order } from '../data/orders';
 
 ChartJS.register(
@@ -108,6 +113,7 @@ const categoryChartData = {
   ],
 };
 
+<<<<<<< HEAD
 const customerChartData = {
   labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
   datasets: [
@@ -124,6 +130,8 @@ const customerChartData = {
   ],
 };
 
+=======
+>>>>>>> main
 const productPerformanceData = [
   { product: 'RG Nu Gundam', daBan: 85, tonKho: 15, doanhThu: 34000000 },
   { product: 'MG Freedom Gundam', daBan: 72, tonKho: 28, doanhThu: 28800000 },
@@ -165,7 +173,109 @@ const DATE_RANGE_DAYS: Record<string, number> = {
 };
 
 const ORDERS_API_URL = buildApiUrl('/orders?summary=1');
+<<<<<<< HEAD
 const REQUEST_TIMEOUT_MS = 5000;
+=======
+const DASHBOARD_STATS_API_URL = buildApiUrl('/orders/stats/dashboard');
+const REQUEST_TIMEOUT_MS = 5000;
+const AUTH_TOKEN_STORAGE_KEY = 'authToken';
+
+type DashboardStatsResponse = {
+  totals: {
+    revenue: number;
+    paidRevenue: number;
+    pendingRevenue: number;
+    orders: number;
+    activeCustomers: number;
+    products: number;
+  };
+  changes: {
+    revenue: number;
+    paidRevenue: number;
+    pendingRevenue: number;
+    orders: number;
+    customers: number;
+    products: number;
+  };
+  revenueTrend: {
+    labels: string[];
+    revenue: number[];
+    paidRevenue: number[];
+    pendingRevenue: number[];
+  };
+  productPerformance: Array<{
+    product: string;
+    sold: number;
+    stock: number;
+    revenue: number;
+  }>;
+  topSellingProducts: Array<{
+    id: number;
+    name: string;
+    sold: number;
+    revenue: number;
+  }>;
+  recentOrders: Array<{
+    id: string;
+    orderNumber: string;
+    customer: string;
+    product: string;
+    amount: number;
+    status: string;
+  }>;
+  topCustomers: Array<{
+    id: number;
+    name: string;
+    email: string;
+    orders: number;
+    spending: number;
+  }>;
+};
+
+const EMPTY_DASHBOARD_STATS: DashboardStatsResponse = {
+  totals: {
+    revenue: 0,
+    paidRevenue: 0,
+    pendingRevenue: 0,
+    orders: 0,
+    activeCustomers: 0,
+    products: 0,
+  },
+  changes: {
+    revenue: 0,
+    paidRevenue: 0,
+    pendingRevenue: 0,
+    orders: 0,
+    customers: 0,
+    products: 0,
+  },
+  revenueTrend: {
+    labels: ['Chưa có dữ liệu'],
+    revenue: [0],
+    paidRevenue: [0],
+    pendingRevenue: [0],
+  },
+  productPerformance: [],
+  topSellingProducts: [],
+  recentOrders: [],
+  topCustomers: [],
+};
+
+const EMPTY_CATEGORY_DISTRIBUTION: ProductCategoryDistribution = {
+  totalProducts: 0,
+  categories: {
+    gundam: 0,
+    pokemon: 0,
+    onepiece: 0,
+  },
+  gundamGrades: {
+    HG: 0,
+    MG: 0,
+    RG: 0,
+    PG: 0,
+  },
+};
+>>>>>>> main
 
 const calculatePercentChange = (current: number, previous: number) => {
   if (previous === 0) {
@@ -204,14 +314,25 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { products, loading: productsLoading } = useProducts();
   const { users, loading: usersLoading } = useUsers();
+<<<<<<< HEAD
   const [orders, setOrders] = useState<Order[]>(fallbackOrders);
   const [ordersLoading, setOrdersLoading] = useState(false);
+=======
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [categoryDistribution, setCategoryDistribution] = useState<ProductCategoryDistribution>(EMPTY_CATEGORY_DISTRIBUTION);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStatsResponse>(EMPTY_DASHBOARD_STATS);
+  const [dashboardStatsLoading, setDashboardStatsLoading] = useState(false);
+>>>>>>> main
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [activeAnalyticsTab, setActiveAnalyticsTab] = useState('revenue');
   const [dateRange, setDateRange] = useState('6months');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+<<<<<<< HEAD
   const [isFilterSticky, setIsFilterSticky] = useState(false);
+=======
+>>>>>>> main
   const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'gundam' | 'cardgame'>('all');
 
   useEffect(() => {
@@ -220,10 +341,22 @@ export const AdminDashboard: React.FC = () => {
     const loadOrders = async () => {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+<<<<<<< HEAD
 
       try {
         setDashboardError(null);
         const response = await fetch(ORDERS_API_URL, { signal: controller.signal });
+=======
+      const authToken = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim() || '';
+
+      try {
+        setOrdersLoading(true);
+        setDashboardError(null);
+        const response = await fetch(ORDERS_API_URL, {
+          signal: controller.signal,
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+        });
+>>>>>>> main
         if (!response.ok) {
           throw new Error('Không thể tải dữ liệu dashboard');
         }
@@ -236,11 +369,19 @@ export const AdminDashboard: React.FC = () => {
         }
       } catch (error) {
         if (isMounted) {
+<<<<<<< HEAD
           setOrders(fallbackOrders);
           setDashboardError(
             error instanceof Error && error.name === 'AbortError'
               ? 'Máy chủ phản hồi chậm. Đang hiển thị dữ liệu tạm thời.'
               : 'Không thể tải dữ liệu đơn hàng mới nhất. Đang hiển thị dữ liệu tạm thời.'
+=======
+          setOrders([]);
+          setDashboardError(
+            error instanceof Error && error.name === 'AbortError'
+              ? 'Máy chủ phản hồi chậm. Chưa thể tải dữ liệu đơn hàng cho dashboard.'
+              : 'Không thể tải dữ liệu đơn hàng mới nhất cho dashboard.'
+>>>>>>> main
           );
         }
       } finally {
@@ -258,6 +399,7 @@ export const AdminDashboard: React.FC = () => {
     };
   }, []);
 
+<<<<<<< HEAD
   React.useEffect(() => {
     const handleScroll = () => {
       setIsFilterSticky(window.scrollY > 150);
@@ -266,6 +408,81 @@ export const AdminDashboard: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+=======
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCategoryDistribution = async () => {
+      try {
+        const data = await fetchProductCategoryDistribution();
+        if (isMounted) {
+          setCategoryDistribution(data);
+        }
+      } catch {
+        if (isMounted) {
+          setCategoryDistribution(EMPTY_CATEGORY_DISTRIBUTION);
+        }
+      }
+    };
+
+    void loadCategoryDistribution();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    const loadDashboardStats = async () => {
+      try {
+        setDashboardError(null);
+        setDashboardStatsLoading(true);
+        const params = new URLSearchParams({
+          dateRange,
+          category: categoryFilter,
+          status: statusFilter,
+        });
+
+        const response = await fetch(`${DASHBOARD_STATS_API_URL}?${params.toString()}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error('Không thể tải thống kê dashboard');
+        }
+
+        const data = await response.json() as DashboardStatsResponse;
+
+        if (isMounted) {
+          setDashboardStats(data);
+        }
+      } catch (error) {
+        if (isMounted && !(error instanceof Error && error.name === 'AbortError')) {
+          setDashboardStats(EMPTY_DASHBOARD_STATS);
+          setDashboardError('Không thể tải thống kê dashboard mới nhất. Một số khu vực có thể đang hiển thị dữ liệu tạm thời.');
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
+        if (isMounted) {
+          setDashboardStatsLoading(false);
+        }
+      }
+    };
+
+    void loadDashboardStats();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [dateRange, categoryFilter, statusFilter]);
+
+>>>>>>> main
   const dashboardData = useMemo(() => {
     const days = DATE_RANGE_DAYS[dateRange] ?? 180;
     const now = new Date();
@@ -311,7 +528,53 @@ export const AdminDashboard: React.FC = () => {
     const previousCustomerCount = new Set(previousOrders.map((order) => order.customerEmail || order.customerPhone)).size;
 
     const revenueBuckets: Record<string, { label: string; sortValue: number; revenue: number; paid: number; pending: number; }> = {};
+<<<<<<< HEAD
     const customerBuckets: Record<string, { label: string; sortValue: number; newCustomers: number; activeCustomers: Set<string>; }> = {};
+=======
+    const customerJoinDates = new Map<string, number>();
+
+    users.forEach((user) => {
+      const joinedAtRaw = user.joinDate ?? user.createdAt;
+      if (!joinedAtRaw) {
+        return;
+      }
+
+      const joinedAt = new Date(joinedAtRaw).getTime();
+      if (Number.isNaN(joinedAt)) {
+        return;
+      }
+
+      if (user.email) {
+        customerJoinDates.set(user.email.toLowerCase(), joinedAt);
+      }
+
+      if (user.phone) {
+        customerJoinDates.set(user.phone.replace(/\D/g, ''), joinedAt);
+      }
+    });
+
+    const customerActivity = new Map<string, { name: string; firstOrderAt: number; hasPriorOrder: boolean }>();
+
+    orders.forEach((order) => {
+      const emailKey = typeof order.customerEmail === 'string' ? order.customerEmail.trim().toLowerCase() : '';
+      const phoneKey = typeof order.customerPhone === 'string' ? order.customerPhone.replace(/\D/g, '') : '';
+      const customerKey = emailKey || phoneKey || order.id;
+      const orderTime = new Date(order.orderDate).getTime();
+      const existing = customerActivity.get(customerKey);
+
+      if (!existing) {
+        customerActivity.set(customerKey, {
+          name: order.customerName,
+          firstOrderAt: orderTime,
+          hasPriorOrder: orderTime < rangeStart.getTime(),
+        });
+        return;
+      }
+
+      existing.firstOrderAt = Math.min(existing.firstOrderAt, orderTime);
+      existing.hasPriorOrder = existing.hasPriorOrder || orderTime < rangeStart.getTime();
+    });
+>>>>>>> main
 
     filteredOrders.forEach((order) => {
       const date = new Date(order.orderDate);
@@ -329,6 +592,7 @@ export const AdminDashboard: React.FC = () => {
         };
       }
 
+<<<<<<< HEAD
       if (!customerBuckets[key]) {
         customerBuckets[key] = {
           label: getRangeLabel(date, dateRange),
@@ -338,6 +602,8 @@ export const AdminDashboard: React.FC = () => {
         };
       }
 
+=======
+>>>>>>> main
       if (order.orderStatus !== 'cancelled') {
         revenueBuckets[key].revenue += order.total;
       }
@@ -347,6 +613,7 @@ export const AdminDashboard: React.FC = () => {
       if (order.paymentStatus === 'pending') {
         revenueBuckets[key].pending += order.total;
       }
+<<<<<<< HEAD
 
       customerBuckets[key].activeCustomers.add(order.customerEmail || order.customerPhone);
     });
@@ -373,6 +640,38 @@ export const AdminDashboard: React.FC = () => {
 
     const sortedRevenueBuckets = Object.values(revenueBuckets).sort((a, b) => a.sortValue - b.sortValue);
     const sortedCustomerBuckets = Object.values(customerBuckets).sort((a, b) => a.sortValue - b.sortValue);
+=======
+    });
+
+    const sortedRevenueBuckets = Object.values(revenueBuckets).sort((a, b) => a.sortValue - b.sortValue);
+    const activeCustomerKeys = new Set<string>();
+
+    filteredOrders.forEach((order) => {
+      const emailKey = typeof order.customerEmail === 'string' ? order.customerEmail.trim().toLowerCase() : '';
+      const phoneKey = typeof order.customerPhone === 'string' ? order.customerPhone.replace(/\D/g, '') : '';
+      activeCustomerKeys.add(emailKey || phoneKey || order.id);
+    });
+
+    let newCustomersCount = 0;
+    let returningCustomersCount = 0;
+
+    activeCustomerKeys.forEach((customerKey) => {
+      const activity = customerActivity.get(customerKey);
+      const joinedAt = customerJoinDates.get(customerKey);
+      const joinedWithinRange = typeof joinedAt === 'number' && joinedAt >= rangeStart.getTime() && joinedAt <= now.getTime();
+      const joinedBeforeRange = typeof joinedAt === 'number' && joinedAt < rangeStart.getTime();
+      const hasPriorOrder = activity?.hasPriorOrder || false;
+
+      if (joinedWithinRange || (!joinedBeforeRange && !hasPriorOrder)) {
+        newCustomersCount += 1;
+        return;
+      }
+
+      returningCustomersCount += 1;
+    });
+
+    const hasCustomerData = newCustomersCount + returningCustomersCount > 0;
+>>>>>>> main
 
     const revenueChartDataReal = {
       labels: sortedRevenueBuckets.length > 0 ? sortedRevenueBuckets.map((bucket) => bucket.label) : ['Chưa có dữ liệu'],
@@ -433,6 +732,7 @@ export const AdminDashboard: React.FC = () => {
     };
 
     const customerChartDataReal = {
+<<<<<<< HEAD
       labels: sortedCustomerBuckets.length > 0 ? sortedCustomerBuckets.map((bucket) => bucket.label) : ['Chưa có dữ liệu'],
       datasets: [
         {
@@ -444,15 +744,36 @@ export const AdminDashboard: React.FC = () => {
           label: 'Khách mua hàng',
           data: sortedCustomerBuckets.length > 0 ? sortedCustomerBuckets.map((bucket) => bucket.activeCustomers.size) : [0],
           backgroundColor: '#0066CC',
+=======
+      labels: hasCustomerData ? ['Khách mới', 'Khách cũ quay lại'] : ['Chưa có dữ liệu'],
+      datasets: [
+        {
+          data: hasCustomerData ? [newCustomersCount, returningCustomersCount] : [1],
+          backgroundColor: hasCustomerData ? ['#DC143C', '#0066CC'] : ['#d1d5db'],
+          borderWidth: 0,
+>>>>>>> main
         },
       ],
     };
 
+<<<<<<< HEAD
+=======
+    const customerBreakdown = hasCustomerData
+      ? [
+          { label: 'Khách mới', value: newCustomersCount, color: '#DC143C' },
+          { label: 'Khách cũ quay lại', value: returningCustomersCount, color: '#0066CC' },
+        ]
+      : [
+          { label: 'Chưa có dữ liệu', value: 1, color: '#d1d5db' },
+        ];
+
+>>>>>>> main
     const createLegendItems = (items: Array<{ name: string; value: number; color: string }>) => {
       const validItems = items.filter((item) => item.value > 0);
       return validItems.length > 0 ? validItems : [{ name: 'Chưa có dữ liệu', value: 1, color: '#d1d5db' }];
     };
 
+<<<<<<< HEAD
     const allCategoryItems = createLegendItems([
       { name: 'Gundam', value: products.filter((product) => product.category === 'gundam').length, color: '#DC143C' },
       { name: 'Pokémon', value: products.filter((product) => product.category === 'pokemon').length, color: '#0066CC' },
@@ -469,6 +790,45 @@ export const AdminDashboard: React.FC = () => {
     const cardGameLegendItems = createLegendItems([
       { name: 'Pokémon', value: products.filter((product) => product.category === 'pokemon').length, color: '#0066CC' },
       { name: 'One Piece', value: products.filter((product) => product.category === 'onepiece').length, color: '#60a5fa' },
+=======
+    const fallbackDistribution: ProductCategoryDistribution = {
+      totalProducts: products.length,
+      categories: {
+        gundam: products.filter((product) => product.category === 'gundam').length,
+        pokemon: products.filter((product) => product.category === 'pokemon').length,
+        onepiece: products.filter((product) => product.category === 'onepiece').length,
+      },
+      gundamGrades: {
+        HG: products.filter((product) => product.category === 'gundam' && product.grade === 'HG').length,
+        MG: products.filter((product) => product.category === 'gundam' && product.grade === 'MG').length,
+        RG: products.filter((product) => product.category === 'gundam' && product.grade === 'RG').length,
+        PG: products.filter((product) => product.category === 'gundam' && product.grade === 'PG').length,
+      },
+    };
+
+    const hasLiveDistribution = categoryDistribution.totalProducts > 0
+      || Object.values(categoryDistribution.categories).some((value) => value > 0)
+      || Object.values(categoryDistribution.gundamGrades).some((value) => value > 0);
+
+    const resolvedDistribution = hasLiveDistribution ? categoryDistribution : fallbackDistribution;
+
+    const allCategoryItems = createLegendItems([
+      { name: 'Gundam', value: resolvedDistribution.categories.gundam, color: '#DC143C' },
+      { name: 'Pokémon', value: resolvedDistribution.categories.pokemon, color: '#0066CC' },
+      { name: 'One Piece', value: resolvedDistribution.categories.onepiece, color: '#60a5fa' },
+    ]);
+
+    const gundamLegendItems = createLegendItems([
+      { name: 'HG', value: resolvedDistribution.gundamGrades.HG, color: '#DC143C' },
+      { name: 'MG', value: resolvedDistribution.gundamGrades.MG, color: '#000000' },
+      { name: 'RG', value: resolvedDistribution.gundamGrades.RG, color: '#6b7280' },
+      { name: 'PG', value: resolvedDistribution.gundamGrades.PG, color: '#9ca3af' },
+    ]);
+
+    const cardGameLegendItems = createLegendItems([
+      { name: 'Pokémon', value: resolvedDistribution.categories.pokemon, color: '#0066CC' },
+      { name: 'One Piece', value: resolvedDistribution.categories.onepiece, color: '#60a5fa' },
+>>>>>>> main
     ]);
 
     const categoryLegendItems = activeCategoryTab === 'gundam'
@@ -504,7 +864,11 @@ export const AdminDashboard: React.FC = () => {
       });
     });
 
+<<<<<<< HEAD
     const productPerformanceRows = visibleProducts
+=======
+    const fallbackProductPerformanceRows = visibleProducts
+>>>>>>> main
       .map((product) => {
         const stats = salesByProduct.get(product.name.toLowerCase()) ?? { sold: 0, revenue: 0 };
         return {
@@ -517,14 +881,22 @@ export const AdminDashboard: React.FC = () => {
       .sort((a, b) => b.doanhThu - a.doanhThu || b.daBan - a.daBan)
       .slice(0, 10);
 
+<<<<<<< HEAD
     const topSellingProductsData = productPerformanceRows.slice(0, 5).map((product, index) => ({
+=======
+    const fallbackTopSellingProductsData = fallbackProductPerformanceRows.slice(0, 5).map((product, index) => ({
+>>>>>>> main
       id: index + 1,
       name: product.product,
       sold: product.daBan,
       revenue: formatCurrency(product.doanhThu),
     }));
 
+<<<<<<< HEAD
     const recentOrdersData = [...filteredOrders]
+=======
+    const fallbackRecentOrdersData = [...filteredOrders]
+>>>>>>> main
       .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
       .slice(0, 5)
       .map((order) => ({
@@ -551,7 +923,11 @@ export const AdminDashboard: React.FC = () => {
       topCustomersMap.set(key, current);
     });
 
+<<<<<<< HEAD
     const topCustomersData = Array.from(topCustomersMap.values())
+=======
+    const fallbackTopCustomersData = Array.from(topCustomersMap.values())
+>>>>>>> main
       .sort((a, b) => b.spending - a.spending)
       .slice(0, 5)
       .map((customer, index) => ({
@@ -562,6 +938,48 @@ export const AdminDashboard: React.FC = () => {
         spending: formatCurrency(customer.spending),
       }));
 
+<<<<<<< HEAD
+=======
+    const productPerformanceRows = dashboardStats.productPerformance.length > 0
+      ? dashboardStats.productPerformance.map((product) => ({
+          product: product.product,
+          daBan: product.sold,
+          tonKho: product.stock,
+          doanhThu: product.revenue,
+        }))
+      : fallbackProductPerformanceRows;
+
+    const topSellingProductsData = dashboardStats.topSellingProducts.length > 0
+      ? dashboardStats.topSellingProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          sold: product.sold,
+          revenue: formatCurrency(product.revenue),
+        }))
+      : fallbackTopSellingProductsData;
+
+    const recentOrdersData = dashboardStats.recentOrders.length > 0
+      ? dashboardStats.recentOrders.map((order) => ({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          customer: order.customer,
+          product: order.product,
+          amount: formatCurrency(order.amount),
+          status: getOrderStatusLabel(order.status),
+        }))
+      : fallbackRecentOrdersData;
+
+    const topCustomersData = dashboardStats.topCustomers.length > 0
+      ? dashboardStats.topCustomers.map((customer) => ({
+          id: customer.id,
+          name: customer.name,
+          email: customer.email || 'Khách vãng lai',
+          orders: customer.orders,
+          spending: formatCurrency(customer.spending),
+        }))
+      : fallbackTopCustomersData;
+
+>>>>>>> main
     return {
       totalRevenue,
       paidRevenue,
@@ -577,6 +995,10 @@ export const AdminDashboard: React.FC = () => {
       revenueChartData: revenueChartDataReal,
       ordersChartData: ordersChartDataReal,
       customerChartData: customerChartDataReal,
+<<<<<<< HEAD
+=======
+      customerBreakdown,
+>>>>>>> main
       categoryChartData: categoryChartDataReal,
       categoryLegendData: categoryLegendItems,
       productPerformanceRows,
@@ -584,10 +1006,53 @@ export const AdminDashboard: React.FC = () => {
       recentOrdersData,
       topCustomersData,
     };
+<<<<<<< HEAD
   }, [orders, products, users, dateRange, categoryFilter, statusFilter, activeCategoryTab]);
 
   const isDashboardLoading = (productsLoading && products.length === 0) || ordersLoading;
 
+=======
+  }, [orders, products, users, dateRange, categoryFilter, statusFilter, activeCategoryTab, categoryDistribution, dashboardStats]);
+
+  const isDashboardLoading = (productsLoading && products.length === 0) || ordersLoading;
+
+  const liveRevenueChartData = useMemo(() => ({
+    labels: dashboardStats.revenueTrend.labels,
+    datasets: [
+      {
+        label: 'Doanh thu',
+        data: dashboardStats.revenueTrend.revenue,
+        borderColor: '#DC143C',
+        backgroundColor: 'rgba(220, 20, 60, 0.1)',
+        tension: 0.4,
+        borderWidth: 3,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+      {
+        label: 'Đã thanh toán',
+        data: dashboardStats.revenueTrend.paidRevenue,
+        borderColor: '#0066CC',
+        backgroundColor: 'rgba(0, 102, 204, 0.1)',
+        tension: 0.4,
+        borderWidth: 3,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+      {
+        label: 'Chờ thanh toán',
+        data: dashboardStats.revenueTrend.pendingRevenue,
+        borderColor: '#6b7280',
+        backgroundColor: 'rgba(107, 114, 128, 0.1)',
+        tension: 0.4,
+        borderWidth: 3,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+    ],
+  }), [dashboardStats]);
+
+>>>>>>> main
   const exportData = (format: 'csv' | 'excel') => {
     const csvRows = [
       ['Mã đơn', 'Khách hàng', 'Ngày đặt', 'Tổng tiền', 'Thanh toán', 'Trạng thái'],
@@ -648,6 +1113,32 @@ export const AdminDashboard: React.FC = () => {
     scales: { x: { stacked: false }, y: { stacked: false } },
   };
 
+<<<<<<< HEAD
+=======
+  const customerPieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((sum: number, item: number) => sum + item, 0);
+
+            if (dashboardData.customerBreakdown.length === 1 && dashboardData.customerBreakdown[0].label === 'Chưa có dữ liệu') {
+              return 'Chưa có dữ liệu';
+            }
+
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+            return `${context.label}: ${value} khách (${percentage}%)`;
+          }
+        }
+      }
+    }
+  };
+
+>>>>>>> main
   const getCategoryChartData = () => dashboardData.categoryChartData;
 
   const getCategoryLegendData = () => dashboardData.categoryLegendData;
@@ -686,11 +1177,19 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
                     <TrendingUp className="w-4 h-4" />
+<<<<<<< HEAD
                     <span>{formatTrend(dashboardData.revenueChange)}</span>
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-1">Tổng Doanh thu</p>
                 <p className="text-2xl font-bold text-black mb-3">{formatCurrency(dashboardData.totalRevenue)}</p>
+=======
+                    <span>{formatTrend(dashboardStats.changes.revenue)}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Tổng Doanh thu</p>
+                <p className="text-2xl font-bold text-black mb-3">{formatCurrency(dashboardStats.totals.revenue)}</p>
+>>>>>>> main
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-primary h-1.5 rounded-full" style={{ width: '75%' }}></div>
                 </div>
@@ -705,11 +1204,19 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
                     <TrendingUp className="w-4 h-4" />
+<<<<<<< HEAD
                     <span>{formatTrend(dashboardData.ordersChange)}</span>
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-1">Tổng Đơn hàng</p>
                 <p className="text-2xl font-bold text-black mb-3">{dashboardData.totalOrders}</p>
+=======
+                    <span>{formatTrend(dashboardStats.changes.orders)}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Tổng Đơn hàng</p>
+                <p className="text-2xl font-bold text-black mb-3">{dashboardStats.totals.orders}</p>
+>>>>>>> main
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-secondary h-1.5 rounded-full" style={{ width: '62%' }}></div>
                 </div>
@@ -724,11 +1231,19 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
                     <TrendingUp className="w-4 h-4" />
+<<<<<<< HEAD
                     <span>{formatTrend(dashboardData.customersChange)}</span>
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-1">Khách hàng hoạt động</p>
                 <p className="text-2xl font-bold text-black mb-3">{dashboardData.activeCustomers}</p>
+=======
+                    <span>{formatTrend(dashboardStats.changes.customers)}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Khách hàng hoạt động</p>
+                <p className="text-2xl font-bold text-black mb-3">{dashboardStats.totals.activeCustomers}</p>
+>>>>>>> main
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-primary h-1.5 rounded-full" style={{ width: '85%' }}></div>
                 </div>
@@ -743,11 +1258,19 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
                     <TrendingUp className="w-4 h-4" />
+<<<<<<< HEAD
                     <span>{formatTrend(dashboardData.productsChange)}</span>
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-1">Tổng Sản phẩm</p>
                 <p className="text-2xl font-bold text-black mb-3">{dashboardData.totalProducts}</p>
+=======
+                    <span>{formatTrend(dashboardStats.changes.products)}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Tổng Sản phẩm</p>
+                <p className="text-2xl font-bold text-black mb-3">{dashboardStats.totals.products}</p>
+>>>>>>> main
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-secondary h-1.5 rounded-full" style={{ width: '68%' }}></div>
                 </div>
@@ -783,9 +1306,14 @@ export const AdminDashboard: React.FC = () => {
                   </TabsTrigger>
                 </TabsList>
 
+<<<<<<< HEAD
                 {/* Sticky Filter Bar */}
                 <div className={`transition-all duration-300 ${isFilterSticky ? 'fixed top-0 left-0 right-0 z-40 bg-white shadow-md px-6 py-4' : ''}`}>
                   <div className="flex flex-wrap items-center gap-4 mb-6">
+=======
+                {/* Filter Bar */}
+                <div className="mb-6 flex flex-wrap items-center gap-4">
+>>>>>>> main
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <select
@@ -842,33 +1370,58 @@ export const AdminDashboard: React.FC = () => {
                         Xuất Excel
                       </button>
                     </div>
+<<<<<<< HEAD
                   </div>
                 </div>
 
                 {/* Tab Content */}
                 <div className={isFilterSticky ? 'mt-20' : ''}>
+=======
+                </div>
+
+                {/* Tab Content */}
+                <div>
+>>>>>>> main
                   {activeAnalyticsTab === 'revenue' && (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 rounded-xl border border-primary/20">
                           <p className="text-sm text-gray-600 mb-1">Doanh thu kỳ này</p>
+<<<<<<< HEAD
                           <p className="text-2xl font-bold text-black">{formatCurrency(dashboardData.totalRevenue)}</p>
                           <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
                             <TrendingUp className="w-4 h-4" /> {formatTrend(dashboardData.revenueChange)} so với kỳ trước
+=======
+                          <p className="text-2xl font-bold text-black">{formatCurrency(dashboardStats.totals.revenue)}</p>
+                          <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
+                            <TrendingUp className="w-4 h-4" /> {formatTrend(dashboardStats.changes.revenue)} so với kỳ trước
+>>>>>>> main
                           </p>
                         </div>
                         <div className="bg-gradient-to-br from-secondary/5 to-secondary/10 p-4 rounded-xl border border-secondary/20">
                           <p className="text-sm text-gray-600 mb-1">Đã thanh toán</p>
+<<<<<<< HEAD
                           <p className="text-2xl font-bold text-black">{formatCurrency(dashboardData.paidRevenue)}</p>
                           <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
                             <TrendingDown className="w-4 h-4" /> {formatTrend(dashboardData.ordersChange)} theo số đơn
+=======
+                          <p className="text-2xl font-bold text-black">{formatCurrency(dashboardStats.totals.paidRevenue)}</p>
+                          <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
+                            <TrendingUp className="w-4 h-4" /> {formatTrend(dashboardStats.changes.paidRevenue)} theo kỳ
+>>>>>>> main
                           </p>
                         </div>
                         <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
                           <p className="text-sm text-gray-600 mb-1">Chờ thanh toán</p>
+<<<<<<< HEAD
                           <p className="text-2xl font-bold text-black">{formatCurrency(dashboardData.pendingRevenue)}</p>
                           <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
                             <TrendingUp className="w-4 h-4" /> {formatTrend(dashboardData.customersChange)} theo khách mua
+=======
+                          <p className="text-2xl font-bold text-black">{formatCurrency(dashboardStats.totals.pendingRevenue)}</p>
+                          <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
+                            <TrendingUp className="w-4 h-4" /> {formatTrend(dashboardStats.changes.pendingRevenue)} theo kỳ
+>>>>>>> main
                           </p>
                         </div>
                       </div>
@@ -876,7 +1429,15 @@ export const AdminDashboard: React.FC = () => {
                       <div className="bg-white p-6 rounded-xl border border-gray-200">
                         <h3 className="font-semibold text-gray-900 mb-4">Xu hướng Doanh thu & Lợi nhuận</h3>
                         <div style={{ width: '100%', height: 400 }}>
+<<<<<<< HEAD
                           <Line data={dashboardData.revenueChartData} options={lineChartOptions} />
+=======
+                          {dashboardStatsLoading ? (
+                            <div className="flex h-full items-center justify-center text-sm text-gray-500">Đang cập nhật biểu đồ doanh thu...</div>
+                          ) : (
+                            <Line data={liveRevenueChartData} options={lineChartOptions} />
+                          )}
+>>>>>>> main
                         </div>
                       </div>
 
@@ -920,9 +1481,15 @@ export const AdminDashboard: React.FC = () => {
                             }}
                           />
                         </div>
+<<<<<<< HEAD
                         <div className={`grid gap-x-8 gap-y-3 ${activeCategoryTab === 'cardgame' ? 'grid-cols-1' : 'grid-cols-2'}`}>
                           {getCategoryLegendData().map((item) => (
                             <div key={item.name} className="flex items-center justify-between">
+=======
+                        <div className={`grid gap-x-6 gap-y-2 ${activeCategoryTab === 'cardgame' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                          {getCategoryLegendData().map((item) => (
+                            <div key={item.name} className="flex items-center gap-2.5">
+>>>>>>> main
                               <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                                 <span className="text-sm text-gray-700">{item.name}</span>
@@ -950,8 +1517,34 @@ export const AdminDashboard: React.FC = () => {
                     <div className="space-y-6">
                       <div className="bg-white p-6 rounded-xl border border-gray-200">
                         <h3 className="font-semibold text-gray-900 mb-4">Khách hàng Mới vs Khách hàng Quay lại</h3>
+<<<<<<< HEAD
                         <div style={{ width: '100%', height: 400 }}>
                           <Bar data={dashboardData.customerChartData} options={barChartOptions} />
+=======
+                        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
+                          <div style={{ width: '100%', height: 400 }}>
+                            <Pie data={dashboardData.customerChartData} options={customerPieChartOptions} />
+                          </div>
+                          <div className="space-y-3">
+                            {dashboardData.customerBreakdown.map((item) => {
+                              const total = dashboardData.customerBreakdown.reduce((sum, entry) => sum + entry.value, 0);
+                              const percentage = item.label === 'Chưa có dữ liệu' || total === 0
+                                ? 0
+                                : (item.value / total) * 100;
+
+                              return (
+                                <div key={item.label} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                                  <div className="mb-2 flex items-center gap-2">
+                                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }}></span>
+                                    <p className="text-sm font-medium text-gray-700">{item.label}</p>
+                                  </div>
+                                  <p className="text-2xl font-bold text-gray-900">{item.label === 'Chưa có dữ liệu' ? 0 : item.value}</p>
+                                  <p className="text-sm text-gray-500">{percentage.toFixed(1)}%</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+>>>>>>> main
                         </div>
                       </div>
                     </div>

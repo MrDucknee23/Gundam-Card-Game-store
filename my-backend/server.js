@@ -1,12 +1,46 @@
 const express = require('express');
+const http = require('http');
+const path = require('path');
 const mongoose = require('mongoose');
+const compression = require('compression');
 const cors = require('cors');
+<<<<<<< HEAD
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+=======
+const multer = require('multer');
+const passport = require('passport');
+require('dotenv').config();
+>>>>>>> main
+
+if (!process.env.GUEST_OTP_JWT_SECRET?.trim()) {
+  if (process.env.JWT_SECRET?.trim()) {
+    process.env.GUEST_OTP_JWT_SECRET = process.env.JWT_SECRET.trim();
+    console.warn('⚠️ GUEST_OTP_JWT_SECRET is missing, fallback to JWT_SECRET');
+  } else {
+    console.error('❌ Missing GUEST_OTP_JWT_SECRET and JWT_SECRET');
+    process.exit(1);
+  }
+}
+
+const configurePassport = require('./config/passport');
+const { initChatRealtime } = require('./realtime/chatRealtime');
 
 const app = express();
+const httpServer = http.createServer(app);
+const JSON_BODY_LIMIT = '5mb';
+
+configurePassport(passport);
+
 app.use(cors());
+<<<<<<< HEAD
 app.use(express.json({ limit: '15mb' }));
+=======
+app.use(compression());
+app.use(express.json({ limit: JSON_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
+>>>>>>> main
 
 const buildMongoUri = () => {
   if (process.env.MONGODB_URI && process.env.MONGODB_URI.trim()) {
@@ -43,17 +77,97 @@ const logMongoErrorHelp = (err) => {
   }
 };
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Server đang chạy!' });
-});
 
 app.use('/api/products', require('./routes/products'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/categories', require('./routes/categories'));
+<<<<<<< HEAD
 // Thêm route orders
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/reviews', require('./routes/reviews'));
+=======
+app.use('/api/guest', require('./routes/guest'));
+app.use('/api/user', require('./routes/user'));
+
+// Fallback direct bindings để tránh 404 khi môi trường chạy bị lệch route mount.
+// Vẫn dùng đúng controller/middleware hiện tại, KHÔNG đổi logic phân quyền.
+const authJwt = require('./middleware/authJwt');
+const userOrderController = require('./controllers/userOrderController');
+const guestOrderController = require('./controllers/guestOrderController');
+app.get('/api/user/orders', authJwt, userOrderController.listOrders);
+app.get('/api/user/orders/:id', authJwt, userOrderController.getOrderDetail);
+app.get('/api/guest/orders', guestOrderController.listOrders);
+app.get('/api/guest/orders/:id', guestOrderController.getOrderDetail);
+
+// Thêm route orders
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/upload', require('./routes/upload'));
+
+// ─── Serve React frontend (production) ──────────────────────────────────────
+const frontendDist = path.join(__dirname, '..', 'my-frontend', 'dist');
+app.use(express.static(frontendDist));
+
+// Mọi request không phải /api/* => trả về index.html (React Router)
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        message: 'Kich thuoc moi tep anh khong duoc vuot qua 5MB',
+        error: 'upload_file_too_large',
+      });
+    }
+
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        message: 'Toi da 9 tep anh cho moi lan upload',
+        error: 'upload_file_count_exceeded',
+      });
+    }
+
+    return res.status(400).json({
+      message: err.message || 'Upload tep anh that bai',
+      error: 'upload_invalid_file',
+    });
+  }
+
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({
+      message: `Du lieu tai len vuot qua gioi han ${JSON_BODY_LIMIT}. Vui long giam kich thuoc hoac so luong hinh anh.`,
+      error: 'payload_too_large',
+    });
+  }
+
+  if (err instanceof SyntaxError && Object.prototype.hasOwnProperty.call(err, 'body')) {
+    return res.status(400).json({
+      message: 'Du lieu JSON khong hop le',
+      error: 'invalid_json',
+    });
+  }
+
+  console.error('Unexpected API error:', {
+    path: req.originalUrl,
+    method: req.method,
+    message: err?.message || err,
+  });
+
+  return res.status(500).json({
+    message: 'Loi may chu noi bo',
+    error: 'internal_server_error',
+  });
+});
+>>>>>>> main
 
 const PORT = process.env.PORT || 5000;
 
@@ -69,7 +183,14 @@ const startServer = async () => {
     });
     console.log('✅ MongoDB connected');
 
+<<<<<<< HEAD
     app.listen(PORT, () => console.log(`🚀 Server tại http://localhost:${PORT}`));
+=======
+    const chatRealtime = initChatRealtime(httpServer);
+    app.set('chatRealtime', chatRealtime);
+
+    httpServer.listen(PORT, () => console.log(`🚀 Server tại http://localhost:${PORT}`));
+>>>>>>> main
   } catch (err) {
     console.error('❌ Không thể kết nối MongoDB:', err.message || err);
     logMongoErrorHelp(err);

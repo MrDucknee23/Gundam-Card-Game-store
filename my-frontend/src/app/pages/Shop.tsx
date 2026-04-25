@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
+<<<<<<< HEAD
 import { ChevronDown } from 'lucide-react';
+=======
+import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+>>>>>>> main
 import { ProductCard } from '../components/ProductCard';
 import { ProductCategory } from '../types/product';
 import { useProducts } from '../hooks/useProducts';
@@ -9,6 +13,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../componen
 import { Slider } from '../components/ui/slider';
 import { Input } from '../components/ui/input';
 import { formatPriceNumber } from '../utils/format';
+<<<<<<< HEAD
+=======
+import { toast } from 'sonner';
+>>>>>>> main
 
 const getFallbackAttributeGroup = (category: ProductCategory | '') => {
   if (category === 'gundam') {
@@ -41,6 +49,11 @@ export const Shop: React.FC = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [minPriceInput, setMinPriceInput] = useState('0');
   const [maxPriceInput, setMaxPriceInput] = useState(formatPriceNumber(10000000));
+<<<<<<< HEAD
+=======
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const currentSearchQuery = (searchParams.get('search') || '').trim();
+>>>>>>> main
 
   useEffect(() => {
     const category = searchParams.get('category') as ProductCategory;
@@ -84,15 +97,24 @@ export const Shop: React.FC = () => {
 
     if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
 
+<<<<<<< HEAD
     const searchQuery = searchParams.get('search');
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
+=======
+    if (currentSearchQuery) {
+      const query = currentSearchQuery.toLowerCase();
+>>>>>>> main
       return product.name.toLowerCase().includes(query) ||
              product.description.toLowerCase().includes(query);
     }
 
     return true;
+<<<<<<< HEAD
   }), [products, selectedCategory, selectedAttributeValue, priceRange, searchParams]);
+=======
+  }), [products, selectedCategory, selectedAttributeValue, priceRange, currentSearchQuery]);
+>>>>>>> main
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -118,6 +140,7 @@ export const Shop: React.FC = () => {
     setMaxPriceInput(formatPriceNumber(value[1]));
   };
 
+<<<<<<< HEAD
   const parsePriceInput = (value: string) => parseInt(value.replace(/\./g, '')) || 0;
 
   const handleMinPriceInputChange = (value: string) => {
@@ -136,16 +159,78 @@ export const Shop: React.FC = () => {
     if (numValue >= priceRange[0]) {
       setPriceRange([priceRange[0], Math.min(numValue, maxAvailablePrice)]);
     }
+=======
+  const parsePriceInput = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    return digits === '' ? null : Number.parseInt(digits, 10);
+  };
+
+  const formatPriceInput = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    return digits === '' ? '' : formatPriceNumber(Number.parseInt(digits, 10));
+  };
+
+  const commitMinPriceInput = () => {
+    const parsedValue = parsePriceInput(minPriceInput);
+    const normalizedMin = Math.min(Math.max(parsedValue ?? 0, 0), maxAvailablePrice);
+
+    if (normalizedMin > priceRange[1]) {
+      toast.error('Giá tối thiểu không được lớn hơn giá tối đa');
+      setMinPriceInput(formatPriceNumber(priceRange[1]));
+      return;
+    }
+
+    setPriceRange([normalizedMin, priceRange[1]]);
+    setMinPriceInput(formatPriceNumber(normalizedMin));
+    setMaxPriceInput(formatPriceNumber(priceRange[1]));
+  };
+
+  const commitMaxPriceInput = () => {
+    const parsedValue = parsePriceInput(maxPriceInput);
+    const nextMax = Math.min(Math.max(parsedValue ?? maxAvailablePrice, 0), maxAvailablePrice);
+    const nextMin = Math.min(priceRange[0], nextMax);
+    setPriceRange([nextMin, nextMax]);
+    setMinPriceInput(formatPriceNumber(nextMin));
+    setMaxPriceInput(formatPriceNumber(nextMax));
+  };
+
+  const handleMinPriceInputChange = (value: string) => {
+    setMinPriceInput(formatPriceInput(value));
+  };
+
+  const handleMaxPriceInputChange = (value: string) => {
+    setMaxPriceInput(formatPriceInput(value));
+>>>>>>> main
   };
 
   return (
     <div className="min-h-screen bg-white">
+<<<<<<< HEAD
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-black mb-8">Cửa hàng</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <aside className="lg:col-span-1">
             <div className="bg-white rounded-xl p-6 sticky top-24 border border-gray-200 shadow-sm">
+=======
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black">Cửa hàng</h1>
+          {/* Mobile filter toggle button */}
+          <button
+            onClick={() => setShowMobileFilter(!showMobileFilter)}
+            className="flex lg:hidden items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-black hover:bg-gray-50 transition-colors"
+          >
+            {showMobileFilter ? <X className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
+            {showMobileFilter ? 'Đóng bộ lọc' : 'Bộ lọc'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+          {/* Filter sidebar - collapsible on mobile */}
+          <aside className={`lg:col-span-1 ${showMobileFilter ? 'block' : 'hidden lg:block'}`}>
+            <div className="bg-white rounded-xl p-5 sm:p-6 lg:sticky lg:top-24 border border-gray-200 shadow-sm">
+>>>>>>> main
               <h2 className="text-xl font-bold mb-6 text-black border-b border-gray-200 pb-3">Bộ lọc</h2>
 
               <Collapsible defaultOpen className="mb-6">
@@ -215,11 +300,19 @@ export const Shop: React.FC = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Tối thiểu</label>
+<<<<<<< HEAD
                         <Input type="text" value={minPriceInput} onChange={(e) => handleMinPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Tối đa</label>
                         <Input type="text" value={maxPriceInput} onChange={(e) => handleMaxPriceInputChange(e.target.value)} className="w-full bg-gray-50 border-gray-300 text-black" />
+=======
+                        <Input type="text" value={minPriceInput} onChange={(e) => handleMinPriceInputChange(e.target.value)} onBlur={commitMinPriceInput} className="w-full bg-gray-50 border-gray-300 text-black" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Tối đa</label>
+                        <Input type="text" value={maxPriceInput} onChange={(e) => handleMaxPriceInputChange(e.target.value)} onBlur={commitMaxPriceInput} className="w-full bg-gray-50 border-gray-300 text-black" />
+>>>>>>> main
                       </div>
                     </div>
                     <p className="text-sm text-gray-600">
@@ -231,6 +324,7 @@ export const Shop: React.FC = () => {
             </div>
           </aside>
 
+<<<<<<< HEAD
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
               <p className="text-gray-600">
@@ -240,6 +334,22 @@ export const Shop: React.FC = () => {
 
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+=======
+          <div className="lg:col-span-3 mt-0 lg:mt-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <p className="text-sm sm:text-base text-gray-600">
+                {filteredProducts.length} sản phẩm được tìm thấy
+              </p>
+              {currentSearchQuery && (
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Kết quả tìm cho: <span className="font-semibold text-black">{currentSearchQuery}</span>
+                </p>
+              )}
+            </div>
+
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+>>>>>>> main
                 {filteredProducts.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}

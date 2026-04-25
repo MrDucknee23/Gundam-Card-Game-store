@@ -5,8 +5,15 @@ import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../utils/format';
 import { useProducts } from '../hooks/useProducts';
 import { resolveWishlistProducts } from '../utils/wishlist';
+<<<<<<< HEAD
 
 const API_URL = 'http://localhost:5000';
+=======
+import { buildApiUrl } from '../utils/api';
+
+const API_URL = 'http://localhost:5000';
+const USER_ORDERS_API_URL = buildApiUrl('/user/orders');
+>>>>>>> main
 const WISHLIST_FALLBACK_IMAGE = 'https://placehold.co/160x160?text=No+Image';
 
 // Auto-detect profile images named "profile image1.png", "profile image2.jpg", etc.
@@ -48,8 +55,13 @@ const AvatarPickerGrid: React.FC<{
     }
   }, []);
 
+<<<<<<< HEAD
   if (loading) return <p className="font-[Poppins] text-sm text-gray-400 text-center py-4">Đang tải ảnh...</p>;
   if (found.length === 0) return <p className="font-[Poppins] text-sm text-gray-400 text-center py-4">Chưa có ảnh nào. Thêm file đặt tên "profile image1.png", "profile image2.jpg",... vào thư mục public/images/</p>;
+=======
+  if (loading) return <p className="text-sm text-gray-400 text-center py-4">Đang tải ảnh...</p>;
+  if (found.length === 0) return <p className="text-sm text-gray-400 text-center py-4">Chưa có ảnh nào. Thêm file đặt tên "profile image1.png", "profile image2.jpg",... vào thư mục public/images/</p>;
+>>>>>>> main
 
   return (
     <div className="grid grid-cols-3 gap-3">
@@ -63,7 +75,11 @@ const AvatarPickerGrid: React.FC<{
         <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
         </svg>
+<<<<<<< HEAD
         <span className="font-[Poppins] text-[10px] font-semibold text-gray-500">Mặc định</span>
+=======
+        <span className="text-[10px] font-semibold text-gray-500">Mặc định</span>
+>>>>>>> main
         {!currentAvatar && (
           <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center text-white text-[9px] font-bold">✓</div>
         )}
@@ -158,6 +174,7 @@ export const Profile: React.FC = () => {
       });
     }
 
+<<<<<<< HEAD
     const userEmail = stored ? JSON.parse(stored).email : null;
     if (!userEmail) {
       setIsLoadingOrders(false);
@@ -166,10 +183,40 @@ export const Profile: React.FC = () => {
         .then((res) => res.json())
         .then((data) => {
           setRecentOrders(data);
+=======
+    const storedToken = localStorage.getItem('authToken') || '';
+    const userEmail = stored ? JSON.parse(stored).email : null;
+    if (!userEmail || !storedToken) {
+      setIsLoadingOrders(false);
+    } else {
+      fetch(USER_ORDERS_API_URL, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      })
+        .then(async (res) => {
+          if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            setCurrentUser(null);
+            setRecentOrders([]);
+            return [];
+          }
+
+          if (!res.ok) {
+            throw new Error('Không thể tải đơn hàng gần đây');
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setRecentOrders(Array.isArray(data) ? data : []);
+>>>>>>> main
           setIsLoadingOrders(false);
         })
         .catch((err) => {
           console.error('Lỗi khi fetch đơn hàng:', err);
+<<<<<<< HEAD
+=======
+          setRecentOrders([]);
+>>>>>>> main
           setIsLoadingOrders(false);
         });
     }
@@ -588,7 +635,11 @@ export const Profile: React.FC = () => {
     {/* Avatar Picker Modal */}
     {showAvatarPicker && (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowAvatarPicker(false)}>
+<<<<<<< HEAD
         <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full font-[Poppins]" onClick={(e) => e.stopPropagation()}>
+=======
+        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+>>>>>>> main
           <h3 className="text-lg font-bold mb-1">Chọn ảnh đại diện</h3>
           <p className="text-sm text-gray-500 mb-4">Bấm vào hình để áp dụng làm ảnh đại diện của bạn</p>
           <AvatarPickerGrid currentAvatar={currentUser?.avatar} onSelect={handleSelectAvatar} />

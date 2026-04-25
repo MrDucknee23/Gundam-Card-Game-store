@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Eye, Search } from 'lucide-react';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
+<<<<<<< HEAD
 import { orders as fallbackOrders } from '../data/orders';
 import type { Order, PaymentStatus, OrderStatus } from '../data/orders';
 import { formatCurrency } from '../utils/format';
@@ -14,6 +15,20 @@ const REQUEST_TIMEOUT_MS = 5000;
 export const ManageOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>(fallbackOrders);
   const [isLoading, setIsLoading] = useState(false);
+=======
+import type { Order, PaymentStatus, OrderStatus } from '../data/orders';
+import { formatCurrency } from '../utils/format';
+import { buildApiUrl } from '../utils/api';
+import { getPaymentMethodLabel, normalizeOrderLike } from '../utils/orderDisplay';
+
+const ORDERS_API_URL = buildApiUrl('/orders?summary=1');
+const REQUEST_TIMEOUT_MS = 5000;
+const AUTH_TOKEN_STORAGE_KEY = 'authToken';
+
+export const ManageOrders: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+>>>>>>> main
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentStatus>('all');
@@ -25,10 +40,22 @@ export const ManageOrders: React.FC = () => {
     const loadOrders = async () => {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+<<<<<<< HEAD
 
       try {
         setLoadError(null);
         const res = await fetch(ORDERS_API_URL, { signal: controller.signal });
+=======
+      const authToken = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim() || '';
+
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+        const res = await fetch(ORDERS_API_URL, {
+          signal: controller.signal,
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+        });
+>>>>>>> main
         if (!res.ok) {
           throw new Error('Không thể tải đơn hàng');
         }
@@ -36,8 +63,13 @@ export const ManageOrders: React.FC = () => {
         const data = await res.json();
         const isStale = res.headers.get('x-orders-stale') === '1';
 
+<<<<<<< HEAD
         if (isMounted && Array.isArray(data) && data.length > 0 && !isStale) {
           setOrders(data);
+=======
+        if (isMounted && Array.isArray(data) && !isStale) {
+          setOrders(data.map((entry) => normalizeOrderLike(entry as Order)));
+>>>>>>> main
         }
       } catch (error) {
         if (!(error instanceof Error && error.name === 'AbortError')) {
@@ -45,11 +77,19 @@ export const ManageOrders: React.FC = () => {
         }
 
         if (isMounted) {
+<<<<<<< HEAD
           setOrders(fallbackOrders);
           setLoadError(
             error instanceof Error && error.name === 'AbortError'
               ? 'Máy chủ phản hồi chậm. Đang hiển thị dữ liệu tạm thời.'
               : 'Không thể tải dữ liệu đơn hàng mới nhất. Đang hiển thị dữ liệu tạm thời.'
+=======
+          setOrders([]);
+          setLoadError(
+            error instanceof Error && error.name === 'AbortError'
+              ? 'Máy chủ phản hồi chậm. Chưa thể tải danh sách đơn hàng mới nhất.'
+              : 'Không thể tải dữ liệu đơn hàng mới nhất.'
+>>>>>>> main
           );
         }
       } finally {
@@ -71,6 +111,7 @@ export const ManageOrders: React.FC = () => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
+<<<<<<< HEAD
   const getPaymentMethodLabel = (paymentMethod?: string) => {
     switch (paymentMethod) {
       case 'bank':
@@ -87,6 +128,8 @@ export const ManageOrders: React.FC = () => {
     }
   };
 
+=======
+>>>>>>> main
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const filteredOrders = useMemo(() => {
@@ -114,7 +157,11 @@ export const ManageOrders: React.FC = () => {
         
         <div className="flex items-center justify-between mb-8 mt-4">
           <div>
+<<<<<<< HEAD
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý hóa đơn</h1>
+=======
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý đơn hàng</h1>
+>>>>>>> main
             <p className="text-gray-600">Theo dõi và cập nhật trạng thái các đơn đặt hàng.</p>
           </div>
         </div>
@@ -156,8 +203,13 @@ export const ManageOrders: React.FC = () => {
             >
               <option value="all">Tất cả trạng thái đơn</option>
               <option value="processing">Đang xử lý</option>
+<<<<<<< HEAD
               <option value="shipped">Đang giao</option>
               <option value="delivered">Hoàn thành</option>
+=======
+              <option value="shipped">Đang vận chuyển</option>
+              <option value="delivered">Giao thành công</option>
+>>>>>>> main
               <option value="cancelled">Đã hủy</option>
             </select>
           </div>
@@ -188,7 +240,13 @@ export const ManageOrders: React.FC = () => {
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
+<<<<<<< HEAD
                     <td colSpan={7} className="text-center py-8 text-gray-500">Không tìm thấy đơn hàng phù hợp.</td>
+=======
+                    <td colSpan={7} className="text-center py-8 text-gray-500">
+                      {orders.length === 0 ? 'Chưa có đơn hàng nào để hiển thị.' : 'Không tìm thấy đơn hàng phù hợp.'}
+                    </td>
+>>>>>>> main
                   </tr>
                 ) : (
                   filteredOrders.map(order => (

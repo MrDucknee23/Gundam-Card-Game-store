@@ -7,7 +7,11 @@ const productSchema = new mongoose.Schema({
   originalPrice: { type: Number },
   stock: { type: Number, required: true, default: 0 },
   category: { type: String, required: true }, // gundam, pokemon, onepiece
+<<<<<<< HEAD
   images: [{ type: String }],
+=======
+  images: [{ type: String, trim: true }],
+>>>>>>> main
   brand: { type: String },
   scale: { type: String },
   grade: { type: String },

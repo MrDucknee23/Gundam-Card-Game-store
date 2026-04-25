@@ -2,11 +2,25 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Order = require('../models/Order');
+<<<<<<< HEAD
+=======
+const {
+  isDbReady,
+  isDbUnavailableError,
+  logDbDegraded,
+  sendDegradedJson,
+} = require('../utils/dbState');
+>>>>>>> main
 
 const PAID_PAYMENT_STATUSES = ['Đã thanh toán', 'paid', 'Paid', 'PAID'];
 
 // Lấy tất cả users
 router.get('/', async (req, res) => {
+  if (!isDbReady()) {
+    logDbDegraded('users:list');
+    return sendDegradedJson(res, [], { source: 'users-empty' });
+  }
+
   try {
     const users = await User.find().select('-password').lean();
 
@@ -52,6 +66,11 @@ router.get('/', async (req, res) => {
 
     res.json(mergedUsers);
   } catch (err) {
+    if (isDbUnavailableError(err)) {
+      logDbDegraded('users:list', err);
+      return sendDegradedJson(res, [], { source: 'users-empty' });
+    }
+
     res.status(500).json({ error: err.message });
   }
 });

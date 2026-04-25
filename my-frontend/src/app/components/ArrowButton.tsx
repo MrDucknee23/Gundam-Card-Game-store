@@ -20,7 +20,7 @@ export const ArrowButton: React.FC<ArrowButtonProps> = ({ direction, onClick, cl
         group
         ${className}
       `}
-      aria-label={direction === 'left' ? 'Previous' : 'Next'}
+      aria-label={direction === 'left' ? 'Trước' : 'Tiếp theo'}
     >
       {direction === 'left' ? (
         <ChevronLeft className="w-6 h-6 text-black group-hover:text-white transition-colors duration-300" />

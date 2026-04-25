@@ -5,6 +5,12 @@ const reviewSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   rating: { type: Number, required: true, min: 1, max: 5 },
   content: { type: String, required: true, maxlength: 2000 },
+<<<<<<< HEAD
+=======
+  adminReply: { type: String, default: '', maxlength: 2000 },
+  adminReplyAt: { type: Date, default: null },
+  adminReplyAuthor: { type: String, default: '' },
+>>>>>>> main
 }, { timestamps: true });
 
 reviewSchema.index({ product: 1, createdAt: -1 });

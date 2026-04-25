@@ -238,7 +238,6 @@ export const Contact: React.FC = () => {
               height="100%"
               style={{ border: 0 }}
               allowFullScreen
-              loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Vị trí GUNDAM STORE"
               className="hover:opacity-95 transition-opacity duration-300"

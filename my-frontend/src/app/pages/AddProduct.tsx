@@ -1,13 +1,25 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+=======
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { ImagePlus, Loader2, UploadCloud } from 'lucide-react';
+>>>>>>> main
 import { Input } from '../components/ui/input';
 import { Checkbox } from '../components/ui/checkbox';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { ProductCategory, GundamGrade, CardRarity } from '../types/product';
 import { toast } from 'sonner';
+<<<<<<< HEAD
 import { createProduct, fetchProductById, ProductPayload, updateProduct } from '../utils/productApi';
 import { useCategories } from '../hooks/useCategories';
+=======
+import { createProduct, fetchProductById, ProductPayload, updateProduct, uploadProductFiles } from '../utils/productApi';
+import { useCategories } from '../hooks/useCategories';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
+>>>>>>> main
 
 const emptyFormData = {
   name: '',
@@ -44,8 +56,17 @@ const isValidVietnamesePrice = (value: string) => {
 
 const normalizeVietnamesePrice = (value: string) => value.replace(/\./g, '');
 
+<<<<<<< HEAD
 const MAX_PRODUCT_IMAGES = 10;
 const MAX_SUB_IMAGES = MAX_PRODUCT_IMAGES - 1;
+=======
+const MAX_PRODUCT_IMAGES = 9;
+const MAX_SUB_IMAGES = MAX_PRODUCT_IMAGES - 1;
+const MAX_IMAGE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_FILE_SIZE_MB = 5;
+const ALLOWED_UPLOAD_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+type UploadAreaTarget = 'main' | 'gallery' | null;
+>>>>>>> main
 
 export const AddProduct: React.FC = () => {
   const navigate = useNavigate();
@@ -59,6 +80,16 @@ export const AddProduct: React.FC = () => {
   const [subImages, setSubImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(isEditMode);
+<<<<<<< HEAD
+=======
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [dragTarget, setDragTarget] = useState<UploadAreaTarget>(null);
+  const mainImageInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryImageInputRef = useRef<HTMLInputElement | null>(null);
+
+  const totalImageCount = (mainImage ? 1 : 0) + subImages.length;
+  const canUploadMoreImages = totalImageCount < MAX_PRODUCT_IMAGES;
+>>>>>>> main
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -144,6 +175,7 @@ export const AddProduct: React.FC = () => {
     loadProduct();
   }, [id, isEditMode, navigate]);
 
+<<<<<<< HEAD
   const handleMainImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -170,6 +202,124 @@ export const AddProduct: React.FC = () => {
       };
       reader.readAsDataURL(file);
     });
+=======
+  const validateUploadFiles = (files: File[]) => {
+    const acceptedFiles: File[] = [];
+
+    files.forEach((file) => {
+      if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.type)) {
+        toast.error(`${file.name} khong phai la tep anh hop le`);
+        return;
+      }
+
+      if (file.size > MAX_IMAGE_FILE_SIZE_BYTES) {
+        toast.error(`${file.name} vuot qua gioi han ${MAX_IMAGE_FILE_SIZE_MB}MB`);
+        return;
+      }
+
+      acceptedFiles.push(file);
+    });
+
+    return acceptedFiles;
+  };
+
+  const uploadIncomingFiles = async (files: File[], preferredTarget: Exclude<UploadAreaTarget, null>) => {
+    if (files.length === 0) {
+      return;
+    }
+
+    if (!canUploadMoreImages) {
+      toast.error(`Da dat toi da ${MAX_PRODUCT_IMAGES} anh`);
+      return;
+    }
+
+    const acceptedFiles = validateUploadFiles(files);
+    if (acceptedFiles.length === 0) {
+      return;
+    }
+
+    const availableSlots = MAX_PRODUCT_IMAGES - totalImageCount;
+    const filesToUpload = acceptedFiles.slice(0, availableSlots);
+
+    if (acceptedFiles.length > availableSlots) {
+      toast.error(`Chi con the tai them ${availableSlots} anh`);
+    }
+
+    try {
+      setIsUploadingImages(true);
+      const uploadedImages = await uploadProductFiles(filesToUpload);
+
+      if (uploadedImages.length === 0) {
+        throw new Error('Khong nhan duoc duong dan anh sau khi upload');
+      }
+
+      const [nextMainImage, ...nextGalleryImages] = uploadedImages;
+
+      if (preferredTarget === 'main') {
+        setMainImage(nextMainImage || mainImage);
+        if (nextGalleryImages.length > 0) {
+          setSubImages((prev) => [...prev, ...nextGalleryImages]);
+        }
+      } else if (!mainImage && nextMainImage) {
+        setMainImage(nextMainImage);
+        if (nextGalleryImages.length > 0) {
+          setSubImages((prev) => [...prev, ...nextGalleryImages]);
+        }
+      } else {
+        setSubImages((prev) => [...prev, ...uploadedImages]);
+      }
+
+      toast.success(`Da tai len ${uploadedImages.length} anh`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Khong the tai anh len');
+    } finally {
+      setIsUploadingImages(false);
+      setDragTarget(null);
+    }
+  };
+
+  const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    await uploadIncomingFiles(files, 'main');
+    e.target.value = '';
+  };
+
+  const handleSubImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    await uploadIncomingFiles(files, 'gallery');
+    e.target.value = '';
+  };
+
+  const handleDragOver = (target: Exclude<UploadAreaTarget, null>) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!canUploadMoreImages || isUploadingImages) {
+      return;
+    }
+    setDragTarget(target);
+  };
+
+  const handleDragLeave = (target: Exclude<UploadAreaTarget, null>) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const nextTarget = e.relatedTarget as Node | null;
+
+    if (e.currentTarget.contains(nextTarget)) {
+      return;
+    }
+
+    if (dragTarget === target) {
+      setDragTarget(null);
+    }
+  };
+
+  const handleDrop = (target: Exclude<UploadAreaTarget, null>) => async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files ?? []);
+    await uploadIncomingFiles(files, target);
+>>>>>>> main
   };
 
   const removeSubImage = (index: number) => {
@@ -267,9 +417,21 @@ export const AddProduct: React.FC = () => {
       return;
     }
 
+<<<<<<< HEAD
     try {
       setIsSubmitting(true);
       const payload = buildPayload();
+=======
+    if (isUploadingImages) {
+      toast.error('Dang tai anh len may chu. Vui long doi hoan tat truoc khi luu san pham');
+      return;
+    }
+
+    const payload = buildPayload();
+
+    try {
+      setIsSubmitting(true);
+>>>>>>> main
 
       if (isEditMode && id) {
         await updateProduct(id, payload);
@@ -291,6 +453,10 @@ export const AddProduct: React.FC = () => {
     setFormData(emptyFormData);
     setMainImage('');
     setSubImages([]);
+<<<<<<< HEAD
+=======
+    setDragTarget(null);
+>>>>>>> main
   };
 
   if (isLoadingProduct) {
@@ -315,11 +481,19 @@ export const AddProduct: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+<<<<<<< HEAD
             <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Product Information</h2>
 
             <div className="space-y-6">
               <div>
                 <Label htmlFor="name" className="text-black">Product Name *</Label>
+=======
+            <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Thông tin sản phẩm</h2>
+
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="name" className="text-black">Tên sản phẩm *</Label>
+>>>>>>> main
                 <Input
                   id="name"
                   name="name"
@@ -327,13 +501,21 @@ export const AddProduct: React.FC = () => {
                   onChange={handleInputChange}
                   required
                   className="mt-2 bg-white border-gray-200 text-black focus:border-primary"
+<<<<<<< HEAD
                   placeholder="Enter product name"
+=======
+                  placeholder="Nhập tên sản phẩm"
+>>>>>>> main
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
+<<<<<<< HEAD
                   <Label htmlFor="category" className="text-black">Category *</Label>
+=======
+                  <Label htmlFor="category" className="text-black">Danh mục *</Label>
+>>>>>>> main
                   <select
                     id="category"
                     name="category"
@@ -342,7 +524,11 @@ export const AddProduct: React.FC = () => {
                     required
                     className="mt-2 w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-black focus:outline-none focus:border-primary transition-colors"
                   >
+<<<<<<< HEAD
                     <option value="">Select category</option>
+=======
+                    <option value="">Chọn danh mục</option>
+>>>>>>> main
                     {categories.map(cat => (
                       <option key={cat.slug} value={cat.slug}>{cat.label}</option>
                     ))}
@@ -350,7 +536,11 @@ export const AddProduct: React.FC = () => {
                 </div>
 
                 <div>
+<<<<<<< HEAD
                   <Label htmlFor="price" className="text-black">Price (VND) *</Label>
+=======
+                  <Label htmlFor="price" className="text-black">Giá (VND) *</Label>
+>>>>>>> main
                   <Input
                     id="price"
                     name="price"
@@ -368,7 +558,11 @@ export const AddProduct: React.FC = () => {
               </div>
 
               <div>
+<<<<<<< HEAD
                 <Label htmlFor="description" className="text-black">Description *</Label>
+=======
+                <Label htmlFor="description" className="text-black">Mô tả *</Label>
+>>>>>>> main
                 <Textarea
                   id="description"
                   name="description"
@@ -377,7 +571,11 @@ export const AddProduct: React.FC = () => {
                   required
                   rows={4}
                   className="mt-2 bg-white border-gray-200 text-black focus:border-primary resize-none"
+<<<<<<< HEAD
                   placeholder="Detailed product description"
+=======
+                  placeholder="Nhập mô tả chi tiết sản phẩm"
+>>>>>>> main
                 />
               </div>
 
@@ -395,12 +593,20 @@ export const AddProduct: React.FC = () => {
                 />
                 <div>
                   <Label htmlFor="featured" className="text-black cursor-pointer">Đánh dấu là sản phẩm nổi bật</Label>
+<<<<<<< HEAD
                   <p className="text-sm text-gray-500 mt-1">Sản phẩm nổi bật sẽ được ưu tiên hiển thị ở khu vực featured trên trang chủ.</p>
+=======
+                  <p className="text-sm text-gray-500 mt-1">Sản phẩm nổi bật sẽ được ưu tiên hiển thị ở khu vực sản phẩm nổi bật trên trang chủ.</p>
+>>>>>>> main
                 </div>
               </div>
 
               <div>
+<<<<<<< HEAD
                 <Label htmlFor="stock" className="text-black">Stock Quantity *</Label>
+=======
+                <Label htmlFor="stock" className="text-black">Số lượng tồn kho *</Label>
+>>>>>>> main
                 <Input
                   id="stock"
                   name="stock"
@@ -411,7 +617,11 @@ export const AddProduct: React.FC = () => {
                   className="mt-2 bg-white border-gray-200 text-black focus:border-primary"
                   placeholder="0"
                 />
+<<<<<<< HEAD
                 <p className="text-sm text-gray-500 mt-2">Current available stock in inventory</p>
+=======
+                <p className="text-sm text-gray-500 mt-2">Số lượng hiện có trong kho</p>
+>>>>>>> main
               </div>
             </div>
           </div>
@@ -419,7 +629,11 @@ export const AddProduct: React.FC = () => {
           {/* Category-Specific Fields - Gundam */}
           {formData.category === 'gundam' && (
             <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+<<<<<<< HEAD
               <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Gundam Specifications</h2>
+=======
+              <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Thông số Gundam</h2>
+>>>>>>> main
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -438,25 +652,41 @@ export const AddProduct: React.FC = () => {
                 </div>
 
                 <div>
+<<<<<<< HEAD
                   <Label htmlFor="scale" className="text-black">Scale</Label>
+=======
+                  <Label htmlFor="scale" className="text-black">Tỷ lệ</Label>
+>>>>>>> main
                   <Input
                     id="scale"
                     name="scale"
                     value={formData.scale}
                     onChange={handleInputChange}
+<<<<<<< HEAD
                     placeholder="e.g., 1/144"
+=======
+                    placeholder="Ví dụ: 1/144"
+>>>>>>> main
                     className="mt-2 bg-white border-gray-200 text-black focus:border-primary"
                   />
                 </div>
 
                 <div>
+<<<<<<< HEAD
                   <Label htmlFor="material" className="text-black">Material</Label>
+=======
+                  <Label htmlFor="material" className="text-black">Chất liệu</Label>
+>>>>>>> main
                   <Input
                     id="material"
                     name="material"
                     value={formData.material}
                     onChange={handleInputChange}
+<<<<<<< HEAD
                     placeholder="e.g., Plastic"
+=======
+                    placeholder="Ví dụ: Nhựa"
+>>>>>>> main
                     className="mt-2 bg-white border-gray-200 text-black focus:border-primary"
                   />
                 </div>
@@ -467,23 +697,39 @@ export const AddProduct: React.FC = () => {
           {/* Category-Specific Fields - Cards */}
           {isCardCategory && (
             <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+<<<<<<< HEAD
               <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Card Specifications</h2>
 
               <div className="space-y-6">
                 <div>
                   <Label htmlFor="cardType" className="text-black">Card Type</Label>
+=======
+              <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Thông số thẻ bài</h2>
+
+              <div className="space-y-6">
+                <div>
+                  <Label htmlFor="cardType" className="text-black">Loại thẻ</Label>
+>>>>>>> main
                   <Input
                     id="cardType"
                     name="cardType"
                     value={formData.cardType}
                     onChange={handleInputChange}
+<<<<<<< HEAD
                     placeholder="e.g., Pokemon, Trainer, Leader, Character"
+=======
+                    placeholder="Ví dụ: Pokemon, Trainer, Leader, Character"
+>>>>>>> main
                     className="mt-2 bg-white border-gray-200 text-black focus:border-primary"
                   />
                 </div>
 
                 <div>
+<<<<<<< HEAD
                   <Label className="text-black block mb-3">{currentAttributeGroup?.label || 'Rarity Level'}</Label>
+=======
+                  <Label className="text-black block mb-3">{currentAttributeGroup?.label || 'Cấp độ độ hiếm'}</Label>
+>>>>>>> main
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {activeAttributeOptions.map((option) => (
                       <button
@@ -531,6 +777,7 @@ export const AddProduct: React.FC = () => {
 
           {/* Image Upload */}
           <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+<<<<<<< HEAD
             <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Product Images</h2>
 
             {/* Main Image Upload */}
@@ -572,12 +819,118 @@ export const AddProduct: React.FC = () => {
                       className="hidden"
                     />
                   </label>
+=======
+            <h2 className="text-black mb-6 border-b border-gray-200 pb-3">Hình ảnh sản phẩm</h2>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Đã tải lên {totalImageCount}/{MAX_PRODUCT_IMAGES} ảnh</p>
+                <p className="text-sm text-gray-500">Kéo thả hoặc bấm để tải ảnh. Hệ thống sẽ tự động tải lên ngay sau khi chọn.</p>
+              </div>
+              {isUploadingImages && (
+                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-medium text-primary shadow-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Đang tải lên...
+                </div>
+              )}
+            </div>
+
+            {/* Main Image Upload */}
+            <div className="mb-8">
+              <Label className="text-black mb-3 block">Ảnh chính *</Label>
+              <div className="mt-2">
+                {mainImage ? (
+                  <div
+                    className={`relative w-full max-w-md aspect-square overflow-hidden rounded-2xl border-2 bg-gray-100 transition-all ${dragTarget === 'main' ? 'border-primary ring-4 ring-primary/15' : 'border-gray-200'}`}
+                    onDragOver={handleDragOver('main')}
+                    onDragLeave={handleDragLeave('main')}
+                    onDrop={handleDrop('main')}
+                  >
+                    <img
+                      src={resolveProductImageUrl(mainImage)}
+                      alt="Main preview"
+                      onError={withImageFallback}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent opacity-0 transition-opacity hover:opacity-100">
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 p-4">
+                        <div>
+                          <p className="text-sm font-semibold text-white">Ảnh chính</p>
+                          <p className="text-xs text-white/80">Kéo ảnh mới vào đây hoặc bấm để thay đổi</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => mainImageInputRef.current?.click()}
+                            disabled={isUploadingImages}
+                            className="rounded-lg bg-white/95 px-3 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Thay ảnh
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMainImage('')}
+                            disabled={isUploadingImages}
+                            className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      ref={mainImageInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={handleMainImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => !isUploadingImages && mainImageInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if ((e.key === 'Enter' || e.key === ' ') && !isUploadingImages) {
+                        e.preventDefault();
+                        mainImageInputRef.current?.click();
+                      }
+                    }}
+                    onDragOver={handleDragOver('main')}
+                    onDragLeave={handleDragLeave('main')}
+                    onDrop={handleDrop('main')}
+                    className={`flex w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-10 text-center transition-all ${dragTarget === 'main' ? 'border-primary bg-primary/5 ring-4 ring-primary/10' : 'border-gray-300 bg-gray-50 hover:border-primary/60 hover:bg-primary/5'} ${isUploadingImages ? 'pointer-events-none opacity-70' : ''}`}
+                  >
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      {isUploadingImages ? <Loader2 className="h-7 w-7 animate-spin" /> : <UploadCloud className="h-7 w-7" />}
+                    </div>
+                    <p className="mb-2 text-base font-semibold text-gray-900">Kéo thả ảnh chính vào đây</p>
+                    <p className="mb-5 text-sm text-gray-500">Hoặc bấm để tải lên. Hỗ trợ JPG, PNG, WEBP tối đa {MAX_IMAGE_FILE_SIZE_MB}MB.</p>
+                    <button
+                      type="button"
+                      disabled={isUploadingImages}
+                      className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isUploadingImages ? 'Đang tải lên...' : 'Chọn ảnh'}
+                    </button>
+                    <input
+                      ref={mainImageInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={handleMainImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+>>>>>>> main
                 )}
               </div>
             </div>
 
             {/* Sub Images Upload */}
             <div>
+<<<<<<< HEAD
               <Label className="text-black mb-3 block">Sub Images (Max 9)</Label>
               <p className="text-sm text-gray-500 mb-3">Click on a thumbnail to swap it with the main image</p>
               
@@ -619,6 +972,85 @@ export const AddProduct: React.FC = () => {
                     />
                   </label>
                 )}
+=======
+              <Label className="text-black mb-3 block">Ảnh thư viện (tối đa {MAX_SUB_IMAGES})</Label>
+              <p className="text-sm text-gray-500 mb-3">Bấm vào ảnh thu nhỏ để đổi vị trí với ảnh chính.</p>
+              <p className="text-sm text-gray-500 mb-4">Bạn có thể kéo thả nhiều ảnh để hệ thống tự tải lên ngay. Chức năng tải lên sẽ bị khóa sau khi đạt {MAX_PRODUCT_IMAGES} ảnh.</p>
+
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => canUploadMoreImages && !isUploadingImages && galleryImageInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && canUploadMoreImages && !isUploadingImages) {
+                    e.preventDefault();
+                    galleryImageInputRef.current?.click();
+                  }
+                }}
+                onDragOver={handleDragOver('gallery')}
+                onDragLeave={handleDragLeave('gallery')}
+                onDrop={handleDrop('gallery')}
+                className={`mb-4 rounded-2xl border-2 border-dashed px-5 py-6 transition-all ${dragTarget === 'gallery' ? 'border-primary bg-primary/5 ring-4 ring-primary/10' : 'border-gray-300 bg-gray-50 hover:border-primary/60 hover:bg-primary/5'} ${!canUploadMoreImages || isUploadingImages ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+              >
+                <div className="flex flex-col items-center justify-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      {isUploadingImages && dragTarget === 'gallery' ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Kéo ảnh thư viện vào đây hoặc bấm để chọn</p>
+                      <p className="text-sm text-gray-500">Chỉ chấp nhận JPG, PNG, WEBP. Mỗi ảnh tối đa {MAX_IMAGE_FILE_SIZE_MB}MB.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!canUploadMoreImages || isUploadingImages}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {canUploadMoreImages ? 'Tải ảnh lên' : 'Đã đạt giới hạn ảnh'}
+                  </button>
+                </div>
+                <input
+                  ref={galleryImageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleSubImageUpload}
+                  className="hidden"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {subImages.map((image, index) => (
+                  <div key={index} className="relative aspect-square overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 group transition-all hover:-translate-y-0.5 hover:shadow-md">
+                    <img
+                      src={resolveProductImageUrl(image)}
+                      alt={`Sub preview ${index + 1}`}
+                      onError={withImageFallback}
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={() => selectSubImage(image)}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-3">
+                        <button
+                          type="button"
+                          onClick={() => selectSubImage(image)}
+                          className="rounded-lg bg-white/95 px-3 py-2 text-xs font-semibold text-gray-900 transition hover:bg-white"
+                        >
+                          Đặt làm ảnh chính
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeSubImage(index)}
+                          className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary/90"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+>>>>>>> main
               </div>
             </div>
           </div>
@@ -627,15 +1059,26 @@ export const AddProduct: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               type="submit"
+<<<<<<< HEAD
               disabled={isSubmitting}
               className="flex-1 bg-primary hover:bg-primary/90 text-white py-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
             >
               {isSubmitting ? 'Đang lưu...' : isEditMode ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}
+=======
+              disabled={isSubmitting || isUploadingImages}
+              className="flex-1 bg-primary hover:bg-primary/90 text-white py-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+            >
+              {isUploadingImages ? 'Đang tải ảnh...' : isSubmitting ? 'Đang lưu...' : isEditMode ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}
+>>>>>>> main
             </button>
             <button
               type="button"
               onClick={handleReset}
+<<<<<<< HEAD
               disabled={isSubmitting}
+=======
+              disabled={isSubmitting || isUploadingImages}
+>>>>>>> main
               className="flex-1 bg-white hover:bg-gray-100 text-black border-2 border-gray-300 hover:border-gray-400 py-4 rounded-lg font-semibold transition-all"
             >
               Đặt lại biểu mẫu

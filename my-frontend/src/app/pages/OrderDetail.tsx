@@ -5,6 +5,18 @@ import { Breadcrumb } from '../components/Breadcrumb';
 import { StatusBadge } from '../components/admin/StatusBadge';
 import { EditOrderModal } from '../components/admin/EditOrderModal';
 import { formatCurrency } from '../utils/format';
+<<<<<<< HEAD
+=======
+import { buildApiUrl } from '../utils/api';
+import {
+  formatAddressParts,
+  getPaymentMethodLabel,
+  normalizeOrderLike,
+  normalizeOrderStatus,
+  normalizePaymentStatus,
+  sanitizePossiblyMojibakeText,
+} from '../utils/orderDisplay';
+>>>>>>> main
 import {
   ArrowLeft,
   Pencil,
@@ -22,6 +34,17 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const AUTH_TOKEN_STORAGE_KEY = 'authToken';
+
+const getAuthHeaders = (includeJsonContentType = false) => {
+  const authToken = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim() || '';
+
+  return {
+    ...(includeJsonContentType ? { 'Content-Type': 'application/json' } : {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  };
+};
+
 export const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -35,6 +58,7 @@ export const OrderDetail: React.FC = () => {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed'>('pending');
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [customerTotalSpent, setCustomerTotalSpent] = useState<number | null>(null);
+<<<<<<< HEAD
 
   useEffect(() => {
     // Gọi API lấy chi tiết đơn hàng
@@ -61,6 +85,74 @@ export const OrderDetail: React.FC = () => {
         console.error('Lỗi khi fetch chi tiết đơn hàng:', error);
         setIsLoading(false);
       });
+=======
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const isCancelledOrder = orderStatus === 'cancelled' || order?.orderStatus === 'cancelled';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadOrderDetail = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+
+        const res = await fetch(buildApiUrl(`/orders/${id}`), {
+          headers: getAuthHeaders(),
+        });
+
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(
+            payload.message || (res.status === 401
+              ? 'Phiên đăng nhập admin đã hết hạn hoặc thiếu token xác thực.'
+              : res.status === 403
+                ? 'Bạn không có quyền xem đơn hàng này.'
+                : res.status === 404
+                  ? 'Không tìm thấy đơn hàng.'
+                  : 'Không thể tải chi tiết đơn hàng.')
+          );
+        }
+
+        const data = normalizeOrderLike(await res.json());
+        if (!isMounted) {
+          return;
+        }
+
+        setOrder(data);
+        setOrderStatus(normalizeOrderStatus(data.orderStatus));
+        setPaymentStatus(normalizePaymentStatus(data.paymentStatus));
+        setAdminNotes(sanitizePossiblyMojibakeText(data.notes));
+
+        if (data.customerEmail && data.customerEmail !== 'N/A') {
+          fetch(buildApiUrl(`/orders/stats/customer?email=${encodeURIComponent(data.customerEmail)}`))
+            .then((response) => response.json())
+            .then((stats) => {
+              if (isMounted) {
+                setCustomerTotalSpent(stats.totalSpent || 0);
+              }
+            })
+            .catch(() => {});
+        }
+      } catch (error) {
+        console.error('Lỗi khi fetch chi tiết đơn hàng:', error);
+        if (isMounted) {
+          setOrder(null);
+          setLoadError(error instanceof Error ? error.message : 'Không thể tải chi tiết đơn hàng.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadOrderDetail();
+
+    return () => {
+      isMounted = false;
+    };
+>>>>>>> main
   }, [id]);
 
   if (isLoading) {
@@ -74,7 +166,7 @@ export const OrderDetail: React.FC = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy đơn hàng</h2>
-            <p className="text-gray-600 mb-6">Đơn hàng bạn đang tìm không tồn tại hoặc đã bị xóa.</p>
+            <p className="text-gray-600 mb-6">{loadError || 'Đơn hàng bạn đang tìm không tồn tại hoặc đã bị xóa.'}</p>
             <Link
               to="/admin/orders"
               className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
@@ -100,6 +192,7 @@ export const OrderDetail: React.FC = () => {
 
   const handleUpdateStatus = async () => {
     try {
+<<<<<<< HEAD
       const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -111,25 +204,62 @@ export const OrderDetail: React.FC = () => {
         toast.error('Cập nhật trạng thái thất bại');
       }
     } catch (error) {
+=======
+      const res = await fetch(buildApiUrl(`/orders/${id}`), {
+        method: 'PUT',
+        headers: getAuthHeaders(true),
+        body: JSON.stringify({ orderStatus })
+      });
+      if (res.ok) {
+        setOrder((current: any) => current ? { ...current, orderStatus } : current);
+        toast.success('Trạng thái đơn hàng đã được cập nhật!');
+      } else {
+        const payload = await res.json().catch(() => ({}));
+        setOrderStatus(order.orderStatus);
+        toast.error(payload.message || 'Cập nhật trạng thái thất bại');
+      }
+    } catch (error) {
+      setOrderStatus(order.orderStatus);
+>>>>>>> main
       toast.error('Lỗi kết nối đến máy chủ');
     }
   };
 
   const handleConfirmPayment = async () => {
     if (paymentStatus === 'paid') return;
+<<<<<<< HEAD
     setIsConfirmingPayment(true);
     try {
       let res = await fetch(`http://localhost:5000/api/orders/${id}/confirm-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+=======
+    if (isCancelledOrder) {
+      toast.error('Không thể ghi nhận thanh toán cho đơn hàng đã hủy.');
+      return;
+    }
+
+    setIsConfirmingPayment(true);
+    try {
+      let res = await fetch(buildApiUrl(`/orders/${id}/confirm-payment`), {
+        method: 'POST',
+        headers: getAuthHeaders(true),
+>>>>>>> main
       });
 
       // Fallback for servers not yet exposing /confirm-payment route.
       if (res.status === 404) {
+<<<<<<< HEAD
         res = await fetch(`http://localhost:5000/api/orders/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentStatus: 'Đã thanh toán' }),
+=======
+        res = await fetch(buildApiUrl(`/orders/${id}`), {
+          method: 'PUT',
+          headers: getAuthHeaders(true),
+          body: JSON.stringify({ paymentStatus: 'paid' }),
+>>>>>>> main
         });
       }
 
@@ -162,9 +292,15 @@ export const OrderDetail: React.FC = () => {
 
   const handleSaveNotes = async () => {
     try {
+<<<<<<< HEAD
       const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+=======
+      const res = await fetch(buildApiUrl(`/orders/${id}`), {
+        method: 'PUT',
+        headers: getAuthHeaders(true),
+>>>>>>> main
         body: JSON.stringify({ notes: adminNotes })
       });
       if (res.ok) {
@@ -337,11 +473,11 @@ export const OrderDetail: React.FC = () => {
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1">{item.productName}</h3>
+                      <h3 className="font-semibold text-gray-900 mb-1">{sanitizePossiblyMojibakeText(item.productName, 'Sản phẩm')}</h3>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs text-gray-500">SKU: {item.productId}</span>
                         <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                          {item.category}
+                          {sanitizePossiblyMojibakeText(item.category, 'Sản phẩm')}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -370,7 +506,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Họ và tên</p>
-                      <p className="text-sm font-semibold text-gray-900">{order.customerName}</p>
+                      <p className="text-sm font-semibold text-gray-900">{sanitizePossiblyMojibakeText(order.customerName, 'Khách hàng')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -379,7 +515,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Email</p>
-                      <p className="text-sm text-gray-900">{order.customerEmail}</p>
+                      <p className="text-sm text-gray-900">{sanitizePossiblyMojibakeText(order.customerEmail, 'N/A')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -388,7 +524,7 @@ export const OrderDetail: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Số điện thoại</p>
-                      <p className="text-sm text-gray-900">{order.customerPhone}</p>
+                      <p className="text-sm text-gray-900">{sanitizePossiblyMojibakeText(order.customerPhone, 'N/A')}</p>
                     </div>
                   </div>
                 </div>
@@ -402,9 +538,12 @@ export const OrderDetail: React.FC = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Địa chỉ giao hàng</p>
                       <p className="text-sm text-gray-900">
-                        {order.shippingAddress.street}<br />
-                        {order.shippingAddress.ward}, {order.shippingAddress.district}<br />
-                        {order.shippingAddress.city}
+                        {formatAddressParts([
+                          order.shippingAddress.street,
+                          order.shippingAddress.ward,
+                          order.shippingAddress.district,
+                          order.shippingAddress.city,
+                        ]) || 'Chưa cập nhật địa chỉ giao hàng'}
                       </p>
                     </div>
                   </div>
@@ -535,7 +674,11 @@ export const OrderDetail: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Ghi nhận thanh toán</h2>
               {/* Payment method instructions */}
+<<<<<<< HEAD
               {paymentStatus !== 'paid' && (
+=======
+              {paymentStatus !== 'paid' && !isCancelledOrder && (
+>>>>>>> main
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
                   {order.paymentMethod === 'bank' || order.paymentMethod === 'banking' ? (
                     <>
@@ -569,6 +712,13 @@ export const OrderDetail: React.FC = () => {
                     <p className="text-xs text-green-700">Số tiền: {formatCurrency(order.total)}</p>
                   </div>
                 </div>
+<<<<<<< HEAD
+=======
+              ) : isCancelledOrder ? (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
+                  Đơn hàng đã bị hủy nên không thể ghi nhận thanh toán.
+                </div>
+>>>>>>> main
               ) : (
                 <button
                   onClick={handleConfirmPayment}

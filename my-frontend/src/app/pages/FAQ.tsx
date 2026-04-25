@@ -10,7 +10,11 @@ import {
 } from 'lucide-react';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import { toast } from 'sonner';
+<<<<<<< HEAD
 import { buildApiUrl } from '../utils/api';
+=======
+import { clearGuestOrderVerification, setGuestLookupContact, setPendingGuestOrderCode } from '../utils/guestOrderAccess';
+>>>>>>> main
 
 // ===========================
 // TYPES & INTERFACES
@@ -750,7 +754,11 @@ export const FAQ: React.FC = () => {
     e.preventDefault();
 
     const normalizedOrderCode = trackingForm.orderCode.trim().toUpperCase();
+<<<<<<< HEAD
     const normalizedEmail = trackingForm.email.trim();
+=======
+    const normalizedEmail = trackingForm.email.trim().toLowerCase();
+>>>>>>> main
     const normalizedPhone = trackingForm.phone.trim();
 
     if (!normalizedOrderCode || !normalizedEmail) {
@@ -761,6 +769,7 @@ export const FAQ: React.FC = () => {
     setIsTrackingLookupLoading(true);
 
     try {
+<<<<<<< HEAD
       const params = new URLSearchParams();
       params.set('email', normalizedEmail);
       if (normalizedPhone) {
@@ -790,6 +799,15 @@ export const FAQ: React.FC = () => {
       navigate(`/orders/${matched.id}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể tra cứu đơn hàng';
+=======
+      setGuestLookupContact(normalizedEmail, normalizedPhone);
+      clearGuestOrderVerification();
+      setPendingGuestOrderCode(normalizedOrderCode);
+      toast.success('Chúng tôi đã chuyển bạn sang bước xác thực OTP để xem đúng đơn hàng cần tra cứu.');
+      navigate('/orders');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể chuyển sang bước xác thực OTP';
+>>>>>>> main
       toast.error(message);
     } finally {
       setIsTrackingLookupLoading(false);
@@ -915,7 +933,11 @@ export const FAQ: React.FC = () => {
           {activeSupportCategory === 'tracking' && (
             <div>
               <h3 className="text-2xl text-black mb-2">Theo dõi đơn hàng realtime</h3>
+<<<<<<< HEAD
               <p className="text-gray-600 mb-5">Nhập mã đơn và email đặt hàng để xem tiến trình giao hàng như Shopee: xử lý, vận chuyển, giao thành công.</p>
+=======
+              <p className="text-gray-600 mb-5">Nhập mã đơn, email và số điện thoại để chuyển sang bước xác thực OTP email trước khi xem tiến trình giao hàng.</p>
+>>>>>>> main
 
               <form onSubmit={handleTrackingLookup} className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input

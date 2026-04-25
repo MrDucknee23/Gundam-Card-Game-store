@@ -7,5 +7,10 @@
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/.pnpm/**": true
+<<<<<<< HEAD
   }
+=======
+  },
+  "git.ignoreLimitWarning": true
+>>>>>>> main
 }

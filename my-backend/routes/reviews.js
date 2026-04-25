@@ -3,6 +3,24 @@ const router = express.Router();
 const Review = require('../models/Review');
 const Product = require('../models/Product');
 
+<<<<<<< HEAD
+=======
+const mapReviewToResponse = (review) => ({
+  id: review._id.toString(),
+  productId: review.product.toString(),
+  userId: review.user?._id?.toString() || '',
+  userName: review.user?.name || 'Ẩn danh',
+  userEmail: review.user?.email || '',
+  userAvatar: review.user?.avatar || null,
+  rating: review.rating,
+  content: review.content,
+  createdAt: review.createdAt,
+  adminReply: review.adminReply || '',
+  adminReplyAt: review.adminReplyAt,
+  adminReplyAuthor: review.adminReplyAuthor || '',
+});
+
+>>>>>>> main
 // GET /api/reviews/:productId — all reviews for a product
 router.get('/:productId', async (req, res) => {
   try {
@@ -10,6 +28,7 @@ router.get('/:productId', async (req, res) => {
       .populate('user', 'name email avatar')
       .sort({ createdAt: -1 });
 
+<<<<<<< HEAD
     const formatted = reviews.map(r => ({
       id: r._id.toString(),
       productId: r.product.toString(),
@@ -21,6 +40,9 @@ router.get('/:productId', async (req, res) => {
       content: r.content,
       createdAt: r.createdAt,
     }));
+=======
+    const formatted = reviews.map(mapReviewToResponse);
+>>>>>>> main
 
     res.json(formatted);
   } catch (err) {
@@ -65,6 +87,7 @@ router.post('/:productId', async (req, res) => {
     const saved = await review.save();
     const populated = await saved.populate('user', 'name email avatar');
 
+<<<<<<< HEAD
     res.status(201).json({
       id: populated._id.toString(),
       productId: populated.product.toString(),
@@ -76,6 +99,9 @@ router.post('/:productId', async (req, res) => {
       content: populated.content,
       createdAt: populated.createdAt,
     });
+=======
+    res.status(201).json(mapReviewToResponse(populated));
+>>>>>>> main
   } catch (err) {
     if (err.code === 11000) {
       return res.status(409).json({ message: 'Bạn đã đánh giá sản phẩm này rồi' });
@@ -84,6 +110,45 @@ router.post('/:productId', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+const upsertReviewReply = async (req, res) => {
+  try {
+    const adminReply = typeof req.body.adminReply === 'string' ? req.body.adminReply.trim() : '';
+    const adminReplyAuthor = typeof req.body.adminReplyAuthor === 'string' ? req.body.adminReplyAuthor.trim() : '';
+
+    if (adminReply.length === 0) {
+      return res.status(400).json({ message: 'Nội dung phản hồi không được để trống' });
+    }
+
+    if (adminReply.length > 2000) {
+      return res.status(400).json({ message: 'Nội dung phản hồi không được vượt quá 2000 ký tự' });
+    }
+
+    const review = await Review.findByIdAndUpdate(
+      req.params.reviewId,
+      {
+        adminReply,
+        adminReplyAt: new Date(),
+        adminReplyAuthor: adminReplyAuthor || 'Quản trị viên',
+      },
+      { new: true }
+    ).populate('user', 'name email avatar');
+
+    if (!review) {
+      return res.status(404).json({ message: 'Không tìm thấy đánh giá' });
+    }
+
+    return res.json(mapReviewToResponse(review));
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+router.put('/:reviewId/reply', upsertReviewReply);
+router.post('/:reviewId/reply', upsertReviewReply);
+
+>>>>>>> main
 // DELETE /api/reviews/:reviewId — admin delete a review
 router.delete('/:reviewId', async (req, res) => {
   try {

@@ -46,9 +46,31 @@ const getErrorMessage = async (response: Response, fallback: string) => {
 };
 
 export async function fetchCategories(): Promise<Category[]> {
+<<<<<<< HEAD
   const res = await fetch(API_URL);
   if (!res.ok) throw new Error('Không thể tải danh mục');
   return res.json();
+=======
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) {
+      throw new Error(await getErrorMessage(res, 'Không thể tải danh mục'));
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Dữ liệu danh mục trả về không hợp lệ');
+    }
+
+    return data;
+  } catch (err) {
+    if (err instanceof Error) {
+      throw err;
+    }
+
+    throw new Error('Không thể kết nối đến máy chủ danh mục');
+  }
+>>>>>>> main
 }
 
 export async function createCategory(payload: CategoryPayload): Promise<Category> {
@@ -88,7 +110,11 @@ export async function updateCategoryAttributeGroup(id: string, payload: Category
     }),
   });
   if (!res.ok) {
+<<<<<<< HEAD
     throw new Error(await getErrorMessage(res, 'Lỗi lưu nhóm thuộc tính con'));
+=======
+    throw new Error(await getErrorMessage(res, 'Lỗi lưu loại'));
+>>>>>>> main
   }
   return res.json();
 }
@@ -106,7 +132,11 @@ export async function clearCategoryAttributeGroup(id: string, category: Pick<Cat
     }),
   });
   if (!res.ok) {
+<<<<<<< HEAD
     throw new Error(await getErrorMessage(res, 'Lỗi xóa nhóm thuộc tính con'));
+=======
+    throw new Error(await getErrorMessage(res, 'Lỗi xóa loại'));
+>>>>>>> main
   }
   return res.json();
 }

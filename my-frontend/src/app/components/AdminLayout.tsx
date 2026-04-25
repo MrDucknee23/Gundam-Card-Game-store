@@ -31,7 +31,11 @@ export const AdminLayout: React.FC = () => {
     { path: '/admin/orders', label: 'Quản lý đơn hàng', icon: ReceiptText },
     { path: '/admin/users', label: 'Người dùng', icon: Users },
     { path: '/admin/inventory/inbound', label: 'Nhập hàng', icon: Truck },
+<<<<<<< HEAD
     { path: '/admin/chat-templates', label: 'Mẫu chat', icon: MessageCircleMore },
+=======
+    { path: '/admin/chat', label: 'Chat', icon: MessageCircleMore },
+>>>>>>> main
   ];
 
   const isActiveMenuItem = (path: string) => {
@@ -42,20 +46,21 @@ export const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ffffff_0%,#f5f7fb_40%,#edf2f9_100%)] text-slate-900">
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[26rem] bg-[radial-gradient(circle_at_top_left,rgba(220,20,60,0.14),transparent_32%),radial-gradient(circle_at_top_right,rgba(0,102,204,0.10),transparent_28%)]" />
       {/* Top Navigation Bar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="sticky top-0 z-50 border-b border-white/70 bg-white/72 backdrop-blur-2xl shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
         <div className="max-w-[1920px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
             <div className="flex items-center gap-4">
               <Link to="/admin" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(180deg,#ff4f74_0%,#dc143c_100%)] shadow-[0_12px_30px_rgba(220,20,60,0.28)]">
                   <span className="text-white font-bold text-lg">G</span>
                 </div>
                 <div>
-                  <h1 className="text-black font-bold text-lg leading-tight">Admin Portal</h1>
-                  <p className="text-xs text-gray-500">Gundam & Card Store</p>
+                  <h1 className="text-slate-950 font-semibold text-lg leading-tight">Admin Portal</h1>
+                  <p className="text-xs text-slate-500">Gundam & Card Store</p>
                 </div>
               </Link>
             </div>
@@ -66,6 +71,7 @@ export const AdminLayout: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
+<<<<<<< HEAD
                   className={`group flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-center transition-all duration-200 ${
                     isActiveMenuItem(item.path)
                       ? 'border-primary bg-primary text-white shadow-[0_14px_35px_rgba(227,24,55,0.22)]'
@@ -73,6 +79,15 @@ export const AdminLayout: React.FC = () => {
                   }`}
                 >
                   <item.icon className={`h-5 w-5 ${isActiveMenuItem(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-primary'}`} />
+=======
+                  className={`group flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-[26px] border px-3 py-3 text-center transition-all duration-300 ${
+                    isActiveMenuItem(item.path)
+                      ? 'border-primary/20 bg-[linear-gradient(180deg,#ff4b72_0%,#dc143c_100%)] text-white shadow-[0_18px_40px_rgba(220,20,60,0.24)]'
+                      : 'border-white/80 bg-white/65 text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_24px_rgba(15,23,42,0.04)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white hover:text-slate-950 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]'
+                  }`}
+                >
+                  <item.icon className={`h-5 w-5 ${isActiveMenuItem(item.path) ? 'text-white' : 'text-slate-400 group-hover:text-primary'}`} />
+>>>>>>> main
                   <span className="text-sm font-semibold leading-tight">{item.label}</span>
                 </Link>
               ))}
@@ -83,20 +98,20 @@ export const AdminLayout: React.FC = () => {
               {/* View Store Link */}
               <Link
                 to="/"
-                className="hidden md:block text-sm text-secondary hover:text-secondary/80 transition-colors"
+                className="hidden rounded-full border border-white/80 bg-white/70 px-4 py-2 text-sm font-medium text-secondary shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-colors hover:text-secondary/80 md:block"
               >
                 View Store →
               </Link>
 
               {/* User Info & Logout */}
-              <div className="hidden md:flex items-center gap-3 pl-4 border-l border-gray-200">
+              <div className="hidden items-center gap-3 rounded-full border border-white/80 bg-white/70 px-3 py-2 shadow-[0_10px_28px_rgba(15,23,42,0.05)] md:flex">
                 <div className="text-right">
-                  <p className="text-sm text-black font-medium">{user?.fullName}</p>
-                  <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_', ' ')}</p>
+                  <p className="text-sm text-slate-950 font-medium">{user?.fullName}</p>
+                  <p className="text-xs text-slate-500 capitalize">{user?.role?.replace('_', ' ')}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-black rounded-lg transition-all duration-200 text-sm font-medium"
+                  className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 transition-all duration-200 hover:bg-slate-200"
                 >
                   Logout
                 </button>
@@ -105,7 +120,11 @@ export const AdminLayout: React.FC = () => {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+<<<<<<< HEAD
                 className="xl:hidden p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"
+=======
+                className="rounded-2xl border border-white/80 bg-white/70 p-2 text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-colors hover:bg-white xl:hidden"
+>>>>>>> main
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {isMobileMenuOpen ? (
@@ -120,17 +139,28 @@ export const AdminLayout: React.FC = () => {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
+<<<<<<< HEAD
             <div className="xl:hidden mt-4 pt-4 border-t border-gray-200">
+=======
+            <div className="xl:hidden mt-4 pt-4 border-t border-slate-200/80">
+>>>>>>> main
               <nav className="grid gap-2 sm:grid-cols-2">
                 {menuItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
+<<<<<<< HEAD
                     className={`flex min-h-[60px] items-center gap-3 rounded-xl border px-4 py-3 font-medium transition-all duration-200 ${
                       isActiveMenuItem(item.path)
                         ? 'border-primary bg-primary text-white'
                         : 'border-transparent text-gray-700 hover:bg-gray-100 hover:text-black'
+=======
+                    className={`flex min-h-[60px] items-center gap-3 rounded-[22px] border px-4 py-3 font-medium transition-all duration-200 ${
+                      isActiveMenuItem(item.path)
+                        ? 'border-primary/20 bg-[linear-gradient(180deg,#ff4b72_0%,#dc143c_100%)] text-white'
+                        : 'border-white/80 bg-white/70 text-slate-700 hover:bg-white hover:text-slate-950'
+>>>>>>> main
                     }`}
                   >
                     <item.icon className="h-4 w-4" />
@@ -162,12 +192,12 @@ export const AdminLayout: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[1920px] mx-auto">
+      <main className="relative z-10 max-w-[1920px] mx-auto px-6 py-6">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 mt-12 bg-white">
+      <footer className="mt-12 border-t border-white/70 bg-white/72 backdrop-blur-xl">
         <div className="max-w-[1920px] mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-500">

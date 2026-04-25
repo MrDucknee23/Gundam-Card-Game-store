@@ -3,10 +3,19 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
+<<<<<<< HEAD
     "dev": "pnpm --filter my-frontend dev",
     "dev:frontend": "pnpm --filter my-frontend dev",
     "dev:backend": "pnpm --filter my-backend dev",
     "build": "pnpm --filter my-frontend build",
     "build:frontend": "pnpm --filter my-frontend build"
+=======
+    "dev": "npx pnpm --parallel --stream --filter my-backend --filter my-frontend dev",
+    "dev:all": "npx pnpm --parallel --stream --filter my-backend --filter my-frontend dev",
+    "dev:frontend": "npx pnpm --filter my-frontend dev",
+    "dev:backend": "npx pnpm --filter my-backend dev",
+    "build": "npx pnpm --filter my-frontend build",
+    "build:frontend": "npx pnpm --filter my-frontend build"
+>>>>>>> main
   }
 }

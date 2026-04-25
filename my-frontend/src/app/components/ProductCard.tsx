@@ -6,6 +6,11 @@ import { Badge } from './ui/badge';
 import { formatPrice } from '../utils/format';
 import { limitedToast } from '../utils/limitedToast';
 import { isWishlisted, toggleWishlist } from '../utils/wishlist';
+<<<<<<< HEAD
+=======
+import { useCart } from '../context/CartContext';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
+>>>>>>> main
 
 interface ProductCardProps {
   product: Product;
@@ -43,7 +48,15 @@ const getGradeColor = (grade?: string) => {
 
 export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) => {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const [isFavorite, setIsFavorite] = useState(false);
+=======
+  const { addToCart, getAvailableStock } = useCart();
+  const [isFavorite, setIsFavorite] = useState(false);
+  const primaryImage = resolveProductImageUrl(product.images?.[0]);
+  const availableStock = getAvailableStock(product);
+  const isSoldOut = availableStock <= 0;
+>>>>>>> main
 
   const isCardProduct = product.category === 'pokemon' || product.category === 'onepiece';
   const isGundamProduct = product.category === 'gundam';
@@ -55,7 +68,41 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/product/${product.id}`);
+
+    const result = addToCart(product, 1);
+    if (!result.ok) {
+      limitedToast.error(result.message || 'Không thể thêm vào giỏ hàng');
+      return;
+    }
+
+    limitedToast.success('Đã thêm sản phẩm vào giỏ hàng');
+    navigate('/cart');
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const result = addToCart(product, 1);
+    if (!result.ok) {
+      limitedToast.error(result.message || 'Không thể mua sản phẩm này');
+      return;
+    }
+
+    navigate('/checkout');
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const nextState = toggleWishlist(product.id);
+      setIsFavorite(nextState);
+      limitedToast.success(nextState ? 'Đã thêm vào yêu thích' : 'Đã bỏ yêu thích');
+    } catch {
+      limitedToast.error('Không thể cập nhật yêu thích của sản phẩm này');
+    }
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -116,6 +163,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
           </button>
 
           <div className="w-full h-full rounded-xl overflow-hidden">
+<<<<<<< HEAD
             <img
               src={product.images?.[0] || ''}
               alt={product.name}
@@ -132,6 +180,38 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
                 ease-out
               "
             />
+=======
+            {primaryImage ? (
+              <div className="relative h-full w-full">
+                <img
+                  src={primaryImage}
+                  alt={product.name}
+                  decoding="async"
+                  onError={withImageFallback}
+                  className={`
+                    w-full 
+                    h-full 
+                    object-cover 
+                    transition-all 
+                    duration-700 
+                    ease-out
+                    ${isSoldOut ? 'brightness-50 grayscale-[0.35]' : 'group-hover:scale-110'}
+                  `}
+                />
+                {isSoldOut && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <span className="rounded-full bg-primary px-4 py-2 text-sm font-bold uppercase tracking-[0.2em] text-white shadow-lg">
+                      Sold out
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gray-100 text-center text-sm font-medium text-gray-400">
+                No image available
+              </div>
+            )}
+>>>>>>> main
           </div>
           
           {product.grade && (
@@ -172,11 +252,12 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
         </div>
 
         {/* CONTENT AREA */}
-        <div className="p-5 flex flex-col flex-grow">
+        <div className="p-4 sm:p-5 flex flex-col flex-grow">
           
           <h3 
             className="
-              text-lg
+              text-base
+              sm:text-lg
               font-bold
               text-black 
               line-clamp-2 
@@ -203,10 +284,11 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
             </span>
           </div>
           
-          <div className="pt-5">
+          <div className="pt-3 sm:pt-5">
             <p 
               className="
-                text-2xl 
+                text-xl
+                sm:text-2xl 
                 font-bold 
                 text-primary
                 tracking-tight
@@ -216,13 +298,23 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
             </p>
           </div>
 
-          <div className="pt-3">
+          <div className="pt-2 sm:pt-3 space-y-2">
+            <button
+              onClick={handleBuyNow}
+              disabled={isSoldOut}
+              className="w-full rounded-xl bg-primary px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-semibold text-white transition-all duration-300 hover:scale-[1.02] hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(227,24,55,0.35)] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:scale-100 disabled:hover:shadow-none"
+            >
+              Mua ngay
+            </button>
             <button
               onClick={handleAddToCart}
+              disabled={isSoldOut}
               className={`
                 w-full
-                px-6 
-                py-3
+                px-4
+                sm:px-6 
+                py-2.5
+                sm:py-3
                 bg-white
                 border-2 
                 ${isGundamProduct ? 'border-primary text-primary' : 'border-secondary text-secondary'}
@@ -232,6 +324,10 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
                 transition-all 
                 duration-300
                 hover:scale-[1.02]
+<<<<<<< HEAD
+=======
+                disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:scale-100
+>>>>>>> main
                 ${isGundamProduct 
                   ? 'hover:bg-primary hover:text-white hover:shadow-[0_0_20px_rgba(227,24,55,0.4)]' 
                   : 'hover:bg-secondary hover:text-white hover:shadow-[0_0_20px_rgba(0,102,204,0.4)]'
@@ -248,12 +344,12 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({ product }) 
                 className={`
                   text-xs 
                   font-medium
-                  ${product.stock > 0 ? 'text-gray-500' : 'text-primary'}
+                  ${availableStock > 0 ? 'text-gray-500' : 'text-primary'}
                 `}
               >
-                {product.stock > 0 ? `Còn hàng: ${product.stock}` : 'Hết hàng'}
+                {availableStock > 0 ? `Còn hàng: ${availableStock}` : 'Hết hàng'}
               </span>
-              {product.stock > 0 && (
+              {availableStock > 0 && (
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
               )}
             </div>

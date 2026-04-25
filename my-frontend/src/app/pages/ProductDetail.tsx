@@ -5,7 +5,11 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
+<<<<<<< HEAD
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+=======
+import { ChevronLeft, Star } from 'lucide-react';
+>>>>>>> main
 import { toast } from 'sonner';
 import { fetchProductById, fetchProducts } from '../utils/productApi';
 import { fetchReviews, createReview, Review } from '../utils/reviewApi';
@@ -19,6 +23,10 @@ import {
   CarouselPrevious,
 } from '../components/ui/carousel';
 import { ProductCard } from '../components/ProductCard';
+<<<<<<< HEAD
+=======
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
+>>>>>>> main
 
 // ─── Avatar helper ───
 const UserAvatar: React.FC<{ name: string; avatar?: string | null; size?: number }> = ({
@@ -109,7 +117,14 @@ export const ProductDetail: React.FC = () => {
 
   // Related products
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+<<<<<<< HEAD
   const [relatedIndex, setRelatedIndex] = useState(0);
+=======
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id]);
+>>>>>>> main
 
   useEffect(() => {
     if (!id) {
@@ -152,8 +167,11 @@ export const ProductDetail: React.FC = () => {
       .slice(0, 12);
   }, [allProducts, product]);
 
+<<<<<<< HEAD
   const maxRelatedIndex = Math.max(0, relatedProducts.length - 4);
 
+=======
+>>>>>>> main
   useEffect(() => {
     if (!carouselApi) return;
 
@@ -179,7 +197,10 @@ export const ProductDetail: React.FC = () => {
   useEffect(() => {
     setSelectedImage(0);
     setQuantity(1);
+<<<<<<< HEAD
     setRelatedIndex(0);
+=======
+>>>>>>> main
     setActiveTab('description');
   }, [product?.id]);
 
@@ -200,12 +221,20 @@ export const ProductDetail: React.FC = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
+<<<<<<< HEAD
           <h1 className="text-2xl font-bold mb-4 text-black">Product not found</h1>
+=======
+          <h1 className="text-2xl font-bold mb-4 text-black">Không tìm thấy sản phẩm</h1>
+>>>>>>> main
           <button
             onClick={() => navigate('/shop')}
             className="text-primary hover:underline"
           >
+<<<<<<< HEAD
             Return to Shop
+=======
+            Quay về cửa hàng
+>>>>>>> main
           </button>
         </div>
       </div>
@@ -244,16 +273,35 @@ export const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (product.stock < quantity) {
+<<<<<<< HEAD
       toast.error('Not enough stock available');
       return;
     }
     addToCart(product, quantity);
+=======
+      toast.error('Số lượng vượt quá tồn kho hiện tại');
+      return;
+    }
+    const result = addToCart(product, quantity);
+    if (!result.ok) {
+      toast.error(result.message || 'Không thể thêm vào giỏ hàng');
+      return;
+    }
+>>>>>>> main
     toast.success('Đã thêm vào giỏ hàng');
   };
 
   const handleBuyNow = () => {
     if (product.stock === 0) return;
+<<<<<<< HEAD
     addToCart(product, quantity);
+=======
+    const result = addToCart(product, quantity);
+    if (!result.ok) {
+      toast.error(result.message || 'Không thể mua sản phẩm này');
+      return;
+    }
+>>>>>>> main
     navigate('/checkout');
   };
 
@@ -309,8 +357,14 @@ export const ProductDetail: React.FC = () => {
                   <CarouselItem key={`${product.id}-${index}`}>
                     <div className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
                       <img
+<<<<<<< HEAD
                         src={image}
                         alt={`${product.name} ${index + 1}`}
+=======
+                        src={resolveProductImageUrl(image)}
+                        alt={`${product.name} ${index + 1}`}
+                        onError={withImageFallback}
+>>>>>>> main
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -341,8 +395,14 @@ export const ProductDetail: React.FC = () => {
                   `}
                 >
                   <img
+<<<<<<< HEAD
                     src={image}
                     alt={`${product.name} ${index + 1}`}
+=======
+                    src={resolveProductImageUrl(image)}
+                    alt={`${product.name} ${index + 1}`}
+                    onError={withImageFallback}
+>>>>>>> main
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -383,25 +443,41 @@ export const ProductDetail: React.FC = () => {
                 <div className="space-y-2">
                   {product.grade && (
                     <div className="flex justify-between">
+<<<<<<< HEAD
                       <span className="text-gray-600">Grade:</span>
+=======
+                      <span className="text-gray-600">Cấp độ:</span>
+>>>>>>> main
                       <span className="font-semibold text-gray-900">{product.grade}</span>
                     </div>
                   )}
                   {product.scale && (
                     <div className="flex justify-between">
+<<<<<<< HEAD
                       <span className="text-gray-600">Scale:</span>
+=======
+                      <span className="text-gray-600">Tỷ lệ:</span>
+>>>>>>> main
                       <span className="font-semibold text-gray-900">{product.scale}</span>
                     </div>
                   )}
                   {product.material && (
                     <div className="flex justify-between">
+<<<<<<< HEAD
                       <span className="text-gray-600">Material:</span>
+=======
+                      <span className="text-gray-600">Chất liệu:</span>
+>>>>>>> main
                       <span className="font-semibold text-gray-900">{product.material}</span>
                     </div>
                   )}
                   {product.cardType && (
                     <div className="flex justify-between">
+<<<<<<< HEAD
                       <span className="text-gray-600">Card Type:</span>
+=======
+                      <span className="text-gray-600">Loại thẻ:</span>
+>>>>>>> main
                       <span className="font-semibold text-gray-900">{product.cardType}</span>
                     </div>
                   )}
@@ -424,11 +500,25 @@ export const ProductDetail: React.FC = () => {
                   min="1"
                   max={product.stock}
                   value={quantity}
+<<<<<<< HEAD
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+=======
+                  onChange={(e) => {
+                    const parsedQuantity = parseInt(e.target.value, 10);
+                    const safeQuantity = Number.isFinite(parsedQuantity)
+                      ? Math.min(Math.max(1, parsedQuantity), Math.max(1, product.stock))
+                      : 1;
+                    setQuantity(safeQuantity);
+                  }}
+>>>>>>> main
                   className="w-20 text-center bg-white border-gray-300 text-black"
                 />
                 <button
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+<<<<<<< HEAD
+=======
+                  disabled={quantity >= product.stock}
+>>>>>>> main
                   className="w-10 h-10 rounded-lg border-2 border-gray-300 bg-white text-black hover:border-primary transition-colors"
                 >
                   +
@@ -592,6 +682,26 @@ export const ProductDetail: React.FC = () => {
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed break-words">{review.content}</p>
+<<<<<<< HEAD
+=======
+                      {review.adminReply && (
+                        <div className="mt-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-semibold text-primary">
+                              {review.adminReplyAuthor || 'Quản trị viên'} đã phản hồi
+                            </p>
+                            {review.adminReplyAt && (
+                              <span className="text-xs text-gray-500">
+                                {new Date(review.adminReplyAt).toLocaleDateString('vi-VN')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
+                            {review.adminReply}
+                          </p>
+                        </div>
+                      )}
+>>>>>>> main
                     </div>
                   ))}
                 </div>
@@ -605,6 +715,7 @@ export const ProductDetail: React.FC = () => {
           <div className="mt-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Sản phẩm liên quan</h2>
+<<<<<<< HEAD
               <div className="flex gap-2">
                 <button
                   onClick={() => setRelatedIndex((i) => Math.max(0, i - 1))}
@@ -633,6 +744,15 @@ export const ProductDetail: React.FC = () => {
                   </div>
                 ))}
               </div>
+=======
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {relatedProducts.map((p) => (
+                <div key={p.id} className="min-w-0">
+                  <ProductCard product={p} />
+                </div>
+              ))}
+>>>>>>> main
             </div>
           </div>
         )}

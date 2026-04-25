@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { X, Upload, Trash2 } from 'lucide-react';
 import { Product, ProductCategory, GundamGrade, CardRarity } from '../types/product';
 import { useCategories } from '../hooks/useCategories';
+<<<<<<< HEAD
+=======
+import { toast } from 'sonner';
+import { uploadProductFiles } from '../utils/productApi';
+>>>>>>> main
 
 const MAX_PRODUCT_IMAGES = 10;
 
@@ -59,6 +64,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       return {
         ...prev,
         images: nextImages,
+<<<<<<< HEAD
       };
     });
 
@@ -73,8 +79,29 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         const newImages = [...formData.images];
         newImages[index] = reader.result as string;
         setFormData(prev => ({ ...prev, images: newImages }));
+=======
+>>>>>>> main
       };
-      reader.readAsDataURL(file);
+    });
+
+    setSelectedMainImage(0);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const [uploadedImage] = await uploadProductFiles([file]);
+      const newImages = [...formData.images];
+      newImages[index] = uploadedImage;
+      setFormData(prev => ({ ...prev, images: newImages }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Khong the tai anh len');
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -86,8 +113,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     }
   };
 
-  const handleAddImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+<<<<<<< HEAD
     if (file && formData.images.length < MAX_PRODUCT_IMAGES) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -97,6 +125,22 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         }));
       };
       reader.readAsDataURL(file);
+=======
+    if (!file || formData.images.length >= MAX_PRODUCT_IMAGES) {
+      return;
+    }
+
+    try {
+      const [uploadedImage] = await uploadProductFiles([file]);
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, uploadedImage]
+      }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Khong the tai anh len');
+    } finally {
+      e.target.value = '';
+>>>>>>> main
     }
   };
 

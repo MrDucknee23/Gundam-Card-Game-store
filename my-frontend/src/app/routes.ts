@@ -1,15 +1,8 @@
 import { createBrowserRouter } from 'react-router';
 import { Layout } from './components/Layout';
 import { ProtectedAdminLayout } from './components/ProtectedAdminLayout';
-import { Home } from './pages/Home';
-import { Shop } from './pages/Shop';
-import { ProductDetail } from './pages/ProductDetail';
-import { Cart } from './pages/Cart';
-import { Checkout } from './pages/Checkout';
-import { Login } from './pages/Login';
-import { AdminLoginWrapper } from './pages/AdminLoginWrapper';
-import { Profile } from './pages/Profile';
 import { About } from './pages/About';
+<<<<<<< HEAD
 import { Contact } from './pages/Contact';
 import { FAQ } from './pages/FAQ';
 import { ReturnPolicy } from './pages/ReturnPolicy';
@@ -28,8 +21,44 @@ import { AdminChatTemplates } from './pages/AdminChatTemplates';
 import { ManageOrders } from './pages/ManageOrders';
 import { OrderDetail } from './pages/OrderDetail';
 import { InventoryInbound } from './pages/InventoryInbound';
+=======
+import { AddProduct } from './pages/AddProduct';
+import { AdminAnalytics } from './pages/AdminAnalytics';
+import { AdminCategories } from './pages/AdminCategories';
+import { AdminLiveChat } from './pages/AdminLiveChat';
+import { AdminChatTemplates } from './pages/AdminChatTemplates';
+import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminLoginWrapper } from './pages/AdminLoginWrapper';
+import { AdminStatistics } from './pages/AdminStatistics';
+import { AdminUsers } from './pages/AdminUsers';
+import { AuthCallback } from './pages/AuthCallback';
+import { Cart } from './pages/Cart';
+import { Checkout } from './pages/Checkout';
+import { Contact } from './pages/Contact';
+import { FAQ } from './pages/FAQ';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { Home } from './pages/Home';
+>>>>>>> main
 import { InboundDetail } from './pages/InboundDetail';
+import { InventoryInbound } from './pages/InventoryInbound';
+import { Login } from './pages/Login';
+import { ManageOrders } from './pages/ManageOrders';
+import { ManageProductsEnhanced } from './pages/ManageProductsEnhanced';
+import { MyOrders } from './pages/MyOrders';
 import { NotFound } from './pages/NotFound';
+import { OrderDetail } from './pages/OrderDetail';
+import { OrderTracking } from './pages/OrderTracking';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { ProductDetail } from './pages/ProductDetail';
+import { ProductDetails } from './pages/ProductDetails';
+import { Profile } from './pages/Profile';
+import { PurchaseGuide } from './pages/PurchaseGuide';
+import { ResetPassword } from './pages/ResetPassword';
+import { ReturnPolicy } from './pages/ReturnPolicy';
+import { ShippingPolicy } from './pages/ShippingPolicy';
+import { Shop } from './pages/Shop';
+import { SupportChat } from './pages/SupportChat';
+import { TermsOfUse } from './pages/TermsOfUse';
 
 export const router = createBrowserRouter([
   {
@@ -42,14 +71,24 @@ export const router = createBrowserRouter([
       { path: 'cart', Component: Cart },
       { path: 'checkout', Component: Checkout },
       { path: 'login', Component: Login },
+      { path: 'forgot-password', Component: ForgotPassword },
+      { path: 'reset-password', Component: ResetPassword },
+      { path: 'auth/callback', Component: AuthCallback },
       { path: 'profile', Component: Profile },
       { path: 'about', Component: About },
       { path: 'contact', Component: Contact },
       { path: 'faq', Component: FAQ },
       { path: 'return-policy', Component: ReturnPolicy },
       { path: 'shipping-policy', Component: ShippingPolicy },
+<<<<<<< HEAD
+=======
+      { path: 'purchase-guide', Component: PurchaseGuide },
+      { path: 'terms-of-use', Component: TermsOfUse },
+      { path: 'privacy-policy', Component: PrivacyPolicy },
+>>>>>>> main
       { path: 'orders', Component: MyOrders },
       { path: 'orders/:id', Component: OrderTracking },
+      { path: 'support-chat', Component: SupportChat },
       { path: '*', Component: NotFound }
     ]
   },
@@ -71,6 +110,10 @@ export const router = createBrowserRouter([
       { path: 'users', Component: AdminUsers },
       { path: 'categories', Component: AdminCategories },
       { path: 'category-attributes', Component: AdminCategories },
+<<<<<<< HEAD
+=======
+      { path: 'chat', Component: AdminLiveChat },
+>>>>>>> main
       { path: 'chat-templates', Component: AdminChatTemplates },
       { path: 'statistics', Component: AdminStatistics },
       { path: 'analytics', Component: AdminAnalytics },

@@ -8,6 +8,22 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '../utils/format';
+<<<<<<< HEAD
+=======
+import { buildApiUrl } from '../utils/api';
+import { buildGuestOrderHeaders, clearGuestOrderVerification, getStoredGuestOrderAccess } from '../utils/guestOrderAccess';
+import {
+  formatAddressParts,
+  getPaymentMethodLabel,
+  getPaymentStatusLabel,
+  normalizeOrderLike,
+  normalizeOrderStatus,
+  sanitizePossiblyMojibakeText,
+} from '../utils/orderDisplay';
+
+const USER_ORDER_API = (id: string) => buildApiUrl(`/user/orders/${id}`);
+const GUEST_ORDER_API = (id: string) => buildApiUrl(`/guest/orders/${id}`);
+>>>>>>> main
 
 interface EditForm {
   recipientName:  string;
@@ -147,6 +163,7 @@ export const OrderTracking: React.FC = () => {
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
+<<<<<<< HEAD
     const guestEmail = localStorage.getItem('guestOrderEmail') || '';
     const guestPhone = localStorage.getItem('guestOrderPhone') || '';
     const user = userStr ? JSON.parse(userStr) : null;
@@ -187,6 +204,82 @@ export const OrderTracking: React.FC = () => {
         setErrorMessage(err.message || 'Không tìm thấy đơn hàng');
         setIsLoading(false);
       });
+=======
+    const storedToken = localStorage.getItem('authToken') || '';
+    const user = userStr ? JSON.parse(userStr) : null;
+    const guestAccess = getStoredGuestOrderAccess();
+
+    if (user?.email && storedToken) {
+      // USER đã đăng nhập: gọi /api/user/orders/:id với JWT
+      fetch(USER_ORDER_API(id!), {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${storedToken}` },
+      })
+        .then((res) => {
+          if (res.status === 403 || res.status === 401) throw new Error('Bạn chỉ có thể xem đơn hàng của chính mình');
+          if (!res.ok) throw new Error('Không tìm thấy đơn hàng');
+          return res.json();
+        })
+        .then((data) => {
+          const normalizedOrder = normalizeOrderLike(data);
+          setOrder(normalizedOrder);
+          setOrderStatus(normalizeOrderStatus(normalizedOrder.orderStatus));
+          setShippingInfo({
+            recipientName: normalizedOrder.customerName,
+            recipientPhone: normalizedOrder.customerPhone,
+            street: normalizedOrder.shippingAddress.street,
+            ward: normalizedOrder.shippingAddress.ward,
+            district: normalizedOrder.shippingAddress.district,
+            city: normalizedOrder.shippingAddress.city,
+          });
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          setErrorMessage(sanitizePossiblyMojibakeText(err.message, 'Không tìm thấy đơn hàng'));
+          setIsLoading(false);
+        });
+      return;
+    }
+
+    if (guestAccess.accessToken) {
+      // GUEST đã xác thực OTP: gọi /api/guest/orders/:id với guest access token
+      fetch(GUEST_ORDER_API(id!), {
+        cache: 'no-store',
+        headers: buildGuestOrderHeaders(),
+      })
+        .then((res) => {
+          if (res.status === 401 || res.status === 403) {
+            clearGuestOrderVerification();
+            throw new Error('Phiên xác thực OTP đã hết hạn. Vui lòng xác thực lại tại trang lịch sử đơn hàng.');
+          }
+          if (!res.ok) throw new Error('Không tìm thấy đơn hàng');
+          return res.json();
+        })
+        .then((data) => {
+          const normalizedOrder = normalizeOrderLike(data);
+          setOrder(normalizedOrder);
+          setOrderStatus(normalizeOrderStatus(normalizedOrder.orderStatus));
+          setShippingInfo({
+            recipientName: normalizedOrder.customerName,
+            recipientPhone: normalizedOrder.customerPhone,
+            street: normalizedOrder.shippingAddress.street,
+            ward: normalizedOrder.shippingAddress.ward,
+            district: normalizedOrder.shippingAddress.district,
+            city: normalizedOrder.shippingAddress.city,
+          });
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          setErrorMessage(sanitizePossiblyMojibakeText(err.message, 'Không tìm thấy đơn hàng'));
+          setIsLoading(false);
+        });
+      return;
+    }
+
+    // Không có auth → yêu cầu xác thực
+    setErrorMessage('Vui lòng xác thực OTP tại trang lịch sử đơn hàng trước khi xem chi tiết đơn guest');
+    setIsLoading(false);
+>>>>>>> main
   }, [id]);
 
   if (isLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Đang tải dữ liệu...</div>;
@@ -216,6 +309,7 @@ export const OrderTracking: React.FC = () => {
   const cfg              = STATUS_CONFIG[orderStatus];
   const StatusIcon       = cfg.icon;
 
+<<<<<<< HEAD
   const handleSaveEdit = async (form: EditForm) => {
     try {
       const res = await fetch(`http://localhost:5000/api/orders/${order.id}`, {
@@ -240,18 +334,69 @@ export const OrderTracking: React.FC = () => {
     } catch (error) {
       toast.error('Lỗi kết nối máy chủ');
     }
+=======
+  const buildMutationHeaders = () => {
+    const token = localStorage.getItem('authToken') || '';
+    const baseHeaders = { 'Content-Type': 'application/json' };
+
+    if (token) {
+      return {
+        ...baseHeaders,
+        Authorization: `Bearer ${token}`,
+      };
+    }
+
+    return buildGuestOrderHeaders(baseHeaders);
+>>>>>>> main
   };
 
-  const handleConfirmCancel = () => {
-    fetch(`http://localhost:5000/api/orders/${order.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderStatus: 'cancelled' })
-    }).then(() => {
+  const handleSaveEdit = async (form: EditForm) => {
+    try {
+      const res = await fetch(buildApiUrl(`/orders/${order.id}`), {
+        method: 'PUT',
+        headers: buildMutationHeaders(),
+        body: JSON.stringify({
+          customer: {
+            name: form.recipientName,
+            phone: form.recipientPhone,
+            email: order.customerEmail, // Giữ nguyên email
+            address: `${form.street}, ${form.ward}, ${form.district}, ${form.city}`
+          }
+        })
+      });
+      if (res.ok) {
+        setShippingInfo(form);
+        setShowEdit(false);
+        toast.success('Cập nhật thông tin nhận hàng thành công!');
+      } else {
+        const payload = await res.json().catch(() => ({ message: '' }));
+        toast.error(sanitizePossiblyMojibakeText(payload.message, 'Cập nhật thất bại, vui lòng thử lại.'));
+      }
+    } catch (error) {
+      toast.error('Lỗi kết nối máy chủ');
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      const res = await fetch(buildApiUrl(`/orders/${order.id}`), {
+        method: 'PUT',
+        headers: buildMutationHeaders(),
+        body: JSON.stringify({ orderStatus: 'cancelled' }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({ message: '' }));
+        toast.error(sanitizePossiblyMojibakeText(payload.message, 'Hủy đơn thất bại, vui lòng thử lại.'));
+        return;
+      }
+
       setOrderStatus('cancelled');
       setShowCancel(false);
       toast.success('Đơn hàng đã được hủy thành công.');
-    });
+    } catch (error) {
+      toast.error('Lỗi kết nối máy chủ');
+    }
   };
 
   return (
@@ -294,16 +439,18 @@ export const OrderTracking: React.FC = () => {
             <h2 className="font-bold text-gray-900 mb-8">Tiến trình đơn hàng</h2>
             <div className="relative">
               <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-200">
-                <div className="h-full bg-primary transition-all duration-700" style={{ width: currentStepIndex > 0 ? `${(currentStepIndex / (TIMELINE.length - 1)) * 100}%` : '0%' }} />
+                  <div className="h-full bg-primary transition-all duration-700" style={{ width: currentStepIndex >= TIMELINE.length - 1 ? '100%' : currentStepIndex > 0 ? `${(currentStepIndex / (TIMELINE.length - 1)) * 100}%` : '0%' }} />
               </div>
               <div className="relative flex justify-between">
                 {TIMELINE.map((step, i) => {
-                  const Icon   = step.icon;
-                  const done   = i < currentStepIndex;
-                  const active = i === currentStepIndex;
+                  const Icon      = step.icon;
+                  const done      = i < currentStepIndex;
+                  const active    = i === currentStepIndex;
+                  const isLast    = i === TIMELINE.length - 1;
+                  const filledRed = done || (active && isLast);
                   return (
                     <div key={step.key} className="flex flex-col items-center gap-2 w-1/3">
-                      <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center z-10 transition-all ${done ? 'bg-primary border-primary text-white' : active ? 'bg-white border-primary text-primary shadow-md shadow-primary/20' : 'bg-white border-gray-200 text-gray-300'}`}>
+                      <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center z-10 transition-all ${filledRed ? 'bg-primary border-primary text-white' : active ? 'bg-white border-primary text-primary shadow-md shadow-primary/20' : 'bg-white border-gray-200 text-gray-300'}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="text-center px-1">
@@ -335,8 +482,8 @@ export const OrderTracking: React.FC = () => {
                   <div key={i} className="flex gap-3 pb-4 border-b border-gray-100 last:pb-0 last:border-0">
                     <img src={item.productImage} alt={item.productName} className="w-16 h-16 rounded-xl object-cover border border-gray-100 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm leading-tight">{item.productName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{item.category}</p>
+                      <p className="font-semibold text-gray-900 text-sm leading-tight">{sanitizePossiblyMojibakeText(item.productName, 'Sản phẩm')}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{sanitizePossiblyMojibakeText(item.category, 'Sản phẩm')}</p>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-gray-500">{formatCurrency(item.price)} × {item.quantity}</p>
                         <p className="text-sm font-bold text-gray-900">{formatCurrency(item.price * item.quantity)}</p>
@@ -361,14 +508,14 @@ export const OrderTracking: React.FC = () => {
                   <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0"><User className="w-4 h-4 text-blue-600" /></div>
                   <div>
                     <p className="text-xs text-gray-400">Người nhận</p>
-                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{shippingInfo.recipientName}</p>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{sanitizePossiblyMojibakeText(shippingInfo.recipientName, 'Khách hàng')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-green-50 rounded-lg flex-shrink-0"><Phone className="w-4 h-4 text-green-600" /></div>
                   <div>
                     <p className="text-xs text-gray-400">Số điện thoại</p>
-                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{shippingInfo.recipientPhone}</p>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{sanitizePossiblyMojibakeText(shippingInfo.recipientPhone, 'N/A')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -376,8 +523,12 @@ export const OrderTracking: React.FC = () => {
                   <div>
                     <p className="text-xs text-gray-400">Địa chỉ giao hàng</p>
                     <p className="text-sm font-semibold text-gray-900 mt-0.5">
-                      {shippingInfo.street}, {shippingInfo.ward},<br />
-                      {shippingInfo.district}, {shippingInfo.city}
+                      {formatAddressParts([
+                        shippingInfo.street,
+                        shippingInfo.ward,
+                        shippingInfo.district,
+                        shippingInfo.city,
+                      ]) || 'Chưa cập nhật địa chỉ giao hàng'}
                     </p>
                   </div>
                 </div>
@@ -406,6 +557,7 @@ export const OrderTracking: React.FC = () => {
                 <div>
                   <p className="text-xs text-gray-400">Phương thức</p>
                 <p className="text-sm font-semibold text-gray-900 mt-0.5">
+<<<<<<< HEAD
                   {order.paymentMethod === 'bank_transfer'
                     ? 'Chuyển khoản ngân hàng'
                     : order.paymentMethod === 'cod'
@@ -415,9 +567,12 @@ export const OrderTracking: React.FC = () => {
                         : order.paymentMethod === 'zalopay'
                           ? 'ZaloPay'
                           : 'Thẻ tín dụng / ghi nợ'}
+=======
+                  {getPaymentMethodLabel(order.paymentMethod)}
+>>>>>>> main
                 </p>
                   <span className={`inline-block mt-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : order.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                    {order.paymentStatus === 'paid' ? 'Đã thanh toán' : order.paymentStatus === 'pending' ? 'Chờ thanh toán' : 'Thanh toán lỗi'}
+                    {getPaymentStatusLabel(order.paymentStatus)}
                   </span>
                 </div>
               </div>

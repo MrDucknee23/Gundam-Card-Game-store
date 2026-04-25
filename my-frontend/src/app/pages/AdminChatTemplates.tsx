@@ -14,6 +14,11 @@ interface ChatTemplate {
   updatedAt: string;
 }
 
+<<<<<<< HEAD
+=======
+type TemplateSeedSignature = Pick<ChatTemplate, 'category' | 'keyword' | 'response'>;
+
+>>>>>>> main
 const DEFAULT_TEMPLATES: ChatTemplate[] = [
   {
     id: '1',
@@ -65,8 +70,36 @@ const DEFAULT_TEMPLATES: ChatTemplate[] = [
   }
 ];
 
+<<<<<<< HEAD
 const CATEGORIES = ['Tất cả', 'Sản phẩm', 'Vận chuyển', 'Thanh toán', 'Đổi trả', 'Bảo hành', 'Khuyến mãi', 'Khác'];
 
+=======
+const DEFAULT_TEMPLATE_SIGNATURES: TemplateSeedSignature[] = DEFAULT_TEMPLATES.map(({ category, keyword, response }) => ({
+  category,
+  keyword,
+  response,
+}));
+
+const CATEGORIES = ['Tất cả', 'Sản phẩm', 'Vận chuyển', 'Thanh toán', 'Đổi trả', 'Bảo hành', 'Khuyến mãi', 'Khác'];
+
+const isSeededDefaultTemplates = (items: unknown): items is ChatTemplate[] => {
+  if (!Array.isArray(items) || items.length !== DEFAULT_TEMPLATE_SIGNATURES.length) {
+    return false;
+  }
+
+  return DEFAULT_TEMPLATE_SIGNATURES.every((seed) => items.some((item) => (
+    typeof item === 'object'
+    && item !== null
+    && 'category' in item
+    && 'keyword' in item
+    && 'response' in item
+    && item.category === seed.category
+    && item.keyword === seed.keyword
+    && item.response === seed.response
+  )));
+};
+
+>>>>>>> main
 export const AdminChatTemplates: React.FC = () => {
   const [templates, setTemplates] = useState<ChatTemplate[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,6 +112,7 @@ export const AdminChatTemplates: React.FC = () => {
   // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
+<<<<<<< HEAD
     if (stored) {
       try {
         setTemplates(JSON.parse(stored));
@@ -88,6 +122,34 @@ export const AdminChatTemplates: React.FC = () => {
     } else {
       setTemplates(DEFAULT_TEMPLATES);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TEMPLATES));
+=======
+    if (!stored) {
+      setTemplates([]);
+      return;
+    }
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+
+        if (!Array.isArray(parsed)) {
+          setTemplates([]);
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+
+        if (isSeededDefaultTemplates(parsed)) {
+          setTemplates([]);
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+
+        setTemplates(parsed);
+      } catch {
+        setTemplates([]);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+>>>>>>> main
     }
   }, []);
 
@@ -121,7 +183,11 @@ export const AdminChatTemplates: React.FC = () => {
           : t
       );
       saveTemplates(updated);
+<<<<<<< HEAD
       toast.success('Đã cập nhật mẫu trả lời!');
+=======
+      toast.success('Đã cập nhật câu trả lời!');
+>>>>>>> main
     } else {
       const newTemplate: ChatTemplate = {
         id: Date.now().toString(),
@@ -130,7 +196,11 @@ export const AdminChatTemplates: React.FC = () => {
         updatedAt: now
       };
       saveTemplates([newTemplate, ...templates]);
+<<<<<<< HEAD
       toast.success('Đã thêm mẫu trả lời mới!');
+=======
+      toast.success('Đã thêm câu trả lời mới!');
+>>>>>>> main
     }
     setIsModalOpen(false);
   };
@@ -142,7 +212,11 @@ export const AdminChatTemplates: React.FC = () => {
   const confirmDelete = () => {
     if (!deleteTarget) return;
     saveTemplates(templates.filter(t => t.id !== deleteTarget.id));
+<<<<<<< HEAD
     toast.success('Đã xóa mẫu trả lời');
+=======
+    toast.success('Đã xóa câu trả lời');
+>>>>>>> main
     setDeleteTarget(null);
   };
 
@@ -166,23 +240,37 @@ export const AdminChatTemplates: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
+<<<<<<< HEAD
         <Breadcrumb items={[{ label: 'Admin', href: '/admin' }, { label: 'Mẫu trả lời Live Chat' }]} />
+=======
+        <Breadcrumb items={[{ label: 'Admin', href: '/admin' }, { label: 'Trả lời Live Chat' }]} />
+>>>>>>> main
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <MessageCircle className="w-8 h-8 text-primary" />
+<<<<<<< HEAD
               Mẫu trả lời Live Chat
             </h1>
             <p className="text-gray-600 mt-1">Quản lý các mẫu câu trả lời nhanh cho hỗ trợ khách hàng</p>
+=======
+              Trả lời Live Chat
+            </h1>
+            <p className="text-gray-600 mt-1">Quản lý các câu trả lời nhanh cho hỗ trợ khách hàng</p>
+>>>>>>> main
           </div>
           <button
             onClick={openAdd}
             className="flex items-center gap-2 bg-primary hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
+<<<<<<< HEAD
             Thêm mẫu mới
+=======
+            Thêm mới
+>>>>>>> main
           </button>
         </div>
 
@@ -225,14 +313,29 @@ export const AdminChatTemplates: React.FC = () => {
               ))}
             </div>
           </div>
+<<<<<<< HEAD
           <p className="text-sm text-gray-500 mt-3">Hiển thị {filtered.length} / {templates.length} mẫu</p>
+=======
+          <p className="text-sm text-gray-500 mt-3">Hiển thị {filtered.length} / {templates.length} câu trả lời</p>
+>>>>>>> main
         </div>
 
         {/* Templates Grid */}
         {filtered.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
             <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+<<<<<<< HEAD
             <p className="text-gray-500">Không tìm thấy mẫu nào</p>
+=======
+            <p className="text-gray-700 font-medium mb-1">
+              {templates.length === 0 ? 'Chưa có câu trả lời nào' : 'Không tìm thấy câu trả lời nào'}
+            </p>
+            <p className="text-sm text-gray-500">
+              {templates.length === 0
+                ? 'Thêm câu trả lời đầu tiên để admin sử dụng dữ liệu thật thay vì mẫu mặc định.'
+                : 'Thử đổi từ khóa tìm kiếm hoặc bộ lọc danh mục.'}
+            </p>
+>>>>>>> main
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,7 +397,11 @@ export const AdminChatTemplates: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">
+<<<<<<< HEAD
                 {editingTemplate ? 'Chỉnh sửa mẫu trả lời' : 'Thêm mẫu trả lời mới'}
+=======
+                {editingTemplate ? 'Chỉnh sửa trả lời' : 'Thêm trả lời mới'}
+>>>>>>> main
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5" />
@@ -361,7 +468,11 @@ export const AdminChatTemplates: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-2">Xác nhận xóa</h2>
             <p className="text-sm text-gray-600 mb-6">
+<<<<<<< HEAD
               Bạn có chắc muốn xóa mẫu trả lời "{deleteTarget.keyword}"? Hành động này không thể hoàn tác.
+=======
+              Bạn có chắc muốn xóa câu trả lời "{deleteTarget.keyword}"? Hành động này không thể hoàn tác.
+>>>>>>> main
             </p>
             <div className="flex gap-3">
               <button

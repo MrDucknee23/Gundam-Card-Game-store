@@ -8,12 +8,13 @@ export const Footer: React.FC = () => {
   return (
     <footer 
       ref={footer.ref}
-      className={`bg-black text-white mt-32 transition-all duration-1000 ${
+      className={`mt-32 text-white transition-all duration-1000 ${
         footer.isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-6 pb-10">
+        <div className="overflow-hidden rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,rgba(10,14,24,0.96),rgba(0,0,0,0.98))] shadow-[0_30px_80px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+          <div className="grid grid-cols-1 gap-12 px-8 py-14 md:grid-cols-2 lg:grid-cols-4 lg:px-10">
           {/* Column 1: Brand */}
           <div className="space-y-4">
             <h3 className="text-2xl text-white mb-4">
@@ -133,8 +134,9 @@ export const Footer: React.FC = () => {
               </li>
             </ul>
           </div>
-        </div>
+          </div>
 
+<<<<<<< HEAD
         {/* Divider */}
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -154,6 +156,28 @@ export const Footer: React.FC = () => {
               >
                 Chính sách bảo mật
               </Link>
+=======
+          {/* Divider */}
+          <div className="border-t border-white/10 px-8 py-6 lg:px-10">
+            <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+              <p className="text-gray-400 text-sm">
+                &copy; 2026 GUNDAM STORE. Bảo lưu mọi quyền.
+              </p>
+              <div className="flex gap-6 text-sm">
+                <Link
+                  to="/terms-of-use"
+                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                >
+                  Điều khoản sử dụng
+                </Link>
+                <Link
+                  to="/privacy-policy"
+                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                >
+                  Chính sách bảo mật
+                </Link>
+              </div>
+>>>>>>> main
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+<<<<<<< HEAD
 import { Link } from 'react-router';
 import { Package, ChevronRight, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,11 +8,42 @@ import { StatusBadge } from '../components/admin/StatusBadge';
 import { formatCurrency } from '../utils/format';
 
 export const MyOrders: React.FC = () => {
+=======
+import { Link, useNavigate } from 'react-router';
+import { Package, ChevronRight, Search } from 'lucide-react';
+import { toast } from 'sonner';
+import { Breadcrumb } from '../components/Breadcrumb';
+import { GuestOrderLookupCard } from '../components/GuestOrderLookupCard';
+import { StatusBadge } from '../components/admin/StatusBadge';
+import { formatCurrency } from '../utils/format';
+import { buildApiUrl } from '../utils/api';
+import { getPaymentMethodLabel, normalizeOrderLike, sanitizePossiblyMojibakeText } from '../utils/orderDisplay';
+import {
+  buildGuestOrderHeaders,
+  clearGuestOrderVerification,
+  clearPendingGuestOrderCode,
+  getPendingGuestOrderCode,
+  getStoredGuestOrderAccess,
+} from '../utils/guestOrderAccess';
+
+const USER_ORDERS_API_URL = buildApiUrl('/user/orders');
+const GUEST_ORDERS_API_URL = buildApiUrl('/guest/orders');
+
+type GuestSession = {
+  email: string;
+  phone: string;
+  accessToken: string;
+};
+
+export const MyOrders: React.FC = () => {
+  const navigate = useNavigate();
+>>>>>>> main
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewerEmail, setViewerEmail] = useState('');
   const [isGuestView, setIsGuestView] = useState(false);
   const [isSignedInUser, setIsSignedInUser] = useState(false);
+<<<<<<< HEAD
   const [lookupForm, setLookupForm] = useState({ email: '', phone: '' });
 
   const fetchOrders = useCallback(async (email: string, phone = '', guestMode = false) => {
@@ -56,10 +88,137 @@ export const MyOrders: React.FC = () => {
       setIsSignedInUser(true);
       setLookupForm({ email: user.email, phone: user.phone || '' });
       fetchOrders(user.email, '', false);
+=======
+  const [guestSession, setGuestSession] = useState<GuestSession | null>(() => {
+    const stored = getStoredGuestOrderAccess();
+    if (!stored.email || !stored.phone || !stored.accessToken) {
+      return null;
+    }
+
+    return {
+      email: stored.email,
+      phone: stored.phone,
+      accessToken: stored.accessToken,
+    };
+  });
+
+  const redirectToPendingOrder = useCallback((nextOrders: any[]) => {
+    const pendingOrderCode = getPendingGuestOrderCode();
+    if (!pendingOrderCode) {
+      return;
+    }
+
+    const matchedOrder = nextOrders.find((order) => String(order.orderNumber || '').toUpperCase() === pendingOrderCode);
+    clearPendingGuestOrderCode();
+
+    if (matchedOrder?.id) {
+      navigate(`/orders/${matchedOrder.id}`);
+      return;
+    }
+
+    toast.error('Không tìm thấy mã đơn đã yêu cầu trong danh sách vừa xác thực.');
+  }, [navigate]);
+
+  const fetchOrders = useCallback(async (email: string) => {
+    try {
+      setIsLoading(true);
+
+      const storedToken = localStorage.getItem('authToken') || '';
+      if (!storedToken) {
+        setIsSignedInUser(false);
+        setViewerEmail('');
+        setOrders([]);
+        setIsGuestView(false);
+        return;
+      }
+
+      const res = await fetch(USER_ORDERS_API_URL, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          // Token hết hạn/không hợp lệ: hạ về guest mode để người dùng có thể xác thực OTP.
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          setIsSignedInUser(false);
+          setViewerEmail('');
+          setOrders([]);
+          setIsGuestView(false);
+          return;
+        }
+
+        const text = await res.text();
+        let msg = 'Không thể tải lịch sử đơn hàng';
+        try { msg = JSON.parse(text).message || msg; } catch { /* HTML page */ }
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+
+      setOrders(Array.isArray(data) ? data.map((entry) => normalizeOrderLike(entry)) : []);
+      setViewerEmail(email.trim());
+      setIsGuestView(false);
+      redirectToPendingOrder(Array.isArray(data) ? data.map((entry) => normalizeOrderLike(entry)) : []);
+    } catch (error) {
+      console.error('Lỗi khi fetch đơn hàng:', error);
+      setOrders([]);
+      toast.error(error instanceof Error ? sanitizePossiblyMojibakeText(error.message, 'Không thể tải lịch sử đơn hàng') : 'Không thể tải lịch sử đơn hàng');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [redirectToPendingOrder]);
+
+  const fetchGuestOrders = useCallback(async (session: GuestSession) => {
+    try {
+      setIsLoading(true);
+
+      // GUEST: gọi /api/guest/orders với guest access token
+      const response = await fetch(GUEST_ORDERS_API_URL, {
+        headers: buildGuestOrderHeaders(),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          clearGuestOrderVerification();
+          setGuestSession(null);
+          throw new Error('Phiên xác thực OTP đã hết hạn. Vui lòng xác thực lại email của bạn.');
+        }
+        const text = await response.text();
+        let msg = 'Không thể tải lịch sử đơn hàng guest';
+        try { msg = JSON.parse(text).message || msg; } catch { /* HTML page */ }
+        throw new Error(msg);
+      }
+
+      const payload = await response.json();
+      const nextOrders = Array.isArray(payload) ? payload.map((entry) => normalizeOrderLike(entry)) : [];
+      setOrders(nextOrders);
+      setViewerEmail(session.email);
+      setIsGuestView(true);
+      redirectToPendingOrder(nextOrders);
+    } catch (error) {
+      console.error('Lỗi khi fetch đơn hàng guest:', error);
+      setOrders([]);
+      toast.error(error instanceof Error ? sanitizePossiblyMojibakeText(error.message, 'Không thể tải lịch sử đơn hàng guest') : 'Không thể tải lịch sử đơn hàng guest');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [redirectToPendingOrder]);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    const token = localStorage.getItem('authToken') || '';
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    if (user?.email && token) {
+      setIsSignedInUser(true);
+      fetchOrders(user.email);
+>>>>>>> main
       return;
     }
 
     setIsSignedInUser(false);
+<<<<<<< HEAD
     setLookupForm({ email: guestEmail, phone: guestPhone });
 
     if (guestEmail) {
@@ -79,6 +238,17 @@ export const MyOrders: React.FC = () => {
 
     await fetchOrders(lookupForm.email, lookupForm.phone, true);
   };
+=======
+
+    if (guestSession?.email && guestSession.phone && guestSession.accessToken) {
+      fetchGuestOrders(guestSession);
+    } else {
+      setIsLoading(false);
+    }
+  }, [fetchGuestOrders, fetchOrders, guestSession]);
+
+  const storedGuestInfo = getStoredGuestOrderAccess();
+>>>>>>> main
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN');
@@ -96,12 +266,18 @@ export const MyOrders: React.FC = () => {
               {isSignedInUser
                 ? `Đây là lịch sử giao hàng của tài khoản ${viewerEmail}.`
                 : viewerEmail
+<<<<<<< HEAD
                   ? `Bạn đang xem đơn hàng guest với email ${viewerEmail}.`
                   : 'Nhập email và số điện thoại đã dùng khi đặt hàng để tra cứu đơn guest.'}
+=======
+                  ? `Bạn đang xem đơn hàng guest đã xác thực OTP với email ${viewerEmail}.`
+                  : 'Xác thực OTP qua email để tra cứu đơn guest an toàn hơn.'}
+>>>>>>> main
             </p>
           </div>
         </div>
 
+<<<<<<< HEAD
         {!isSignedInUser && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
             <h2 className="text-lg font-bold text-gray-900 mb-2">Tra cứu đơn hàng guest</h2>
@@ -132,6 +308,44 @@ export const MyOrders: React.FC = () => {
                 Tra cứu đơn
               </button>
             </form>
+=======
+        {!isSignedInUser && !guestSession && (
+          <GuestOrderLookupCard
+            initialEmail={storedGuestInfo.email}
+            initialPhone={storedGuestInfo.phone}
+            onResolved={({ email, phone, accessToken, orders: resolvedOrders }) => {
+              const nextSession = { email, phone, accessToken };
+              setGuestSession(nextSession);
+              setOrders(resolvedOrders);
+              setViewerEmail(email);
+              setIsGuestView(true);
+              setIsLoading(false);
+              redirectToPendingOrder(resolvedOrders);
+            }}
+          />
+        )}
+
+        {!isSignedInUser && guestSession && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-emerald-900">Email {guestSession.email} đã xác thực OTP.</p>
+              <p className="text-sm text-emerald-700">Bạn có thể xem danh sách đơn guest trong phiên hiện tại.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                clearGuestOrderVerification();
+                setGuestSession(null);
+                setOrders([]);
+                setViewerEmail('');
+                setIsGuestView(false);
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-100"
+            >
+              <Search className="w-4 h-4" />
+              Xác thực email khác
+            </button>
+>>>>>>> main
           </div>
         )}
 
@@ -160,7 +374,11 @@ export const MyOrders: React.FC = () => {
                         <h3 className="font-bold text-gray-900">{order.orderNumber}</h3>
                         <p className="text-sm text-gray-500">Ngày đặt: {formatDate(order.orderDate)}</p>
                         <p className="text-sm text-gray-500 mt-1">
+<<<<<<< HEAD
                           Thanh toán: <span className="font-medium text-gray-700">{order.paymentMethod === 'bank' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}</span>
+=======
+                          Thanh toán: <span className="font-medium text-gray-700">{getPaymentMethodLabel(order.paymentMethod)}</span>
+>>>>>>> main
                         </p>
                       </div>
                     </div>

@@ -12,6 +12,12 @@ export interface Review {
   rating: number;
   content: string;
   createdAt: string;
+<<<<<<< HEAD
+=======
+  adminReply: string;
+  adminReplyAt: string | null;
+  adminReplyAuthor: string;
+>>>>>>> main
 }
 
 const requestJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
@@ -58,3 +64,17 @@ export const deleteReview = async (reviewId: string): Promise<void> => {
     method: 'DELETE',
   });
 };
+<<<<<<< HEAD
+=======
+
+export const replyToReview = async (
+  reviewId: string,
+  adminReply: string,
+  adminReplyAuthor: string,
+): Promise<Review> => {
+  return requestJson<Review>(`${API_URL}/${reviewId}/reply`, {
+    method: 'PUT',
+    body: JSON.stringify({ adminReply, adminReplyAuthor }),
+  });
+};
+>>>>>>> main

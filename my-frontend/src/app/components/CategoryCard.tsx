@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React from 'react';
+=======
+import React, { useState } from 'react';
+>>>>>>> main
 import { GundamGrade, ProductCategory } from '../types/product';
 
 interface CategoryCardProps {
@@ -20,6 +24,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   onClick,
   isActive = false
 }) => {
+  const [imgError, setImgError] = useState(false);
   const getOverlayColor = () => {
     if (grade) {
       switch (grade) {
@@ -51,28 +56,36 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 border-2 border-gray-300 hover:border-primary ${isActive ? 'border-primary' : ''}`}
+      className={`group relative cursor-pointer overflow-hidden rounded-[1.6rem] border border-white/60 bg-white/85 shadow-[0_22px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl transform transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(220,20,60,0.18)] ${isActive ? 'border-primary shadow-[0_22px_44px_rgba(220,20,60,0.2)]' : 'hover:border-primary/60'}`}
     >
       {/* Background Image */}
       <div className="aspect-[20/9] relative overflow-hidden">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        {!imgError && (
+          <img
+            src={image}
+            alt={title}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        )}
+
+        {/* Gradient Overlay — hiện đầy khi ảnh lỗi, nửa trong suốt khi ảnh load */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t ${getOverlayColor()} ${
+            imgError ? 'opacity-100' : 'opacity-65 group-hover:opacity-75'
+          } transition-opacity`}
         />
-        
-        {/* Gradient Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t ${getOverlayColor()} opacity-60 group-hover:opacity-70 transition-opacity`} />
-        
+
         {/* Dark overlay for better text contrast */}
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/24" />
+        <div className="absolute inset-x-4 top-4 h-7 rounded-full bg-white/18 blur-xl" />
       </div>
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
         <div className="transform transition-transform duration-300 group-hover:translate-y-0">
-          <h3 className="text-2xl font-bold mb-2">{title}</h3>
-          <p className="text-white/90 text-sm">{description}</p>
+          <h3 className="mb-2 text-2xl font-bold tracking-[-0.02em]">{title}</h3>
+          <p className="text-sm text-white/90">{description}</p>
         </div>
       </div>
     </div>

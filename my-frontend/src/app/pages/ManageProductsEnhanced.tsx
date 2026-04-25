@@ -9,7 +9,13 @@ import { useProducts } from '../hooks/useProducts';
 import { createProduct, deleteProduct, ProductPayload } from '../utils/productApi';
 import { useCategories } from '../hooks/useCategories';
 import { formatPrice } from '../utils/format';
+<<<<<<< HEAD
 import { deleteReview, fetchReviews, Review } from '../utils/reviewApi';
+=======
+import { deleteReview, fetchReviews, replyToReview, Review } from '../utils/reviewApi';
+import { useAuth } from '../context/AuthContext';
+import { resolveProductImageUrl, withImageFallback } from '../utils/imageUrl';
+>>>>>>> main
 
 type ProductStatus = 'active' | 'out_of_stock' | 'draft';
 type SortField = 'name' | 'price' | 'stock';
@@ -17,6 +23,10 @@ type SortOrder = 'asc' | 'desc';
 
 export const ManageProductsEnhanced: React.FC = () => {
   const navigate = useNavigate();
+<<<<<<< HEAD
+=======
+  const { user } = useAuth();
+>>>>>>> main
   const { products: fetchedProducts, loading, error } = useProducts();
   const { categories } = useCategories();
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,6 +43,11 @@ export const ManageProductsEnhanced: React.FC = () => {
   const [reviewProduct, setReviewProduct] = useState<Product | null>(null);
   const [productReviews, setProductReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+<<<<<<< HEAD
+=======
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [savingReplyId, setSavingReplyId] = useState<string | null>(null);
+>>>>>>> main
   
   const itemsPerPage = 10;
 
@@ -167,8 +182,20 @@ export const ManageProductsEnhanced: React.FC = () => {
     try {
       const reviews = await fetchReviews(product.id);
       setProductReviews(reviews);
+<<<<<<< HEAD
     } catch {
       setProductReviews([]);
+=======
+      setReplyDrafts(
+        reviews.reduce<Record<string, string>>((next, review) => {
+          next[review.id] = review.adminReply || '';
+          return next;
+        }, {})
+      );
+    } catch {
+      setProductReviews([]);
+      setReplyDrafts({});
+>>>>>>> main
       toast.error('Không thể tải danh sách đánh giá');
     } finally {
       setLoadingReviews(false);
@@ -183,6 +210,30 @@ export const ManageProductsEnhanced: React.FC = () => {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Không thể xóa đánh giá');
     }
+<<<<<<< HEAD
+=======
+  };
+
+  const handleReplyReview = async (reviewId: string) => {
+    const adminReply = replyDrafts[reviewId]?.trim() || '';
+
+    if (!adminReply) {
+      toast.error('Vui lòng nhập phản hồi cho đánh giá này');
+      return;
+    }
+
+    try {
+      setSavingReplyId(reviewId);
+      const updatedReview = await replyToReview(reviewId, adminReply, user?.fullName || 'Quản trị viên');
+      setProductReviews((current) => current.map((review) => review.id === reviewId ? updatedReview : review));
+      setReplyDrafts((current) => ({ ...current, [reviewId]: updatedReview.adminReply || '' }));
+      toast.success('Đã lưu phản hồi cho đánh giá');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể lưu phản hồi');
+    } finally {
+      setSavingReplyId(null);
+    }
+>>>>>>> main
   };
 
   const handleToggleSelect = (productId: string) => {
@@ -381,7 +432,7 @@ export const ManageProductsEnhanced: React.FC = () => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{ minWidth: '200px', width: '200px' }}>
                     Thao tác
                   </th>
                 </tr>
@@ -416,8 +467,9 @@ export const ManageProductsEnhanced: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <img
-                            src={product.images[0]}
+                            src={resolveProductImageUrl(product.images[0])}
                             alt={product.name}
+                            onError={withImageFallback}
                             className="w-16 h-16 object-cover rounded-lg"
                           />
                         </td>
@@ -463,28 +515,35 @@ export const ManageProductsEnhanced: React.FC = () => {
                         <td className="px-6 py-4">
                           <StatusBadge status={status} />
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-1">
+                        <td className="px-4 py-4" style={{ minWidth: '200px', width: '200px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'nowrap' }}>
                             <button
                               onClick={() => navigate(`/admin/products/${product.id}`)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Xem chi tiết"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => navigate(`/admin/products/${product.id}/edit`)}
                               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                               title="Chỉnh sửa"
                             >
-                              <Pencil className="w-4 h-4" />
+                              <Pencil className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleDuplicate(product)}
                               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                               title="Sao chép"
                             >
-                              <Copy className="w-4 h-4" />
+                              <Copy className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenReviews(product)}
+                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              title="Xem đánh giá"
+                            >
+                              <Star className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleOpenReviews(product)}
@@ -498,7 +557,7 @@ export const ManageProductsEnhanced: React.FC = () => {
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Xóa"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
                         </td>
@@ -564,6 +623,10 @@ export const ManageProductsEnhanced: React.FC = () => {
                   setIsReviewsModalOpen(false);
                   setReviewProduct(null);
                   setProductReviews([]);
+<<<<<<< HEAD
+=======
+                  setReplyDrafts({});
+>>>>>>> main
                 }}
                 className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -623,6 +686,48 @@ export const ManageProductsEnhanced: React.FC = () => {
                       <p className="mt-3 text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
                         {review.content}
                       </p>
+<<<<<<< HEAD
+=======
+
+                      <div className="mt-4 rounded-xl bg-gray-50 p-4 border border-gray-200">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <p className="text-sm font-semibold text-gray-900">Phản hồi của admin</p>
+                          {review.adminReplyAt && (
+                            <span className="text-xs text-gray-500">
+                              {new Date(review.adminReplyAt).toLocaleDateString('vi-VN')}
+                            </span>
+                          )}
+                        </div>
+
+                        {review.adminReply && (
+                          <div className="mb-3 rounded-lg border border-primary/15 bg-white px-3 py-2 text-sm text-gray-700">
+                            <p className="font-medium text-primary mb-1">{review.adminReplyAuthor || 'Quản trị viên'}</p>
+                            <p className="whitespace-pre-wrap break-words">{review.adminReply}</p>
+                          </div>
+                        )}
+
+                        <textarea
+                          value={replyDrafts[review.id] || ''}
+                          onChange={(event) => setReplyDrafts((current) => ({
+                            ...current,
+                            [review.id]: event.target.value,
+                          }))}
+                          rows={3}
+                          placeholder="Nhập phản hồi của admin cho đánh giá này"
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                        />
+
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            onClick={() => handleReplyReview(review.id)}
+                            disabled={savingReplyId === review.id}
+                            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
+                          >
+                            {savingReplyId === review.id ? 'Đang lưu...' : review.adminReply ? 'Cập nhật phản hồi' : 'Gửi phản hồi'}
+                          </button>
+                        </div>
+                      </div>
+>>>>>>> main
                     </div>
                   ))}
                 </div>

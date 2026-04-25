@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import React from 'react';
+import { Navigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -9,19 +9,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        // Not logged in - redirect to login
-        navigate(requireAdmin ? '/admin/login' : '/login');
-      } else if (requireAdmin && !isAdmin) {
-        // Logged in but not admin - redirect to home
-        navigate('/');
-      }
-    }
-  }, [isAuthenticated, isAdmin, loading, navigate, requireAdmin]);
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -34,8 +22,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     );
   }
 
-  if (!isAuthenticated || (requireAdmin && !isAdmin)) {
-    return null;
+  if (!isAuthenticated) {
+    return <Navigate to={requireAdmin ? '/admin/login' : '/login'} replace state={{ from: location }} />;
+  }
+
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/admin/login" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;

@@ -3,6 +3,17 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
+<<<<<<< HEAD
+=======
+const {
+  DEFAULT_CATEGORY_SEED,
+  getDefaultCategoriesFallback,
+  isDbReady,
+  isDbUnavailableError,
+  logDbDegraded,
+  sendDegradedJson,
+} = require('../utils/dbState');
+>>>>>>> main
 
 const normalizeSlug = (value = '') => value.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
 
@@ -50,11 +61,23 @@ const normalizeAttributeOptions = (options = []) => {
 const seedDefaults = async () => {
   const count = await Category.countDocuments();
   if (count === 0) {
+<<<<<<< HEAD
     await Category.insertMany([
       { name: 'gundam', slug: 'gundam', label: 'Gundam', description: 'Mô hình Gundam các loại' },
       { name: 'pokemon', slug: 'pokemon', label: 'Pokémon', description: 'Thẻ bài Pokémon TCG' },
       { name: 'onepiece', slug: 'onepiece', label: 'One Piece', description: 'Thẻ bài One Piece Card Game' },
     ]);
+=======
+    await Category.insertMany(DEFAULT_CATEGORY_SEED.map((category) => ({
+      ...category,
+      description:
+        category.slug === 'gundam'
+          ? 'Mô hình Gundam các loại'
+          : category.slug === 'pokemon'
+            ? 'Thẻ bài Pokémon TCG'
+            : 'Thẻ bài One Piece Card Game',
+    })));
+>>>>>>> main
     console.log('✅ Đã seed 3 danh mục mặc định');
   }
 };
@@ -74,6 +97,14 @@ runSeedWhenDbReady();
 
 // 1. Lấy tất cả danh mục
 router.get('/', async (req, res) => {
+<<<<<<< HEAD
+=======
+  if (!isDbReady()) {
+    logDbDegraded('categories:list');
+    return sendDegradedJson(res, getDefaultCategoriesFallback(), { source: 'default-categories' });
+  }
+
+>>>>>>> main
   try {
     const categories = await Category.find().sort({ createdAt: 1 });
     const formatted = categories.map(c => ({
@@ -82,6 +113,14 @@ router.get('/', async (req, res) => {
     }));
     res.json(formatted);
   } catch (err) {
+<<<<<<< HEAD
+=======
+    if (isDbUnavailableError(err)) {
+      logDbDegraded('categories:list', err);
+      return sendDegradedJson(res, getDefaultCategoriesFallback(), { source: 'default-categories' });
+    }
+
+>>>>>>> main
     res.status(500).json({ message: err.message });
   }
 });
