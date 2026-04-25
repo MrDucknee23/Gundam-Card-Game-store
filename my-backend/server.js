@@ -1,17 +1,23 @@
+/**
+ * 🤖 GUNDAM CARD GAME STORE - BACKEND SERVER
+ * 
+ * File chính khởi động Express server với:
+ * - MongoDB connection
+ * - Middleware (CORS, compression, JSON parser)
+ * - Passport authentication
+ * - API routes
+ * - Socket.io realtime chat
+ */
+
 const express = require('express');
 const http = require('http');
 const path = require('path');
 const mongoose = require('mongoose');
 const compression = require('compression');
 const cors = require('cors');
-<<<<<<< HEAD
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
-=======
 const multer = require('multer');
 const passport = require('passport');
-require('dotenv').config();
->>>>>>> main
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 if (!process.env.GUEST_OTP_JWT_SECRET?.trim()) {
   if (process.env.JWT_SECRET?.trim()) {
@@ -32,15 +38,14 @@ const JSON_BODY_LIMIT = '5mb';
 
 configurePassport(passport);
 
+// ✅ CORS - Cho phép frontend gọi API từ origin khác
 app.use(cors());
-<<<<<<< HEAD
-app.use(express.json({ limit: '15mb' }));
-=======
-app.use(compression());
-app.use(express.json({ limit: JSON_BODY_LIMIT }));
-app.use(express.urlencoded({ extended: true }));
-app.use(passport.initialize());
->>>>>>> main
+
+// ✅ Middleware
+app.use(compression()); // Nén response
+app.use(express.json({ limit: '15mb' })); // Parse JSON requests
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded
+app.use(passport.initialize()); // Passport authentication
 
 const buildMongoUri = () => {
   if (process.env.MONGODB_URI && process.env.MONGODB_URI.trim()) {
@@ -78,20 +83,19 @@ const logMongoErrorHelp = (err) => {
 };
 
 
+// ✅ API ROUTES
 app.use('/api/products', require('./routes/products'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/categories', require('./routes/categories'));
-<<<<<<< HEAD
-// Thêm route orders
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/reviews', require('./routes/reviews'));
-=======
 app.use('/api/guest', require('./routes/guest'));
 app.use('/api/user', require('./routes/user'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/upload', require('./routes/upload'));
 
-// Fallback direct bindings để tránh 404 khi môi trường chạy bị lệch route mount.
-// Vẫn dùng đúng controller/middleware hiện tại, KHÔNG đổi logic phân quyền.
+// ✅ Fallback direct bindings để tránh 404
 const authJwt = require('./middleware/authJwt');
 const userOrderController = require('./controllers/userOrderController');
 const guestOrderController = require('./controllers/guestOrderController');
@@ -100,22 +104,16 @@ app.get('/api/user/orders/:id', authJwt, userOrderController.getOrderDetail);
 app.get('/api/guest/orders', guestOrderController.listOrders);
 app.get('/api/guest/orders/:id', guestOrderController.getOrderDetail);
 
-// Thêm route orders
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/chat', require('./routes/chat'));
-app.use('/api/reviews', require('./routes/reviews'));
-app.use('/api/upload', require('./routes/upload'));
-
-// ─── Serve React frontend (production) ──────────────────────────────────────
+// ✅ Serve React frontend (production)
 const frontendDist = path.join(__dirname, '..', 'my-frontend', 'dist');
 app.use(express.static(frontendDist));
 
-// Mọi request không phải /api/* => trả về index.html (React Router)
+// ✅ SPA fallback - mọi request không phải /api/* => trả về index.html (React Router)
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
-// ─────────────────────────────────────────────────────────────────────────────
 
+// ✅ Error handling middleware
 app.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
@@ -167,10 +165,10 @@ app.use((err, req, res, next) => {
     error: 'internal_server_error',
   });
 });
->>>>>>> main
 
 const PORT = process.env.PORT || 5000;
 
+// ✅ Start server
 const startServer = async () => {
   try {
     const mongoUri = buildMongoUri();
@@ -183,14 +181,12 @@ const startServer = async () => {
     });
     console.log('✅ MongoDB connected');
 
-<<<<<<< HEAD
-    app.listen(PORT, () => console.log(`🚀 Server tại http://localhost:${PORT}`));
-=======
+    // ✅ Initialize Socket.io cho real-time chat
     const chatRealtime = initChatRealtime(httpServer);
     app.set('chatRealtime', chatRealtime);
 
+    // ✅ Listen on port
     httpServer.listen(PORT, () => console.log(`🚀 Server tại http://localhost:${PORT}`));
->>>>>>> main
   } catch (err) {
     console.error('❌ Không thể kết nối MongoDB:', err.message || err);
     logMongoErrorHelp(err);
